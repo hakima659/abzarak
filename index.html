@@ -3,20 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ابزارک؛ مجموعه ابزارهای رایگان آنلاین برای محاسبه، تبدیل واحد، سود، تخفیف و اقساط">
+<meta name="keywords" content="ابزار آنلاین, محاسبه درصد, محاسبه سود, تخفیف, اقساط, تبدیل واحد">
 <title>ابزارک | ابزارهای رایگان آنلاین</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f5f7fb;color:#222}
-header{background:#2563eb;color:white;padding:28px 16px;text-align:center}
-header h1{margin:0 0 10px}
-main{max-width:900px;margin:25px auto;padding:0 15px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-.card{background:white;border-radius:16px;padding:20px;box-shadow:0 4px 18px #00000012}
-input,textarea,button{width:100%;padding:12px;margin:7px 0;border:1px solid #ddd;border-radius:10px;font-size:15px}
-textarea{min-height:100px}
-button{background:#2563eb;color:white;border:0;font-weight:bold}
-.result{background:#f1f5f9;padding:12px;border-radius:10px;margin-top:8px;min-height:25px}
-footer{text-align:center;padding:30px;color:#666}
+
+body{
+  margin:0;
+  font-family:Tahoma,Arial,sans-serif;
+  background:#f5f7fb;
+  color:#222;
+  line-height:1.8;
+}
+
+header{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:white;
+  padding:35px 16px;
+  text-align:center;
+}
+
+header h1{
+  margin:0 0 8px;
+  font-size:32px;
+}
+
+header p{
+  margin:0;
+}
+
+main{
+  max-width:1100px;
+  margin:25px auto;
+  padding:0 15px;
+}
+
+.intro{
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  margin-bottom:20px;
+  box-shadow:0 4px 18px #00000012;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+  gap:18px;
+}
+
+.card{
+  background:white;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 4px 18px #00000012;
+}
+
+.card h2{
+  margin-top:0;
+  font-size:20px;
+}
+
+input,textarea,button{
+  width:100%;
+  padding:12px;
+  margin:7px 0;
+  border:1px solid #ddd;
+  border-radius:10px;
+  font-size:15px;
+  font-family:inherit;
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+button{
+  background:#2563eb;
+  color:white;
+  border:0;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.result{
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:10px;
+  margin-top:8px;
+  min-height:25px;
+}
+
+footer{
+  text-align:center;
+  padding:35px 15px;
+  color:#666;
+}
 </style>
 </head>
 
@@ -24,16 +113,22 @@ footer{text-align:center;padding:30px;color:#666}
 
 <header>
 <h1>ابزارک</h1>
-<p>ابزارهای رایگان برای کار و درآمد آنلاین</p>
+<p>ابزارهای رایگان، سریع و کاربردی آنلاین</p>
 </header>
 
 <main>
+
+<div class="intro">
 <h2>ابزارهای کاربردی، رایگان و سریع</h2>
+<p>
+در ابزارک می‌توانید محاسبات روزمره، تبدیل واحد، سود، تخفیف و اقساط را به‌صورت آنلاین انجام دهید.
+</p>
+</div>
 
 <div class="grid">
 
 <section class="card">
-<h2>محاسبه درصد</h2>
+<h2>🧮 محاسبه درصد</h2>
 <input id="num" type="number" placeholder="عدد">
 <input id="per" type="number" placeholder="درصد">
 <button onclick="percent()">محاسبه</button>
@@ -41,15 +136,15 @@ footer{text-align:center;padding:30px;color:#666}
 </section>
 
 <section class="card">
-<h2>تبدیل دلار به تومان</h2>
+<h2>💵 تبدیل دلار به تومان</h2>
 <input id="usd" type="number" placeholder="مقدار دلار">
-<input id="rate" type="number" placeholder="قیمت دلار">
+<input id="rate" type="number" placeholder="قیمت هر دلار به تومان">
 <button onclick="dollar()">محاسبه</button>
 <div class="result" id="r2"></div>
 </section>
 
 <section class="card">
-<h2>محاسبه تخفیف</h2>
+<h2>🏷️ محاسبه تخفیف</h2>
 <input id="price" type="number" placeholder="قیمت کالا">
 <input id="discount" type="number" placeholder="درصد تخفیف">
 <button onclick="off()">محاسبه</button>
@@ -57,7 +152,7 @@ footer{text-align:center;padding:30px;color:#666}
 </section>
 
 <section class="card">
-<h2>محاسبه سود</h2>
+<h2>📈 محاسبه سود</h2>
 <input id="capital" type="number" placeholder="سرمایه">
 <input id="profit" type="number" placeholder="درصد سود">
 <button onclick="profitCalc()">محاسبه</button>
@@ -65,21 +160,74 @@ footer{text-align:center;padding:30px;color:#666}
 </section>
 
 <section class="card">
-<h2>تبدیل کیلومتر به متر</h2>
+<h2>📏 کیلومتر به متر</h2>
 <input id="km" type="number" placeholder="کیلومتر">
 <button onclick="kmToM()">تبدیل</button>
 <div class="result" id="r5"></div>
 </section>
 
 <section class="card">
-<h2>محاسبه اقساط</h2>
+<h2>💳 محاسبه اقساط</h2>
 <input id="loan" type="number" placeholder="مبلغ وام">
 <input id="months" type="number" placeholder="تعداد ماه">
 <button onclick="loanCalc()">محاسبه</button>
 <div class="result" id="r6"></div>
 </section>
 
+<section class="card">
+<h2>🎂 محاسبه سن</h2>
+<input id="birth" type="number" placeholder="سال تولد شمسی">
+<button onclick="ageCalc()">محاسبه</button>
+<div class="result" id="r7"></div>
+</section>
+
+<section class="card">
+<h2>📝 تولید متن معرفی</h2>
+<input id="name" placeholder="نام محصول یا کسب‌وکار">
+<textarea id="info" placeholder="چند کلمه درباره محصول بنویسید"></textarea>
+<button onclick="makeText()">تولید متن</button>
+<div class="result" id="r8"></div>
+</section>
+
+<section class="card">
+<h2>⚖️ کیلوگرم به گرم</h2>
+<input id="kg" type="number" placeholder="کیلوگرم">
+<button onclick="kgToG()">تبدیل</button>
+<div class="result" id="r9"></div>
+</section>
+
+<section class="card">
+<h2>📐 متر به سانتی‌متر</h2>
+<input id="meter" type="number" placeholder="متر">
+<button onclick="meterToCm()">تبدیل</button>
+<div class="result" id="r10"></div>
+</section>
+
+<section class="card">
+<h2>🔢 میانگین اعداد</h2>
+<textarea id="numbers" placeholder="اعداد را با فاصله یا کاما وارد کنید"></textarea>
+<button onclick="average()">محاسبه میانگین</button>
+<div class="result" id="r11"></div>
+</section>
+
+<section class="card">
+<h2>💰 افزایش قیمت</h2>
+<input id="basePrice" type="number" placeholder="قیمت">
+<input id="increase" type="number" placeholder="درصد افزایش">
+<button onclick="increasePrice()">محاسبه</button>
+<div class="result" id="r12"></div>
+</section>
+
 </div>
+
+<div class="intro" style="margin-top:25px">
+<h2>📚 درباره ابزارک</h2>
+<p>
+ابزارک یک مجموعه ابزار آنلاین رایگان است که برای انجام سریع محاسبات و تبدیل‌های روزمره طراحی شده است.
+در آینده می‌توان ابزارهای بیشتری، مقالات آموزشی و امکانات جدید به آن اضافه کرد.
+</p>
+</div>
+
 </main>
 
 <footer>
@@ -87,45 +235,116 @@ footer{text-align:center;padding:30px;color:#666}
 </footer>
 
 <script>
+
 function v(id){
 return Number(document.getElementById(id).value)||0;
 }
 
+function fa(n){
+return Number(n).toLocaleString("fa-IR");
+}
+
 function percent(){
-document.getElementById("r1").textContent=
-"نتیجه: "+(v("num")*v("per")/100).toLocaleString("fa-IR");
+let x=v("num")*v("per")/100;
+document.getElementById("r1").textContent="نتیجه: "+fa(x);
 }
 
 function dollar(){
-document.getElementById("r2").textContent=
-"مبلغ: "+(v("usd")*v("rate")).toLocaleString("fa-IR")+" تومان";
+let x=v("usd")*v("rate");
+document.getElementById("r2").textContent="مبلغ: "+fa(x)+" تومان";
 }
 
 function off(){
-let p=v("price"),d=v("discount");
+let p=v("price");
+let d=v("discount");
 let x=p*d/100;
 document.getElementById("r3").textContent=
-"تخفیف: "+x.toLocaleString("fa-IR")+" تومان | قیمت نهایی: "+(p-x).toLocaleString("fa-IR")+" تومان";
+"تخفیف: "+fa(x)+" تومان | قیمت نهایی: "+fa(p-x)+" تومان";
 }
 
 function profitCalc(){
-let c=v("capital"),p=v("profit");
+let c=v("capital");
+let p=v("profit");
 let x=c*p/100;
 document.getElementById("r4").textContent=
-"سود: "+x.toLocaleString("fa-IR")+" تومان | مجموع: "+(c+x).toLocaleString("fa-IR")+" تومان";
+"سود: "+fa(x)+" تومان | مجموع: "+fa(c+x)+" تومان";
 }
 
 function kmToM(){
-document.getElementById("r5").textContent=
-(v("km")*1000).toLocaleString("fa-IR")+" متر";
+let x=v("km")*1000;
+document.getElementById("r5").textContent=fa(x)+" متر";
 }
 
 function loanCalc(){
-let l=v("loan"),m=v("months");
+let l=v("loan");
+let m=v("months");
 let x=m?l/m:0;
 document.getElementById("r6").textContent=
-"قسط تقریبی ماهانه: "+x.toLocaleString("fa-IR")+" تومان";
+"قسط تقریبی ماهانه: "+fa(x)+" تومان";
 }
+
+function ageCalc(){
+let b=v("birth");
+let x=1405-b;
+document.getElementById("r7").textContent=
+"سن تقریبی: "+fa(x)+" سال";
+}
+
+function makeText(){
+let name=document.getElementById("name").value.trim();
+let info=document.getElementById("info").value.trim();
+
+if(!name){
+document.getElementById("r8").textContent="لطفاً نام محصول را وارد کنید.";
+return;
+}
+
+let text="با "+name+"، تجربه‌ای ساده و کاربردی داشته باشید. "+
+info+" این محصول با هدف استفاده آسان و ارائه تجربه بهتر طراحی شده است.";
+
+document.getElementById("r8").textContent=text;
+}
+
+function kgToG(){
+let x=v("kg")*1000;
+document.getElementById("r9").textContent=fa(x)+" گرم";
+}
+
+function meterToCm(){
+let x=v("meter")*100;
+document.getElementById("r10").textContent=fa(x)+" سانتی‌متر";
+}
+
+function average(){
+let text=document.getElementById("numbers").value;
+
+let arr=text
+.replace(/،/g,",")
+.split(/[,\s]+/)
+.map(Number)
+.filter(x=>!isNaN(x));
+
+if(arr.length===0){
+document.getElementById("r11").textContent="لطفاً عدد وارد کنید.";
+return;
+}
+
+let sum=arr.reduce((a,b)=>a+b,0);
+let avg=sum/arr.length;
+
+document.getElementById("r11").textContent=
+"میانگین: "+fa(avg);
+}
+
+function increasePrice(){
+let p=v("basePrice");
+let i=v("increase");
+let x=p*i/100;
+
+document.getElementById("r12").textContent=
+"مقدار افزایش: "+fa(x)+" تومان | قیمت جدید: "+fa(p+x)+" تومان";
+}
+
 </script>
 
 </body>
