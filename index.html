@@ -1,180 +1,499 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>12 Useful Tools</title>
-  <meta name="description" content="A collection of 12 useful online tools.">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A free collection of useful online tools.">
+<title>ابزارک | ابزارهای رایگان آنلاین</title>
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #222;
-      line-height: 1.6;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    header {
-      background: #2563eb;
-      color: white;
-      text-align: center;
-      padding: 40px 20px;
-    }
+body {
+  margin: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f5f7fb;
+  color: #222;
+  line-height: 1.8;
+}
 
-    header h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
+header {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: white;
+  padding: 35px 16px;
+  text-align: center;
+}
 
-    header p {
-      font-size: 17px;
-    }
+header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
 
-    .container {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
+main {
+  max-width: 1100px;
+  margin: 25px auto;
+  padding: 0 15px;
+}
 
-    .tools {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
+.intro,
+.card,
+.balance {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px #00000012;
+}
 
-    .tool {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 18px;
+}
 
-    .tool h2 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
+input,
+textarea,
+select,
+button {
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+}
 
-    .tool p {
-      color: #666;
-      margin-bottom: 18px;
-    }
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
 
-    .tool button {
-      border: none;
-      background: #2563eb;
-      color: white;
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 15px;
-    }
+button {
+  background: #2563eb;
+  color: white;
+  border: 0;
+  cursor: pointer;
+  font-weight: bold;
+}
 
-    .tool button:hover {
-      background: #1d4ed8;
-    }
+.withdraw-button {
+  background: #16a34a;
+}
 
-    footer {
-      text-align: center;
-      padding: 30px 20px;
-      color: #777;
-    }
-  </style>
+.result {
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+.balance {
+  background: linear-gradient(135deg, #111827, #374151);
+  color: white;
+  text-align: center;
+}
+
+.balance-amount {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.notice {
+  background: #fff7ed;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.success {
+  background: #f0fdf4;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+footer {
+  text-align: center;
+  padding: 35px 15px;
+  color: #666;
+}
+</style>
 </head>
 
 <body>
 
-  <header>
-    <h1>12 Useful Online Tools</h1>
-    <p>Simple, fast and useful tools in one place.</p>
-  </header>
+<header>
+  <h1>ابزارک</h1>
+  <p>ابزارهای رایگان، سریع و کاربردی آنلاین</p>
+</header>
 
-  <main class="container">
-    <div class="tools">
+<main>
 
-      <div class="tool">
-        <h2>Text Counter</h2>
-        <p>Count words and characters.</p>
-        <button onclick="alert('Text Counter')">Open Tool</button>
-      </div>
+<div class="balance">
+  <h2>💰 موجودی حساب</h2>
+  <div class="balance-amount">
+    <span id="balance">0</span> تومان
+  </div>
+  <p>حداقل مبلغ برداشت: 10,000 تومان</p>
+</div>
 
-      <div class="tool">
-        <h2>Word Counter</h2>
-        <p>Count the number of words.</p>
-        <button onclick="alert('Word Counter')">Open Tool</button>
-      </div>
+<section class="card">
+  <h2>💸 درخواست برداشت</h2>
 
-      <div class="tool">
-        <h2>Character Counter</h2>
-        <p>Count characters in your text.</p>
-        <button onclick="alert('Character Counter')">Open Tool</button>
-      </div>
+  <input
+    id="withdrawAmount"
+    type="number"
+    min="10000"
+    placeholder="مبلغ برداشت به تومان"
+  >
 
-      <div class="tool">
-        <h2>Case Converter</h2>
-        <p>Convert text to upper or lower case.</p>
-        <button onclick="alert('Case Converter')">Open Tool</button>
-      </div>
+  <select id="withdrawMethod">
+    <option value="">روش دریافت را انتخاب کنید</option>
+    <option value="USDT">USDT</option>
+    <option value="Bank">حساب بانکی</option>
+    <option value="Wallet">کیف پول</option>
+  </select>
 
-      <div class="tool">
-        <h2>Text Cleaner</h2>
-        <p>Clean unnecessary spaces from text.</p>
-        <button onclick="alert('Text Cleaner')">Open Tool</button>
-      </div>
+  <input
+    id="withdrawAddress"
+    type="text"
+    placeholder="شماره حساب یا آدرس کیف پول"
+  >
 
-      <div class="tool">
-        <h2>Text Reverser</h2>
-        <p>Reverse any text instantly.</p>
-        <button onclick="alert('Text Reverser')">Open Tool</button>
-      </div>
+  <button class="withdraw-button" onclick="requestWithdraw()">
+    ثبت درخواست برداشت
+  </button>
 
-      <div class="tool">
-        <h2>Password Generator</h2>
-        <p>Create a strong random password.</p>
-        <button onclick="alert('Password Generator')">Open Tool</button>
-      </div>
+  <div class="result" id="withdrawResult"></div>
 
-      <div class="tool">
-        <h2>Number Generator</h2>
-        <p>Generate random numbers.</p>
-        <button onclick="alert('Number Generator')">Open Tool</button>
-      </div>
+  <div class="notice">
+    ثبت درخواست به معنی انتقال فوری وجه نیست.
+  </div>
+</section>
 
-      <div class="tool">
-        <h2>Age Calculator</h2>
-        <p>Calculate your age easily.</p>
-        <button onclick="alert('Age Calculator')">Open Tool</button>
-      </div>
+<div class="intro">
+  <h2>ابزارهای کاربردی، رایگان و سریع</h2>
+  <p>
+    در ابزارک می‌توانید محاسبات روزمره، تبدیل واحد، سود، تخفیف و اقساط را آنلاین انجام دهید.
+  </p>
+</div>
 
-      <div class="tool">
-        <h2>BMI Calculator</h2>
-        <p>Calculate your body mass index.</p>
-        <button onclick="alert('BMI Calculator')">Open Tool</button>
-      </div>
+<div class="grid">
 
-      <div class="tool">
-        <h2>Percentage Calculator</h2>
-        <p>Calculate percentages quickly.</p>
-        <button onclick="alert('Percentage Calculator')">Open Tool</button>
-      </div>
+<section class="card">
+  <h2>🧮 محاسبه درصد</h2>
+  <input id="numberValue" type="number" placeholder="عدد">
+  <input id="percentValue" type="number" placeholder="درصد">
+  <button onclick="calculatePercent()">محاسبه</button>
+  <div class="result" id="result1"></div>
+</section>
 
-      <div class="tool">
-        <h2>Calculator</h2>
-        <p>Perform basic calculations.</p>
-        <button onclick="alert('Calculator')">Open Tool</button>
-      </div>
+<section class="card">
+  <h2>💵 تبدیل دلار به تومان</h2>
+  <input id="dollarValue" type="number" placeholder="مقدار دلار">
+  <input id="dollarRate" type="number" placeholder="قیمت هر دلار">
+  <button onclick="calculateDollar()">محاسبه</button>
+  <div class="result" id="result2"></div>
+</section>
 
-    </div>
-  </main>
+<section class="card">
+  <h2>🏷️ محاسبه تخفیف</h2>
+  <input id="priceValue" type="number" placeholder="قیمت کالا">
+  <input id="discountValue" type="number" placeholder="درصد تخفیف">
+  <button onclick="calculateDiscount()">محاسبه</button>
+  <div class="result" id="result3"></div>
+</section>
 
-  <footer>
-    <p>© 2026 12 Useful Tools. All rights reserved.</p>
-  </footer>
+<section class="card">
+  <h2>📈 محاسبه سود</h2>
+  <input id="capitalValue" type="number" placeholder="سرمایه">
+  <input id="profitValue" type="number" placeholder="درصد سود">
+  <button onclick="calculateProfit()">محاسبه</button>
+  <div class="result" id="result4"></div>
+</section>
+
+<section class="card">
+  <h2>📏 کیلومتر به متر</h2>
+  <input id="kilometerValue" type="number" placeholder="کیلومتر">
+  <button onclick="convertKilometer()">تبدیل</button>
+  <div class="result" id="result5"></div>
+</section>
+
+<section class="card">
+  <h2>💳 محاسبه اقساط</h2>
+  <input id="loanValue" type="number" placeholder="مبلغ وام">
+  <input id="monthValue" type="number" placeholder="تعداد ماه">
+  <button onclick="calculateLoan()">محاسبه</button>
+  <div class="result" id="result6"></div>
+</section>
+
+<section class="card">
+  <h2>🎂 محاسبه سن</h2>
+  <input id="birthYear" type="number" placeholder="سال تولد شمسی">
+  <button onclick="calculateAge()">محاسبه</button>
+  <div class="result" id="result7"></div>
+</section>
+
+<section class="card">
+  <h2>📝 تولید متن معرفی</h2>
+  <input id="productName" placeholder="نام محصول یا کسب‌وکار">
+  <textarea id="productInfo" placeholder="توضیحات کوتاه"></textarea>
+  <button onclick="generateText()">تولید متن</button>
+  <div class="result" id="result8"></div>
+</section>
+
+<section class="card">
+  <h2>⚖️ کیلوگرم به گرم</h2>
+  <input id="kilogramValue" type="number" placeholder="کیلوگرم">
+  <button onclick="convertKilogramToGram()">تبدیل</button>
+  <div class="result" id="result9"></div>
+</section>
+
+<section class="card">
+  <h2>📐 متر به سانتی‌متر</h2>
+  <input id="meterValue" type="number" placeholder="متر">
+  <button onclick="convertMeter()">تبدیل</button>
+  <div class="result" id="result10"></div>
+</section>
+
+<section class="card">
+  <h2>🔢 میانگین اعداد</h2>
+  <textarea id="numberList" placeholder="اعداد را با فاصله یا کاما وارد کنید"></textarea>
+  <button onclick="calculateAverage()">محاسبه میانگین</button>
+  <div class="result" id="result11"></div>
+</section>
+
+<section class="card">
+  <h2>💰 افزایش قیمت</h2>
+  <input id="basePrice" type="number" placeholder="قیمت">
+  <input id="increaseValue" type="number" placeholder="درصد افزایش">
+  <button onclick="calculateIncrease()">محاسبه</button>
+  <div class="result" id="result12"></div>
+</section>
+
+</div>
+
+<div class="intro">
+  <h2>📚 درباره ابزارک</h2>
+  <p>
+    ابزارک یک مجموعه ابزار آنلاین رایگان برای انجام سریع محاسبات و تبدیل‌های روزمره است.
+  </p>
+</div>
+
+</main>
+
+<footer>
+  ابزارک — نسخه رایگان و قابل توسعه
+</footer>
+
+<script>
+
+function getValue(id) {
+  return Number(document.getElementById(id).value) || 0;
+}
+
+function formatNumber(value) {
+  return Number(value).toLocaleString("fa-IR");
+}
+
+function calculatePercent() {
+  const result =
+    getValue("numberValue") *
+    getValue("percentValue") / 100;
+
+  document.getElementById("result1").textContent =
+    "نتیجه: " + formatNumber(result);
+}
+
+function calculateDollar() {
+  const result =
+    getValue("dollarValue") *
+    getValue("dollarRate");
+
+  document.getElementById("result2").textContent =
+    "مبلغ: " + formatNumber(result) + " تومان";
+}
+
+function calculateDiscount() {
+  const price = getValue("priceValue");
+  const discount = getValue("discountValue");
+  const amount = price * discount / 100;
+
+  document.getElementById("result3").textContent =
+    "تخفیف: " + formatNumber(amount) +
+    " تومان | قیمت نهایی: " +
+    formatNumber(price - amount) + " تومان";
+}
+
+function calculateProfit() {
+  const capital = getValue("capitalValue");
+  const profit = getValue("profitValue");
+  const amount = capital * profit / 100;
+
+  document.getElementById("result4").textContent =
+    "سود: " + formatNumber(amount) +
+    " تومان | مجموع: " +
+    formatNumber(capital + amount) + " تومان";
+}
+
+function convertKilometer() {
+  const result = getValue("kilometerValue") * 1000;
+
+  document.getElementById("result5").textContent =
+    formatNumber(result) + " متر";
+}
+
+function calculateLoan() {
+  const loan = getValue("loanValue");
+  const months = getValue("monthValue");
+  const result = months ? loan / months : 0;
+
+  document.getElementById("result6").textContent =
+    "قسط تقریبی ماهانه: " +
+    formatNumber(result) + " تومان";
+}
+
+function calculateAge() {
+  const birthYear = getValue("birthYear");
+  const result = 1405 - birthYear;
+
+  document.getElementById("result7").textContent =
+    "سن تقریبی: " + formatNumber(result) + " سال";
+}
+
+function generateText() {
+  const name =
+    document.getElementById("productName").value.trim();
+
+  const info =
+    document.getElementById("productInfo").value.trim();
+
+  if (!name) {
+    document.getElementById("result8").textContent =
+      "لطفاً نام محصول را وارد کنید.";
+    return;
+  }
+
+  document.getElementById("result8").textContent =
+    "با " + name +
+    "، تجربه‌ای ساده و کاربردی داشته باشید. " +
+    info +
+    " این محصول برای استفاده آسان طراحی شده است.";
+}
+
+function convertKilogramToGram() {
+  const result = getValue("kilogramValue") * 1000;
+
+  document.getElementById("result9").textContent =
+    formatNumber(result) + " گرم";
+}
+
+function convertMeter() {
+  const result = getValue("meterValue") * 100;
+
+  document.getElementById("result10").textContent =
+    formatNumber(result) + " سانتی‌متر";
+}
+
+function calculateAverage() {
+  const text =
+    document.getElementById("numberList").value;
+
+  const values = text
+    .replace(/،/g, ",")
+    .split(/[,\s]+/)
+    .map(Number)
+    .filter(value => !isNaN(value));
+
+  if (values.length === 0) {
+    document.getElementById("result11").textContent =
+      "لطفاً عدد وارد کنید.";
+    return;
+  }
+
+  const sum =
+    values.reduce((total, value) => total + value, 0);
+
+  const average = sum / values.length;
+
+  document.getElementById("result11").textContent =
+    "میانگین: " + formatNumber(average);
+}
+
+function calculateIncrease() {
+  const price = getValue("basePrice");
+  const increase = getValue("increaseValue");
+  const amount = price * increase / 100;
+
+  document.getElementById("result12").textContent =
+    "مقدار افزایش: " +
+    formatNumber(amount) +
+    " تومان | قیمت جدید: " +
+    formatNumber(price + amount) +
+    " تومان";
+}
+
+function requestWithdraw() {
+
+  const amount =
+    Number(document.getElementById("withdrawAmount").value) || 0;
+
+  const method =
+    document.getElementById("withdrawMethod").value;
+
+  const address =
+    document.getElementById("withdrawAddress").value.trim();
+
+  const balance =
+    Number(localStorage.getItem("toolBalance")) || 0;
+
+  const result =
+    document.getElementById("withdrawResult");
+
+  if (amount < 10000) {
+    result.textContent =
+      "حداقل مبلغ برداشت 10,000 تومان است.";
+    return;
+  }
+
+  if (amount > balance) {
+    result.textContent =
+      "موجودی کافی نیست.";
+    return;
+  }
+
+  if (!method) {
+    result.textContent =
+      "لطفاً روش دریافت را انتخاب کنید.";
+    return;
+  }
+
+  if (!address) {
+    result.textContent =
+      "لطفاً اطلاعات دریافت را وارد کنید.";
+    return;
+  }
+
+  result.innerHTML =
+    '<div class="success">' +
+    'درخواست برداشت با موفقیت ثبت شد.' +
+    '</div>';
+}
+
+function loadBalance() {
+
+  const balance =
+    Number(localStorage.getItem("toolBalance")) || 0;
+
+  document.getElementById("balance").textContent =
+    formatNumber(balance);
+}
+
+loadBalance();
+
+</script>
 
 </body>
-</html>
+  </html>
