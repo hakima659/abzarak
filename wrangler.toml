@@ -1,239 +1,191 @@
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-
-    if (request.method === "GET" && url.pathname === "/") {
-      return new Response(HTML, {
-        headers: {
-          "Content-Type": "text/html; charset=UTF-8"
-        }
-      });
-    }
-
-    if (request.method === "POST" && url.pathname === "/api/ai") {
-      try {
-        const body = await request.json();
-        const prompt = String(body.prompt || "").trim();
-
-        if (!prompt) {
-          return Response.json(
-            { error: "لطفاً سؤال خود را بنویسید." },
-            { status: 400 }
-          );
-        }
-
-        const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct",
-          {
-            messages: [
-              {
-                role: "system",
-                content: "به زبان فارسی، دقیق، مفید و دوستانه پاسخ بده."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ]
-          }
-        );
-
-        return Response.json({
-          success: true,
-          answer: result.response || "پاسخی دریافت نشد."
-        });
-
-      } catch (error) {
-        return Response.json(
-          { error: "خطا در اجرای هوش مصنوعی." },
-          { status: 500 }
-        );
-      }
-    }
-
-    return new Response("صفحه پیدا نشد.", { status: 404 });
-  }
-};
 
 const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ابزارک AI</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ابزارک هوش مصنوعی</title>
 <style>
-* {
-  box-sizing: border-box;
+body{
+  margin:0;
+  font-family:Tahoma,Arial,sans-serif;
+  background:#f3f4f6;
+  color:#111827;
 }
-
-body {
-  margin: 0;
-  font-family: Tahoma, Arial, sans-serif;
-  background: #f1f5f9;
-  color: #172033;
+.container{
+  max-width:700px;
+  margin:40px auto;
+  padding:20px;
 }
-
-.container {
-  max-width: 650px;
-  margin: auto;
-  padding: 25px 15px;
+.box{
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 5px 25px rgba(0,0,0,.08);
 }
-
-.header {
-  text-align: center;
-  margin-bottom: 20px;
+h1{
+  text-align:center;
+  margin-top:0;
 }
-
-.header h1 {
-  margin: 0;
-  font-size: 30px;
+textarea{
+  width:100%;
+  min-height:150px;
+  box-sizing:border-box;
+  padding:15px;
+  border:1px solid #d1d5db;
+  border-radius:12px;
+  font-size:16px;
+  resize:vertical;
 }
-
-.header p {
-  color: #64748b;
+button{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:#2563eb;
+  color:white;
+  font-size:17px;
+  cursor:pointer;
 }
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.08);
+button:disabled{
+  opacity:.6;
 }
-
-textarea {
-  width: 100%;
-  min-height: 150px;
-  border: 1px solid #dbe2ea;
-  border-radius: 14px;
-  padding: 15px;
-  font-size: 16px;
-  font-family: inherit;
-  outline: none;
-  resize: vertical;
+#result{
+  margin-top:20px;
+  padding:15px;
+  background:#f9fafb;
+  border-radius:12px;
+  white-space:pre-wrap;
+  line-height:1.9;
+  min-height:40px;
 }
-
-button {
-  width: 100%;
-  margin-top: 12px;
-  padding: 15px;
-  border: 0;
-  border-radius: 14px;
-  background: #2563eb;
-  color: white;
-  font-size: 17px;
-  font-family: inherit;
-}
-
-button:disabled {
-  opacity: .6;
-}
-
-.answer {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8fafc;
-  border-radius: 14px;
-  min-height: 80px;
-  white-space: pre-wrap;
-  line-height: 1.9;
-}
-
-.footer {
-  text-align: center;
-  color: #94a3b8;
-  margin-top: 20px;
-  font-size: 13px;
+.status{
+  text-align:center;
+  color:#6b7280;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
+  <div class="box">
+    <h1>🤖 ابزارک هوش مصنوعی</h1>
 
-  <div class="header">
-    <h1>🤖 ابزارک AI</h1>
-    <p>دستیار هوش مصنوعی فارسی</p>
+    <textarea id="prompt" placeholder="سؤال یا درخواست خود را بنویسید..."></textarea>
+
+    <button id="send">ارسال به هوش مصنوعی</button>
+
+    <div class="status" id="status">آماده است</div>
+
+    <div id="result"></div>
   </div>
-
-  <div class="card">
-
-    <textarea
-      id="prompt"
-      placeholder="سؤال یا درخواست خود را بنویسید..."
-    ></textarea>
-
-    <button id="ask" onclick="askAI()">
-      پرسش از هوش مصنوعی
-    </button>
-
-    <div class="answer" id="answer">
-      پاسخ اینجا نمایش داده می‌شود.
-    </div>
-
-  </div>
-
-  <div class="footer">
-    ابزارک AI
-  </div>
-
 </div>
 
 <script>
-async function askAI() {
+const promptBox = document.getElementById("prompt");
+const sendButton = document.getElementById("send");
+const result = document.getElementById("result");
+const status = document.getElementById("status");
 
-  const prompt =
-    document.getElementById("prompt").value.trim();
-
-  const answer =
-    document.getElementById("answer");
-
-  const button =
-    document.getElementById("ask");
+sendButton.addEventListener("click", async () => {
+  const prompt = promptBox.value.trim();
 
   if (!prompt) {
-    answer.textContent =
-      "لطفاً سؤال خود را بنویسید.";
+    result.textContent = "لطفاً متن خود را وارد کنید.";
     return;
   }
 
-  button.disabled = true;
-  answer.textContent =
-    "⏳ در حال دریافت پاسخ...";
+  sendButton.disabled = true;
+  status.textContent = "در حال دریافت پاسخ...";
+  result.textContent = "";
 
   try {
-
     const response = await fetch("/api/ai", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        prompt: prompt
-      })
+      body: JSON.stringify({ prompt })
     });
 
     const data = await response.json();
 
-    if (data.answer) {
-      answer.textContent = data.answer;
-    } else {
-      answer.textContent =
-        data.error || "پاسخی دریافت نشد.";
+    if (!response.ok) {
+      throw new Error(data.error || "خطایی رخ داد.");
     }
 
+    result.textContent = data.answer || "پاسخی دریافت نشد.";
+    status.textContent = "پاسخ آماده است ✅";
+
   } catch (error) {
-
-    answer.textContent =
-      "ارتباط با سرور برقرار نشد.";
-
+    result.textContent = "خطا: " + error.message;
+    status.textContent = "خطا ❌";
   } finally {
-
-    button.disabled = false;
+    sendButton.disabled = false;
   }
-}
+});
 </script>
-
 </body>
 </html>`;
+
+export default {
+  async fetch(request, env) {
+
+    const url = new URL(request.url);
+
+    // صفحه اصلی
+    if (request.method === "GET" && url.pathname === "/") {
+      return new Response(HTML, {
+        headers: {
+          "content-type": "text/html; charset=UTF-8"
+        }
+      });
+    }
+
+    // هوش مصنوعی
+    if (request.method === "POST" && url.pathname === "/api/ai") {
+
+      try {
+        const body = await request.json();
+        const prompt = body.prompt;
+
+        if (!prompt || !prompt.trim()) {
+          return Response.json(
+            { error: "لطفاً متن خود را وارد کنید." },
+            { status: 400 }
+          );
+        }
+
+        const response = await env.AI.run(
+          "openai/gpt-5.6-sol",
+          {
+            input: prompt,
+            instructions:
+              "به زبان فارسی پاسخ بده. پاسخ‌ها را واضح، دقیق و کاربردی ارائه کن.",
+            max_output_tokens: 1024,
+            reasoning: {
+              effort: "medium"
+            }
+          }
+        );
+
+        return Response.json({
+          answer: response.output_text || "پاسخی دریافت نشد."
+        });
+
+      } catch (error) {
+
+        return Response.json(
+          {
+            error: "خطا در اتصال به هوش مصنوعی: " + error.message
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+};
