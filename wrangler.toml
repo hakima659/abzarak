@@ -1,6 +1,245 @@
-name = "round-truth-b294"
-main = "worker.js"
-compatibility_date = "2026-08-27"
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
 
-[ai]
-binding = "AI"
+    // صفحه اصلی
+    if (request.method === "GET" && url.pathname === "/") {
+      return new Response(HTML, {
+        headers: {
+          "Content-Type": "text/html; charset=UTF-8"
+        }
+      });
+    }
+
+    // هوش مصنوعی
+    if (request.method === "POST" && url.pathname === "/api/ai") {
+      try {
+        const body = await request.json();
+        const prompt = String(body.prompt || "").trim();
+
+        if (!prompt) {
+          return Response.json(
+            { error: "لطفاً سؤال خود را بنویسید." },
+            { status: 400 }
+          );
+        }
+
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct",
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "تو یک دستیار هوش مصنوعی فارسی‌زبان، دقیق، مفید و دوستانه هستی."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ]
+          }
+        );
+
+        return Response.json({
+          success: true,
+          answer: result.response
+        });
+
+      } catch (error) {
+        return Response.json(
+          { error: "خطا در ارتباط با هوش مصنوعی." },
+          { status: 500 }
+        );
+      }
+    }
+
+    return new Response("صفحه پیدا نشد.", { status: 404 });
+  }
+};
+
+const HTML = `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ابزارک AI</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f1f5f9;
+  color: #172033;
+}
+
+.container {
+  max-width: 650px;
+  margin: auto;
+  padding: 25px 15px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.header p {
+  color: #64748b;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.08);
+}
+
+textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  border: 1px solid #dbe2ea;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #2563eb;
+}
+
+button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 15px;
+  border: 0;
+  border-radius: 14px;
+  background: #2563eb;
+  color: white;
+  font-size: 17px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .6;
+}
+
+.answer {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 14px;
+  min-height: 80px;
+  white-space: pre-wrap;
+  line-height: 1.9;
+}
+
+.footer {
+  text-align: center;
+  color: #94a3b8;
+  margin-top: 20px;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>🤖 ابزارک AI</h1>
+    <p>دستیار هوش مصنوعی فارسی</p>
+  </div>
+
+  <div class="card">
+
+    <textarea
+      id="prompt"
+      placeholder="سؤال یا درخواست خود را بنویسید..."
+    ></textarea>
+
+    <button id="ask" onclick="askAI()">
+      پرسش از هوش مصنوعی
+    </button>
+
+    <div class="answer" id="answer">
+      پاسخ اینجا نمایش داده می‌شود.
+    </div>
+
+  </div>
+
+  <div class="footer">
+    ساخته شده با ابزارک AI
+  </div>
+
+</div>
+
+<script>
+async function askAI() {
+
+  const prompt = document
+    .getElementById("prompt")
+    .value
+    .trim();
+
+  const answer = document.getElementById("answer");
+  const button = document.getElementById("ask");
+
+  if (!prompt) {
+    answer.textContent = "لطفاً سؤال خود را بنویسید.";
+    return;
+  }
+
+  button.disabled = true;
+  answer.textContent = "⏳ در حال دریافت پاسخ...";
+
+  try {
+
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: prompt
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.answer) {
+      answer.textContent = data.answer;
+    } else {
+      answer.textContent =
+        data.error || "پاسخی دریافت نشد.";
+    }
+
+  } catch (error) {
+
+    answer.textContent =
+      "ارتباط با سرور برقرار نشد.";
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+}
+</script>
+
+</body>
+</html>`;
