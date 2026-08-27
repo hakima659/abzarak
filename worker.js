@@ -44,6 +44,4 @@ export default {
       }
     }
 
-    return new Response("ابزارک هوش مصنوعی فعال است.");
-  }
-};
+    return new Response
