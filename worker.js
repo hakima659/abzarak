@@ -1,3 +1,4 @@
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -34,6 +35,7 @@ export default {
           success: true,
           response: result.response
         });
+
       } catch (error) {
         return Response.json(
           { error: "خطایی در اجرای هوش مصنوعی رخ داد." },
@@ -44,5 +46,4 @@ export default {
 
     return new Response("ابزارک هوش مصنوعی فعال است.");
   }
-};[ai]
-binding = "AI"
+};
