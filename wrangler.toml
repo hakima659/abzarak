@@ -4,7 +4,6 @@ const HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ابزارک هوش مصنوعی</title>
-
 <style>
 * {
   box-sizing: border-box;
@@ -20,8 +19,8 @@ body {
 .container {
   width: 100%;
   max-width: 700px;
-  margin: 0 auto;
-  padding: 25px 15px;
+  margin: 40px auto;
+  padding: 20px;
 }
 
 .box {
@@ -34,12 +33,12 @@ body {
 h1 {
   text-align: center;
   margin-top: 0;
-  margin-bottom: 20px;
 }
 
 textarea {
   width: 100%;
   min-height: 150px;
+  box-sizing: border-box;
   padding: 15px;
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -72,7 +71,7 @@ button:disabled {
   border-radius: 12px;
   white-space: pre-wrap;
   line-height: 1.9;
-  min-height: 50px;
+  min-height: 40px;
 }
 
 .status {
@@ -84,7 +83,6 @@ button:disabled {
 </head>
 
 <body>
-
 <div class="container">
   <div class="box">
 
@@ -143,28 +141,29 @@ sendButton.addEventListener("click", async () => {
 
     if (!response.ok) {
       throw new Error(
-        data.error || "خطایی در دریافت پاسخ رخ داد."
+        data.error || "خطایی رخ داد."
       );
     }
 
     result.textContent =
       data.answer || "پاسخی دریافت نشد.";
 
-    status.textContent = "پاسخ آماده است ✅";
+    status.textContent =
+      "پاسخ آماده است ✅";
 
   } catch (error) {
 
     result.textContent =
       "خطا: " + error.message;
 
-    status.textContent = "خطا ❌";
+    status.textContent =
+      "خطا ❌";
 
   } finally {
 
     sendButton.disabled = false;
 
   }
-
 });
 </script>
 
@@ -172,24 +171,22 @@ sendButton.addEventListener("click", async () => {
 </html>`;
 
 export default {
-
   async fetch(request, env) {
 
     const url = new URL(request.url);
 
-    // صفحه اصلی
     if (
       request.method === "GET" &&
       url.pathname === "/"
     ) {
       return new Response(HTML, {
         headers: {
-          "Content-Type": "text/html; charset=UTF-8"
+          "Content-Type":
+            "text/html; charset=UTF-8"
         }
       });
     }
 
-    // درخواست هوش مصنوعی
     if (
       request.method === "POST" &&
       url.pathname === "/api/ai"
@@ -207,7 +204,8 @@ export default {
         if (!prompt) {
           return Response.json(
             {
-              error: "لطفاً متن خود را وارد کنید."
+              error:
+                "لطفاً متن خود را وارد کنید."
             },
             {
               status: 400
@@ -252,7 +250,8 @@ export default {
           {
             error:
               "خطا در اتصال به هوش مصنوعی: " +
-              (error.message || "خطای نامشخص")
+              (error.message ||
+                "خطای نامشخص")
           },
           {
             status: 500
