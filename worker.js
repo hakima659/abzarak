@@ -1,3 +1,4 @@
+
 const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -65,16 +66,16 @@ button:disabled {
 <body>
 
 <div class="container">
-  <h1>🤖 دستیار هوش مصنوعی</h1>
+<h1>🤖 دستیار هوش مصنوعی</h1>
 
-  <div id="chat">
-    <div class="message ai">سلام! 👋 سوالت را بنویس.</div>
-  </div>
+<div id="chat">
+<div class="message ai">سلام! 👋 سوالت را بنویس.</div>
+</div>
 
-  <div class="row">
-    <input id="prompt" placeholder="پیامت را بنویس..." />
-    <button id="send">ارسال</button>
-  </div>
+<div class="row">
+<input id="prompt" placeholder="پیامت را بنویس..." />
+<button id="send">ارسال</button>
+</div>
 </div>
 
 <script>
@@ -105,7 +106,7 @@ async function sendMessage() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt: prompt })
     });
 
     const data = await response.json();
@@ -115,6 +116,7 @@ async function sendMessage() {
     } else {
       addMessage(data.error || "خطایی رخ داد.", "ai");
     }
+
   } catch (error) {
     addMessage("ارتباط با هوش مصنوعی برقرار نشد.", "ai");
   }
@@ -160,7 +162,7 @@ export default {
         }
 
         const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct",
+          "@cf/meta/llama-3.1-8b-instruct-fast",
           {
             messages: [
               {
@@ -182,7 +184,9 @@ export default {
 
       } catch (error) {
         return Response.json(
-          { error: "خطایی در اجرای هوش مصنوعی رخ داد." },
+          {
+            error: "خطایی در اجرای هوش مصنوعی رخ داد."
+          },
           { status: 500 }
         );
       }
