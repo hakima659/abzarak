@@ -1,6 +1,7 @@
+
 name = "round-truth-b294"
 main = "worker.js"
-compatibility_date = "2026-08-29"
+compatibility_date = "2026-08-28"
 
 [ai]
 binding = "AI"
