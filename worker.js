@@ -2,321 +2,303 @@ const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>دستیار هوش مصنوعی</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f4f6;
+  color:#111827;
 }
-
-.container {
-  max-width: 700px;
-  margin: 20px auto;
-  padding: 15px;
+.app{
+  max-width:700px;
+  margin:auto;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:white;
 }
-
-h1 {
-  text-align: center;
-  margin-bottom: 5px;
+header{
+  background:#111827;
+  color:white;
+  padding:18px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
 }
-
-.subtitle {
-  text-align: center;
-  color: #666;
-  margin-bottom: 15px;
+#chat{
+  flex:1;
+  padding:15px;
+  overflow-y:auto;
 }
-
-#chat {
-  background: white;
-  border-radius: 15px;
-  padding: 15px;
-  min-height: 350px;
-  max-height: 60vh;
-  overflow-y: auto;
-  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+.msg{
+  padding:12px 15px;
+  margin:10px 0;
+  border-radius:15px;
+  max-width:90%;
+  line-height:1.8;
+  white-space:pre-wrap;
 }
-
-.message {
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  white-space: pre-wrap;
-  line-height: 1.7;
+.user{
+  background:#e5e7eb;
+  margin-right:auto;
 }
-
-.user {
-  background: #e8f0fe;
+.ai{
+  background:#eef2ff;
+  margin-left:auto;
 }
-
-.ai {
-  background: #f0f0f0;
+.bottom{
+  display:flex;
+  gap:8px;
+  padding:10px;
+  border-top:1px solid #ddd;
+  background:white;
 }
-
-.buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
+input{
+  flex:1;
+  padding:14px;
+  border:1px solid #ccc;
+  border-radius:12px;
+  font-size:16px;
+  outline:none;
 }
-
-.small-button {
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: #ddd;
-  cursor: pointer;
+button{
+  border:0;
+  border-radius:12px;
+  padding:0 18px;
+  background:#111827;
+  color:white;
+  font-size:16px;
 }
-
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
+button:disabled{
+  opacity:.5;
 }
-
-input {
-  flex: 1;
-  padding: 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 16px;
-  outline: none;
-}
-
-button {
-  padding: 14px 22px;
-  border: 0;
-  border-radius: 10px;
-  background: #2563eb;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: .6;
-}
-
-.clear {
-  width: 100%;
-  margin-top: 10px;
-  background: #dc2626;
+.clear{
+  background:#dc2626;
+  margin:10px;
+  padding:12px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<h1>🤖 دستیار هوش مصنوعی</h1>
-
-<div class="subtitle">
-سلام! 👋 سوالت را بنویس.
-</div>
+<header>🤖 دستیار هوش مصنوعی</header>
 
 <div id="chat">
-  <div class="message ai">سلام! 👋 من آماده‌ام. چه کمکی از من می‌خواهی؟</div>
+  <div class="msg ai">
+    سلام! 👋 من آماده‌ام. چه کمکی از من می‌خواهی؟
+  </div>
 </div>
 
-<div class="row">
-  <input id="prompt" placeholder="پیامت را بنویس..." />
-  <button id="send">ارسال</button>
-</div>
+<button class="clear" onclick="clearChat()">
+🗑️ پاک کردن گفتگو
+</button>
 
-<button class="clear" id="clear">🗑️ پاک کردن گفتگو</button>
+<div class="bottom">
+  <input
+    id="input"
+    type="text"
+    placeholder="پیامت را بنویس..."
+    onkeydown="if(event.key==='Enter') sendMessage()"
+  >
+  <button id="send" onclick="sendMessage()">ارسال</button>
+</div>
 
 </div>
 
 <script>
-const input = document.getElementById("prompt");
-const button = document.getElementById("send");
+
+const input = document.getElementById("input");
 const chat = document.getElementById("chat");
-const clearButton = document.getElementById("clear");
+const send = document.getElementById("send");
 
-function addMessage(text, type) {
-  const wrapper = document.createElement("div");
-
-  const message = document.createElement("div");
-  message.className = "message " + type;
-  message.textContent = text;
-
-  wrapper.appendChild(message);
-
-  if (type === "ai") {
-    const copyButton = document.createElement("button");
-    copyButton.className = "small-button";
-    copyButton.textContent = "📋 کپی";
-
-    copyButton.onclick = async function() {
-      try {
-        await navigator.clipboard.writeText(text);
-        copyButton.textContent = "✅ کپی شد";
-        setTimeout(() => {
-          copyButton.textContent = "📋 کپی";
-        }, 1500);
-      } catch (e) {
-        copyButton.textContent = "کپی نشد";
-      }
-    };
-
-    wrapper.appendChild(copyButton);
-  }
-
-  chat.appendChild(wrapper);
-  chat.scrollTop = chat.scrollHeight;
-
-  return wrapper;
+function addMessage(text,type){
+  const div=document.createElement("div");
+  div.className="msg "+type;
+  div.textContent=text;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+  return div;
 }
 
-async function sendMessage() {
-  const prompt = input.value.trim();
+async function sendMessage(){
 
-  if (!prompt) return;
+  const prompt=input.value.trim();
 
-  addMessage(prompt, "user");
+  if(!prompt) return;
 
-  input.value = "";
-  button.disabled = true;
-  input.disabled = true;
+  addMessage(prompt,"user");
 
-  const loading = addMessage("⏳ در حال پاسخ‌گویی...", "ai");
+  input.value="";
+  send.disabled=true;
 
-  try {
-    const response = await fetch("/api/ai", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+  const loading=addMessage("در حال فکر کردن...","ai");
+
+  try{
+
+    const response=await fetch("/api/ai",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
       },
-      body: JSON.stringify({
-        prompt: prompt
+      body:JSON.stringify({
+        prompt:prompt
       })
     });
 
-    const data = await response.json();
+    const data=await response.json();
 
     loading.remove();
 
-    if (data.success) {
-      addMessage(data.response, "ai");
-    } else {
+    if(!response.ok){
       addMessage(
-        data.error || "خطایی رخ داد.",
+        data.error || "خطایی در اجرای هوش مصنوعی رخ داد.",
         "ai"
       );
+      return;
     }
 
-  } catch (error) {
+    addMessage(
+      data.response || "پاسخی دریافت نشد.",
+      "ai"
+    );
+
+  }catch(error){
 
     loading.remove();
 
     addMessage(
-      "ارتباط با هوش مصنوعی برقرار نشد.",
+      "خطا در اتصال به هوش مصنوعی. دوباره امتحان کن.",
       "ai"
     );
-  }
 
-  button.disabled = false;
-  input.disabled = false;
-  input.focus();
+  }finally{
+
+    send.disabled=false;
+    input.focus();
+
+  }
 }
 
-button.addEventListener("click", sendMessage);
+function clearChat(){
+  chat.innerHTML=`
+    <div class="msg ai">
+      گفتگو پاک شد. 👋 دوباره سوالت را بنویس.
+    </div>
+  `;
+}
 
-input.addEventListener("keydown", function(event) {
-  if (event.key === "Enter") {
-    sendMessage();
-  }
-});
-
-clearButton.addEventListener("click", function() {
-  chat.innerHTML =
-    '<div class="message ai">گفتگو پاک شد. 👋 دوباره شروع کنیم؟</div>';
-});
 </script>
 
 </body>
 </html>`;
 
 export default {
+
   async fetch(request, env) {
 
     const url = new URL(request.url);
 
-    if (
-      request.method === "GET" &&
-      url.pathname === "/"
-    ) {
+    // صفحه اصلی
+    if (request.method === "GET" && url.pathname === "/") {
+
       return new Response(HTML, {
-        headers: {
-          "content-type": "text/html; charset=UTF-8"
+        headers:{
+          "content-type":"text/html; charset=UTF-8"
         }
       });
+
     }
 
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/ai"
-    ) {
+    // API هوش مصنوعی
+    if (request.method === "POST" && url.pathname === "/api/ai") {
 
       try {
 
         const body = await request.json();
+
         const prompt = body.prompt;
 
-        if (!prompt || !prompt.trim()) {
+        if(!prompt || !prompt.trim()){
+
           return Response.json(
             {
-              error: "لطفاً متن خود را وارد کنید."
+              error:"لطفاً متن خود را وارد کنید."
             },
             {
-              status: 400
+              status:400
             }
           );
+
         }
 
         const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fast",
+          "@cf/google/gemma-4-26b-a4b-it",
           {
-            messages: [
+            messages:[
               {
-                role: "system",
+                role:"system",
                 content:
-                  "You are a helpful Persian-speaking AI assistant. Always answer in Persian."
+                "تو یک دستیار هوش مصنوعی فارسی‌زبان مفید، دقیق و دوستانه هستی. پاسخ‌ها را به زبان فارسی بده."
               },
               {
-                role: "user",
-                content: prompt
+                role:"user",
+                content:prompt
               }
-            ]
+            ],
+            chat_template_kwargs:{
+              enable_thinking:false
+            }
           }
         );
 
+        let answer =
+          result?.response ||
+          result?.text ||
+          result?.content ||
+          "";
+
+        if(!answer){
+
+          answer =
+            typeof result === "string"
+              ? result
+              : JSON.stringify(result);
+
+        }
+
         return Response.json({
-          success: true,
-          response: result.response
+          response:answer
         });
 
-      } catch (error) {
+      } catch(error){
+
+        console.error("AI ERROR:",error);
 
         return Response.json(
           {
             error:
-              "خطایی در اجرای هوش مصنوعی رخ داد."
+            "هوش مصنوعی در حال حاضر پاسخ نداد. لطفاً دوباره امتحان کنید."
           },
           {
-            status: 500
+            status:500
           }
         );
+
       }
+
     }
 
-    return new Response(
-      "Not Found",
-      {
-        status: 404
-      }
-    );
+    return new Response("Not Found",{
+      status:404
+    });
+
   }
+
 };
