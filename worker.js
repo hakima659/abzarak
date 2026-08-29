@@ -2,7 +2,7 @@ const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>دستیار هوش مصنوعی</title>
 
 <style>
@@ -14,23 +14,21 @@ html,body{
   margin:0;
   padding:0;
   width:100%;
-  height:100%;
+  min-height:100%;
 }
 
 body{
   font-family:Arial,sans-serif;
   background:#f1f5f9;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+  color:#111;
+  padding-bottom:125px;
 }
 
 header{
-  flex:none;
   background:linear-gradient(135deg,#1677ff,#6c4cff);
   color:white;
   text-align:center;
-  padding:18px 12px;
+  padding:18px 10px;
 }
 
 header h2{
@@ -44,7 +42,6 @@ header p{
 }
 
 .account{
-  flex:none;
   background:white;
   margin:10px;
   padding:12px;
@@ -83,9 +80,10 @@ header p{
 }
 
 .withdraw{
+  display:block;
   width:100%;
   margin-top:10px;
-  padding:10px;
+  padding:11px;
   border:0;
   border-radius:12px;
   background:#16a34a;
@@ -95,9 +93,7 @@ header p{
 }
 
 #chat{
-  flex:1;
-  overflow-y:auto;
-  padding:5px 12px 170px;
+  padding:10px 12px 20px;
 }
 
 .welcome{
@@ -129,50 +125,53 @@ header p{
 
 .bottom{
   position:fixed;
-  z-index:1000;
+  z-index:99999;
   bottom:0;
   left:0;
   right:0;
   width:100%;
   background:white;
-  padding:10px;
+  padding:9px;
   box-shadow:0 -3px 15px #0002;
 }
 
 .row{
-  width:100%;
   display:flex;
-  align-items:stretch;
-  gap:8px;
+  width:100%;
+  gap:7px;
 }
 
 #prompt{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  flex:1 1 auto;
-  width:100%;
+  display:block;
+  flex:1;
+  width:1px;
   min-width:0;
   height:52px;
-  border:2px solid #d5dbe3;
+  border:2px solid #1677ff;
   border-radius:14px;
-  padding:12px;
+  padding:0 13px;
   font-family:Arial,sans-serif;
-  font-size:16px;
+  font-size:17px;
   color:#111;
-  background:#f8fafc;
+  background:white;
   outline:none;
-  resize:none;
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+#prompt::placeholder{
+  color:#777;
+  opacity:1;
 }
 
 #prompt:focus{
-  border-color:#1677ff;
-  background:white;
+  border-color:#6c4cff;
+  box-shadow:0 0 0 2px #6c4c222;
 }
 
 .send{
   flex:none;
-  width:75px;
+  width:72px;
   height:52px;
   border:0;
   border-radius:14px;
@@ -185,8 +184,8 @@ header p{
 .clear{
   display:block;
   width:100%;
-  height:42px;
-  margin-top:8px;
+  height:40px;
+  margin-top:7px;
   border:0;
   border-radius:12px;
   background:#f1f5f9;
@@ -195,18 +194,19 @@ header p{
 }
 
 @media(max-width:600px){
-  .bottom{
-    padding:8px;
+
+  body{
+    padding-bottom:120px;
   }
 
   #prompt{
-    font-size:16px;
-    height:50px;
+    height:52px;
+    font-size:17px;
   }
 
   .send{
     width:70px;
-    height:50px;
+    height:52px;
   }
 }
 </style>
@@ -220,6 +220,7 @@ header p{
 </header>
 
 <div class="account">
+
   <div class="account-top">
 
     <div class="account-icon">💰</div>
@@ -235,32 +236,36 @@ header p{
 
   </div>
 
-  <button class="withdraw" onclick="withdraw()">
+  <button class="withdraw" type="button" onclick="withdraw()">
     💵 برداشت
   </button>
+
 </div>
 
 <div id="chat">
+
   <div class="welcome">
     ✨ من آماده‌ام؛ هر سؤالی داری بپرس.
   </div>
+
 </div>
 
 <div class="bottom">
 
   <div class="row">
 
-    <textarea
+    <input
       id="prompt"
-      rows="1"
+      type="text"
       placeholder="پیامت را بنویس..."
       autocomplete="off"
+      autocorrect="off"
       spellcheck="false"
-    ></textarea>
+    >
 
     <button
-      type="button"
       class="send"
+      type="button"
       onclick="sendMessage()"
     >
       ارسال
@@ -269,8 +274,8 @@ header p{
   </div>
 
   <button
-    type="button"
     class="clear"
+    type="button"
     onclick="clearChat()"
   >
     🗑️ پاک کردن گفتگو
@@ -279,6 +284,7 @@ header p{
 </div>
 
 <script>
+
 const chat = document.getElementById("chat");
 const promptBox = document.getElementById("prompt");
 
@@ -322,8 +328,6 @@ async function sendMessage(){
 
   chat.appendChild(loading);
 
-  chat.scrollTop = chat.scrollHeight;
-
   try{
 
     const res = await fetch("/api/ai",{
@@ -365,14 +369,14 @@ function withdraw(){
 
   alert(
     "💰 موجودی فعلی شما: $0.00\\n\\n" +
-    "سیستم برداشت پس از راه‌اندازی درآمد واقعی فعال خواهد شد."
+    "سیستم برداشت هنوز فعال نشده است."
   );
 
 }
 
 promptBox.addEventListener("keydown",function(e){
 
-  if(e.key === "Enter" && !e.shiftKey){
+  if(e.key === "Enter"){
 
     e.preventDefault();
 
@@ -382,18 +386,13 @@ promptBox.addEventListener("keydown",function(e){
 
 });
 
-promptBox.addEventListener("click",function(){
-
-  promptBox.focus();
-
-});
-
 </script>
 
 </body>
 </html>`;
 
 export default {
+
   async fetch(request, env) {
 
     const url = new URL(request.url);
@@ -419,8 +418,12 @@ export default {
         if(!prompt || !prompt.trim()){
 
           return Response.json(
-            {error:"لطفاً متن خود را وارد کنید."},
-            {status:400}
+            {
+              error:"لطفاً متن خود را وارد کنید."
+            },
+            {
+              status:400
+            }
           );
 
         }
@@ -431,7 +434,7 @@ export default {
             messages:[
               {
                 role:"system",
-                content:"تو یک دستیار هوش مصنوعی مفید و مودب هستی. به زبان کاربر پاسخ بده."
+                content:"تو یک دستیار هوش مصنوعی مفید و مودب هستی. همیشه به زبان کاربر پاسخ بده."
               },
               {
                 role:"user",
@@ -454,7 +457,9 @@ export default {
           {
             error:"خطا در دریافت پاسخ هوش مصنوعی: " + error.message
           },
-          {status:500}
+          {
+            status:500
+          }
         );
 
       }
@@ -466,5 +471,5 @@ export default {
     });
 
   }
+
 };
-  
