@@ -1,255 +1,149 @@
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
 
-    // صفحه اصلی
-    if (request.method === "GET" && url.pathname === "/") {
-      return new Response(`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>دستیار هوش مصنوعی</title>
-
 <style>
+*{box-sizing:border-box}
 body{
-  margin:0;
-  padding:20px;
-  background:#f3f4f6;
-  font-family:Arial,sans-serif;
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#f4f7fb;
+ height:100vh;
+ display:flex;
+ flex-direction:column;
 }
-
-.box{
-  max-width:600px;
-  margin:30px auto;
-  background:white;
-  padding:20px;
-  border-radius:18px;
-  box-shadow:0 4px 20px rgba(0,0,0,.08);
+header{
+ background:#fff;
+ padding:18px;
+ text-align:center;
+ box-shadow:0 2px 10px #0001;
 }
-
-h2{
-  text-align:center;
+header h2{margin:0 0 6px}
+header p{margin:0;color:#777}
+#chat{
+ flex:1;
+ overflow-y:auto;
+ padding:15px;
 }
-
+.msg{
+ max-width:85%;
+ padding:12px 15px;
+ margin:10px 0;
+ border-radius:16px;
+ line-height:1.8;
+ white-space:pre-wrap;
+}
+.user{
+ margin-right:auto;
+ background:#dcecff;
+}
+.ai{
+ margin-left:auto;
+ background:#fff;
+ box-shadow:0 2px 8px #0001;
+}
+.bottom{
+ background:#fff;
+ padding:10px;
+ box-shadow:0 -2px 10px #0001;
+}
+.row{
+ display:flex;
+ gap:8px;
+}
 textarea{
-  width:100%;
-  height:130px;
-  box-sizing:border-box;
-  padding:14px;
-  border:1px solid #ddd;
-  border-radius:12px;
-  font-size:16px;
-  resize:vertical;
+ flex:1;
+ border:1px solid #ddd;
+ border-radius:14px;
+ padding:12px;
+ resize:none;
+ font-size:16px;
+ outline:none;
 }
-
 button{
-  width:100%;
-  margin-top:10px;
-  padding:14px;
-  border:0;
-  border-radius:12px;
-  background:#2563eb;
-  color:white;
-  font-size:16px;
+ border:0;
+ border-radius:12px;
+ padding:0 16px;
+ font-size:15px;
+ cursor:pointer;
 }
-
-button:active{
-  transform:scale(.98);
-}
-
-#answer{
-  margin-top:15px;
-  padding:15px;
-  background:#f1f5f9;
-  border-radius:12px;
-  min-height:30px;
-  white-space:pre-wrap;
-  line-height:1.8;
-}
+.send{background:#1677ff;color:white}
+.clear{background:#eee;margin-top:8px;width:100%;padding:10px}
 </style>
 </head>
 
 <body>
 
-<div class="box">
-
+<header>
 <h2>🤖 دستیار هوش مصنوعی</h2>
-
 <p>سلام! 👋 سوالت را بنویس.</p>
+</header>
 
-<textarea
-id="prompt"
-placeholder="پیامت را بنویس..."
-></textarea>
+<div id="chat"></div>
 
-<button onclick="sendMessage()">
-ارسال
-</button>
+<div class="bottom">
+<div class="row">
+<textarea id="prompt" rows="1" placeholder="پیامت را بنویس..."></textarea>
+<button class="send" onclick="sendMessage()">ارسال</button>
+</div>
 
-<button onclick="clearChat()">
-🗑️ پاک کردن گفتگو
-</button>
-
-<div id="answer"></div>
-
+<button class="clear" onclick="clearChat()">🗑️ پاک کردن گفتگو</button>
 </div>
 
 <script>
+const chat=document.getElementById("chat");
+const prompt=document.getElementById("prompt");
+
+function addMessage(text,type){
+ const div=document.createElement("div");
+ div.className="msg "+type;
+ div.textContent=text;
+ chat.appendChild(div);
+ chat.scrollTop=chat.scrollHeight;
+}
 
 async function sendMessage(){
+ const text=prompt.value.trim();
+ if(!text)return;
 
-  const input =
-    document.getElementById("prompt");
+ addMessage(text,"user");
+ prompt.value="";
 
-  const answer =
-    document.getElementById("answer");
+ const loading=document.createElement("div");
+ loading.className="msg ai";
+ loading.textContent="⏳ در حال پاسخ...";
+ chat.appendChild(loading);
 
-  const prompt =
-    input.value.trim();
+ try{
+   const res=await fetch("/api/ai",{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({prompt:text})
+   });
 
-  if(!prompt){
-    answer.innerText =
-      "لطفاً متن خود را وارد کنید.";
-    return;
-  }
+   const data=await res.json();
+   loading.textContent=data.answer || data.response || data.error || "پاسخی دریافت نشد.";
+ }catch(e){
+   loading.textContent="❌ خطا در ارتباط با هوش مصنوعی";
+ }
 
-  answer.innerText =
-    "⏳ در حال دریافت پاسخ...";
-
-  try{
-
-    const response =
-      await fetch("/api/ai",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          prompt:prompt
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if(!response.ok){
-
-      answer.innerText =
-        data.error ||
-        "خطایی رخ داد.";
-
-      return;
-    }
-
-    answer.innerText =
-      data.answer ||
-      "پاسخی دریافت نشد.";
-
-  }catch(error){
-
-    answer.innerText =
-      "❌ اتصال به هوش مصنوعی برقرار نشد.";
-  }
+ chat.scrollTop=chat.scrollHeight;
 }
-
 
 function clearChat(){
-
-  document.getElementById("prompt").value = "";
-
-  document.getElementById("answer").innerText = "";
+ chat.innerHTML="";
 }
 
+prompt.addEventListener("keydown",e=>{
+ if(e.key==="Enter" && !e.shiftKey){
+   e.preventDefault();
+   sendMessage();
+ }
+});
 </script>
 
 </body>
-</html>`, {
-        headers: {
-          "content-type": "text/html; charset=UTF-8"
-        }
-      });
-    }
-
-
-    // API هوش مصنوعی
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/ai"
-    ) {
-
-      try {
-
-        const body =
-          await request.json();
-
-        const prompt =
-          body.prompt;
-
-        if(
-          !prompt ||
-          !prompt.trim()
-        ){
-
-          return Response.json(
-            {
-              error:
-                "لطفاً متن خود را وارد کنید."
-            },
-            {
-              status:400
-            }
-          );
-        }
-
-
-        const result =
-          await env.AI.run(
-            "@cf/meta/llama-3.1-8b-instruct-fast",
-            {
-              messages:[
-                {
-                  role:"system",
-                  content:
-                    "شما یک دستیار هوش مصنوعی فارسی‌زبان هستید. پاسخ‌ها را واضح، مفید و به زبان فارسی ارائه کنید."
-                },
-                {
-                  role:"user",
-                  content:prompt
-                }
-              ]
-            }
-          );
-
-
-        return Response.json({
-          answer:
-            result.response ||
-            "پاسخی دریافت نشد."
-        });
-
-
-      } catch(error) {
-
-        return Response.json(
-          {
-            error:
-              "خطا در اتصال به هوش مصنوعی: " +
-              error.message
-          },
-          {
-            status:500
-          }
-        );
-      }
-    }
-
-
-    return new Response(
-      "Not Found",
-      {
-        status:404
-      }
-    );
-  }
-};
+</html>
