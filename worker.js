@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -7,7 +6,9 @@
 <title>دستیار هوش مصنوعی</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+ box-sizing:border-box;
+}
 
 body{
  margin:0;
@@ -18,6 +19,7 @@ body{
  flex-direction:column;
 }
 
+/* Header */
 header{
  background:linear-gradient(135deg,#1677ff,#6c4cff);
  color:white;
@@ -37,16 +39,48 @@ header p{
  font-size:14px;
 }
 
+/* Income */
+.income{
+ background:white;
+ margin:12px;
+ padding:14px;
+ border-radius:16px;
+ box-shadow:0 3px 12px #0001;
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+
+.income-title{
+ font-weight:bold;
+}
+
+.income strong{
+ margin-right:auto;
+ color:#1677ff;
+}
+
+.income button{
+ border:0;
+ border-radius:12px;
+ background:#16a34a;
+ color:white;
+ padding:9px 14px;
+ font-size:14px;
+ cursor:pointer;
+}
+
+/* Chat */
 #chat{
  flex:1;
  overflow-y:auto;
- padding:18px 14px 120px;
+ padding:10px 14px 120px;
 }
 
 .welcome{
  text-align:center;
  color:#777;
- margin-top:35px;
+ margin-top:30px;
  font-size:15px;
 }
 
@@ -73,6 +107,7 @@ header p{
  border-bottom-left-radius:5px;
 }
 
+/* Bottom */
 .bottom{
  position:fixed;
  bottom:0;
@@ -140,9 +175,23 @@ button{
 }
 
 @media(max-width:600px){
- header h2{font-size:20px}
- .msg{max-width:92%}
- button.send{padding:0 14px}
+
+ header h2{
+  font-size:20px;
+ }
+
+ .msg{
+  max-width:92%;
+ }
+
+ button.send{
+  padding:0 14px;
+ }
+
+ .income{
+  margin:10px;
+ }
+
 }
 </style>
 </head>
@@ -154,44 +203,76 @@ button{
 <p>سلام! 👋 سوالت را بنویس.</p>
 </header>
 
-<div id="chat">
-<div class="welcome">
-✨ من آماده‌ام؛ هر سؤالی داری بپرس.
-</div>
-</div>
+<!-- Income -->
+<div class="income">
+<div class="income-title">💰 درآمد من</div>
 
-<div class="bottom">
+<strong>$0.00</strong>
 
-<div class="row">
-<textarea
- id="prompt"
- rows="1"
- placeholder="پیامت را بنویس..."
-></textarea>
-
-<button class="send" onclick="sendMessage()">
-ارسال
+<button onclick="showWithdraw()">
+برداشت
 </button>
 </div>
 
-<button class="clear" onclick="clearChat()">
+<!-- Chat -->
+<div id="chat">
+
+<div class="welcome">
+✨ من آماده‌ام؛ هر سؤالی داری بپرس.
+</div>
+
+</div>
+
+<!-- Bottom -->
+<div class="bottom">
+
+<div class="row">
+
+<textarea
+id="prompt"
+rows="1"
+placeholder="پیامت را بنویس..."
+></textarea>
+
+<button
+class="send"
+onclick="sendMessage()"
+>
+ارسال
+</button>
+
+</div>
+
+<button
+class="clear"
+onclick="clearChat()"
+>
 🗑️ پاک کردن گفتگو
 </button>
 
 </div>
 
 <script>
+
 const chat=document.getElementById("chat");
 const prompt=document.getElementById("prompt");
 
+/* Add message */
 function addMessage(text,type){
+
  const div=document.createElement("div");
+
  div.className="msg "+type;
+
  div.textContent=text;
+
  chat.appendChild(div);
+
  chat.scrollTop=chat.scrollHeight;
 }
 
+
+/* Send message */
 async function sendMessage(){
 
  const text=prompt.value.trim();
@@ -199,68 +280,98 @@ async function sendMessage(){
  if(!text)return;
 
  const welcome=document.querySelector(".welcome");
- if(welcome) welcome.remove();
+
+ if(welcome){
+  welcome.remove();
+ }
 
  addMessage(text,"user");
 
  prompt.value="";
 
  const loading=document.createElement("div");
+
  loading.className="msg ai";
+
  loading.textContent="⏳ در حال پاسخ...";
+
  chat.appendChild(loading);
 
  chat.scrollTop=chat.scrollHeight;
 
  try{
 
-   const res=await fetch("/api/ai",{
-     method:"POST",
-     headers:{
-       "Content-Type":"application/json"
-     },
-     body:JSON.stringify({
-       prompt:text
-     })
-   });
+  const res=await fetch("/api/ai",{
 
-   const data=await res.json();
+   method:"POST",
 
-   loading.textContent=
-     data.answer ||
-     data.response ||
-     data.error ||
-     "پاسخی دریافت نشد.";
+   headers:{
+    "Content-Type":"application/json"
+   },
+
+   body:JSON.stringify({
+    prompt:text
+   })
+
+  });
+
+  const data=await res.json();
+
+  loading.textContent=
+   data.answer ||
+   data.response ||
+   data.error ||
+   "پاسخی دریافت نشد.";
 
  }catch(e){
 
-   loading.textContent=
-     "❌ خطا در ارتباط با هوش مصنوعی";
+  loading.textContent=
+   "❌ خطا در ارتباط با هوش مصنوعی";
 
  }
 
  chat.scrollTop=chat.scrollHeight;
 }
 
+
+/* Clear chat */
 function clearChat(){
 
- chat.innerHTML=
- `<div class="welcome">
+ chat.innerHTML=`
+ <div class="welcome">
  ✨ من آماده‌ام؛ هر سؤالی داری بپرس.
- </div>`;
+ </div>
+ `;
 
 }
 
-prompt.addEventListener("keydown",e=>{
+
+/* Withdraw */
+function showWithdraw(){
+
+ alert(
+  "💰 بخش برداشت هنوز فعال نشده است.\n\n" +
+  "موجودی فعلی: $0.00\n\n" +
+  "بعد از راه‌اندازی سیستم درآمد، " +
+  "روش برداشت را اضافه می‌کنیم."
+ );
+
+}
+
+
+/* Enter to send */
+prompt.addEventListener("keydown",function(e){
 
  if(e.key==="Enter" && !e.shiftKey){
 
-   e.preventDefault();
-   sendMessage();
+  e.preventDefault();
+
+  sendMessage();
 
  }
 
 });
+
 </script>
 
 </body>
