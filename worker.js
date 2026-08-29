@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -6,9 +7,7 @@
 <title>دستیار هوش مصنوعی</title>
 
 <style>
-*{
- box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
  margin:0;
@@ -19,7 +18,6 @@ body{
  flex-direction:column;
 }
 
-/* Header */
 header{
  background:linear-gradient(135deg,#1677ff,#6c4cff);
  color:white;
@@ -39,49 +37,67 @@ header p{
  font-size:14px;
 }
 
-/* Income */
-.income{
+.account{
  background:white;
  margin:12px;
- padding:14px;
- border-radius:16px;
+ padding:15px;
+ border-radius:18px;
  box-shadow:0 3px 12px #0001;
+}
+
+.account-top{
  display:flex;
  align-items:center;
  gap:12px;
 }
 
-.income-title{
+.account-icon{
+ font-size:30px;
+}
+
+.account-title{
+ font-weight:bold;
+ font-size:17px;
+}
+
+.balance{
+ margin-right:auto;
+ text-align:left;
+}
+
+.balance small{
+ display:block;
+ color:#777;
+ font-size:12px;
+}
+
+.balance strong{
+ color:#1677ff;
+ font-size:20px;
+}
+
+.withdraw{
+ margin-top:12px;
+ width:100%;
+ padding:11px;
+ border:0;
+ border-radius:13px;
+ background:#16a34a;
+ color:white;
+ font-size:15px;
  font-weight:bold;
 }
 
-.income strong{
- margin-right:auto;
- color:#1677ff;
-}
-
-.income button{
- border:0;
- border-radius:12px;
- background:#16a34a;
- color:white;
- padding:9px 14px;
- font-size:14px;
- cursor:pointer;
-}
-
-/* Chat */
 #chat{
  flex:1;
  overflow-y:auto;
- padding:10px 14px 120px;
+ padding:8px 14px 125px;
 }
 
 .welcome{
  text-align:center;
  color:#777;
- margin-top:30px;
- font-size:15px;
+ margin-top:25px;
 }
 
 .msg{
@@ -107,7 +123,6 @@ header p{
  border-bottom-left-radius:5px;
 }
 
-/* Bottom */
 .bottom{
  position:fixed;
  bottom:0;
@@ -142,22 +157,14 @@ textarea:focus{
  background:white;
 }
 
-button{
+.send{
  border:0;
  border-radius:14px;
  padding:0 18px;
- font-size:15px;
- cursor:pointer;
-}
-
-.send{
  background:#1677ff;
  color:white;
+ font-size:15px;
  font-weight:bold;
-}
-
-.send:active{
- transform:scale(.97);
 }
 
 .clear{
@@ -166,32 +173,15 @@ button{
  margin:8px auto 0;
  width:100%;
  padding:10px;
+ border:0;
+ border-radius:13px;
  background:#f1f5f9;
  color:#555;
 }
 
-.clear:hover{
- background:#e5e7eb;
-}
-
 @media(max-width:600px){
-
- header h2{
-  font-size:20px;
- }
-
- .msg{
-  max-width:92%;
- }
-
- button.send{
-  padding:0 14px;
- }
-
- .income{
-  margin:10px;
- }
-
+ header h2{font-size:20px}
+ .msg{max-width:92%}
 }
 </style>
 </head>
@@ -203,18 +193,29 @@ button{
 <p>سلام! 👋 سوالت را بنویس.</p>
 </header>
 
-<!-- Income -->
-<div class="income">
-<div class="income-title">💰 درآمد من</div>
+<div class="account">
 
-<strong>$0.00</strong>
+<div class="account-top">
 
-<button onclick="showWithdraw()">
-برداشت
-</button>
+<div class="account-icon">💰</div>
+
+<div class="account-title">
+حساب من
 </div>
 
-<!-- Chat -->
+<div class="balance">
+<small>موجودی</small>
+<strong>$0.00</strong>
+</div>
+
+</div>
+
+<button class="withdraw" onclick="withdraw()">
+💵 برداشت
+</button>
+
+</div>
+
 <div id="chat">
 
 <div class="welcome">
@@ -223,7 +224,6 @@ button{
 
 </div>
 
-<!-- Bottom -->
 <div class="bottom">
 
 <div class="row">
@@ -257,7 +257,6 @@ onclick="clearChat()"
 const chat=document.getElementById("chat");
 const prompt=document.getElementById("prompt");
 
-/* Add message */
 function addMessage(text,type){
 
  const div=document.createElement("div");
@@ -271,8 +270,6 @@ function addMessage(text,type){
  chat.scrollTop=chat.scrollHeight;
 }
 
-
-/* Send message */
 async function sendMessage(){
 
  const text=prompt.value.trim();
@@ -297,22 +294,16 @@ async function sendMessage(){
 
  chat.appendChild(loading);
 
- chat.scrollTop=chat.scrollHeight;
-
  try{
 
   const res=await fetch("/api/ai",{
-
    method:"POST",
-
    headers:{
     "Content-Type":"application/json"
    },
-
    body:JSON.stringify({
     prompt:text
    })
-
   });
 
   const data=await res.json();
@@ -323,7 +314,7 @@ async function sendMessage(){
    data.error ||
    "پاسخی دریافت نشد.";
 
- }catch(e){
+ }catch(error){
 
   loading.textContent=
    "❌ خطا در ارتباط با هوش مصنوعی";
@@ -333,8 +324,6 @@ async function sendMessage(){
  chat.scrollTop=chat.scrollHeight;
 }
 
-
-/* Clear chat */
 function clearChat(){
 
  chat.innerHTML=`
@@ -345,21 +334,15 @@ function clearChat(){
 
 }
 
-
-/* Withdraw */
-function showWithdraw(){
+function withdraw(){
 
  alert(
-  "💰 بخش برداشت هنوز فعال نشده است.\n\n" +
-  "موجودی فعلی: $0.00\n\n" +
-  "بعد از راه‌اندازی سیستم درآمد، " +
-  "روش برداشت را اضافه می‌کنیم."
+  "💰 موجودی فعلی شما: $0.00\n\n" +
+  "سیستم برداشت پس از راه‌اندازی درآمد واقعی فعال خواهد شد."
  );
 
 }
 
-
-/* Enter to send */
 prompt.addEventListener("keydown",function(e){
 
  if(e.key==="Enter" && !e.shiftKey){
