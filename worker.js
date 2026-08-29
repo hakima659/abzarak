@@ -1,4 +1,3 @@
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -12,7 +11,7 @@ export default {
       });
     }
 
-    // API هوش مصنوعی
+    // هوش مصنوعی
     if (request.method === "POST" && url.pathname === "/api/ai") {
       try {
         const body = await request.json();
@@ -20,7 +19,7 @@ export default {
 
         if (!prompt || !prompt.trim()) {
           return Response.json(
-            { error: "لطفاً متن خود را وارد کنید." },
+            { error: "لطفاً پیام خود را بنویسید." },
             { status: 400 }
           );
         }
@@ -49,8 +48,7 @@ export default {
       } catch (error) {
         return Response.json(
           {
-            error:
-              "خطا در دریافت پاسخ هوش مصنوعی: " +
+            error: "خطا در دریافت پاسخ: " +
               (error.message || String(error))
           },
           { status: 500 }
@@ -68,158 +66,347 @@ const HTML = `
 <html lang="fa" dir="rtl">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
 
-  <title>دستیار هوش مصنوعی</title>
+<meta charset="UTF-8">
 
-  <style>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-    * {
-      box-sizing: border-box;
-    }
+<title>دستیار هوش مصنوعی</title>
 
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #f5f7fb;
-      font-family: Tahoma, Arial, sans-serif;
-    }
+<style>
 
-    .container {
-      width: 100%;
-      max-width: 700px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 5px 25px rgba(0,0,0,.08);
-    }
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      text-align: center;
-      margin: 5px 0;
-    }
+body {
+  margin: 0;
+  padding: 15px;
+  background: #f4f6fb;
+  font-family: Tahoma, Arial, sans-serif;
+}
 
-    .subtitle {
-      text-align: center;
-      color: #777;
-      margin-bottom: 20px;
-    }
+.container {
+  max-width: 700px;
+  margin: auto;
+}
 
-    textarea {
-      width: 100%;
-      min-height: 110px;
-      padding: 14px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 16px;
-      font-family: Tahoma, Arial, sans-serif;
-      resize: vertical;
-      outline: none;
-    }
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+}
 
-    textarea:focus {
-      border-color: #2563eb;
-    }
+h1 {
+  text-align: center;
+  margin: 5px 0;
+}
 
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
+.subtitle {
+  text-align: center;
+  color: #777;
+  margin-bottom: 20px;
+}
 
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 15px;
-      cursor: pointer;
-    }
+.balance {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  margin: 10px;
+}
 
-    .send {
-      background: #2563eb;
-      color: white;
-    }
+.balance-label {
+  text-align: center;
+  color: #777;
+}
 
-    .clear {
-      background: #eeeeee;
-      color: #333;
-    }
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  margin: 4px;
+}
 
-    .answer {
-      margin-top: 20px;
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 15px;
-      line-height: 2;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
+.primary {
+  background: #2563eb;
+  color: white;
+}
 
-    .loading {
-      margin-top: 20px;
-      padding: 15px;
-      background: #f8fafc;
-      border-radius: 12px;
-      color: #666;
-    }
+.success {
+  background: #16a34a;
+  color: white;
+}
 
-    .error {
-      margin-top: 20px;
-      padding: 15px;
-      background: #fff1f2;
-      color: #b91c1c;
-      border-radius: 12px;
-      line-height: 1.8;
-    }
+.gray {
+  background: #eeeeee;
+}
 
-  </style>
+.danger {
+  background: #dc2626;
+  color: white;
+}
+
+textarea,
+input,
+select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  margin-top: 8px;
+  font-size: 15px;
+  font-family: Tahoma;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.answer {
+  margin-top: 15px;
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 12px;
+  line-height: 2;
+  white-space: pre-wrap;
+}
+
+.hidden {
+  display: none;
+}
+
+.notice {
+  background: #fff7ed;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+  line-height: 1.8;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+</style>
+
 </head>
 
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <h1>🤖 دستیار هوش مصنوعی</h1>
+<div class="card">
 
-    <div class="subtitle">
-      سلام! 👋 سوالت را بنویس.
-    </div>
+<h1>🤖 دستیار هوش مصنوعی</h1>
 
-    <textarea
-      id="prompt"
-      placeholder="پیامت را بنویس..."
-    ></textarea>
+<div class="subtitle">
+سلام! 👋 سوالت را بنویس.
+</div>
 
-    <div class="buttons">
+<textarea
+id="prompt"
+placeholder="پیامت را بنویس..."
+></textarea>
 
-      <button
-        class="send"
-        onclick="sendMessage()">
-        ارسال
-      </button>
+<div class="row">
 
-      <button
-        class="clear"
-        onclick="clearChat()">
-        🗑️ پاک کردن گفتگو
-      </button>
+<button
+class="primary"
+onclick="sendMessage()">
+ارسال
+</button>
 
-    </div>
+<button
+class="gray"
+onclick="clearChat()">
+🗑️ پاک کردن گفتگو
+</button>
 
-    <div id="answer"></div>
+</div>
 
-  </div>
+<div id="answer"></div>
+
+</div>
+
+
+<div class="card">
+
+<h2>💰 حساب من</h2>
+
+<div class="balance-label">
+موجودی شما
+</div>
+
+<div class="balance">
+$<span id="balance">0.00</span>
+</div>
+
+<div class="row">
+
+<button
+class="success"
+onclick="showWithdraw()">
+💵 برداشت
+</button>
+
+<button
+class="gray"
+onclick="showAccount()">
+👤 حساب کاربری
+</button>
+
+</div>
+
+</div>
+
+
+<div
+class="card hidden"
+id="account">
+
+<h2>👤 حساب کاربری</h2>
+
+<label>
+نام
+</label>
+
+<input
+id="name"
+placeholder="نام شما">
+
+<label>
+ایمیل
+</label>
+
+<input
+id="email"
+type="email"
+placeholder="ایمیل شما">
+
+<button
+class="primary"
+onclick="saveAccount()">
+ذخیره اطلاعات
+</button>
+
+<div id="accountMessage"></div>
+
+</div>
+
+
+<div
+class="card hidden"
+id="withdraw">
+
+<h2>💵 درخواست برداشت</h2>
+
+<div class="notice">
+
+حداقل مبلغ برداشت:
+<strong>$1</strong>
+
+<br>
+
+برداشت واقعی نیاز به اتصال سیستم پرداخت یا کیف پول دارد.
+
+</div>
+
+<label>
+مبلغ برداشت
+</label>
+
+<input
+id="amount"
+type="number"
+step="0.01"
+placeholder="مثلاً 5">
+
+<label>
+روش پرداخت
+</label>
+
+<select id="method">
+
+<option value="USDT">
+USDT
+</option>
+
+<option value="Bank">
+حساب بانکی
+</option>
+
+</select>
+
+<label>
+آدرس کیف پول / اطلاعات پرداخت
+</label>
+
+<input
+id="payment"
+placeholder="اطلاعات پرداخت را وارد کنید">
+
+<button
+class="success"
+onclick="requestWithdraw()">
+ثبت درخواست برداشت
+</button>
+
+<button
+class="gray"
+onclick="hideWithdraw()">
+بستن
+</button>
+
+<div id="withdrawMessage"></div>
+
+</div>
+
+
+<div class="card">
+
+<h3>📋 وضعیت حساب</h3>
+
+<div id="status">
+حساب فعال است.
+</div>
+
+</div>
+
+</div>
 
 
 <script>
 
+let balance =
+parseFloat(localStorage.getItem("balance") || "0");
+
+function updateBalance() {
+
+  document.getElementById("balance")
+    .textContent = balance.toFixed(2);
+
+  localStorage.setItem(
+    "balance",
+    balance.toFixed(2)
+  );
+}
+
+updateBalance();
+
+
 async function sendMessage() {
 
   const prompt =
-    document.getElementById("prompt").value.trim();
+    document.getElementById("prompt")
+      .value.trim();
 
   const answer =
     document.getElementById("answer");
@@ -227,39 +414,39 @@ async function sendMessage() {
   if (!prompt) {
 
     answer.innerHTML =
-      '<div class="error">لطفاً پیام خود را بنویسید.</div>';
+      '<div class="answer">لطفاً پیام خود را بنویسید.</div>';
 
     return;
   }
 
   answer.innerHTML =
-    '<div class="loading">⏳ در حال دریافت پاسخ...</div>';
+    '<div class="answer">⏳ در حال دریافت پاسخ...</div>';
 
   try {
 
-    const response = await fetch("/api/ai", {
+    const response =
+      await fetch("/api/ai", {
 
-      method: "POST",
+        method: "POST",
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-      body: JSON.stringify({
-        prompt: prompt
-      })
+        body: JSON.stringify({
+          prompt: prompt
+        })
 
-    });
+      });
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
-    if (!response.ok || data.error) {
+    if (data.error) {
 
       answer.innerHTML =
-        '<div class="error">❌ ' +
-        escapeHtml(
-          data.error || "خطای نامشخص"
-        ) +
+        '<div class="answer">❌ ' +
+        escapeHtml(data.error) +
         '</div>';
 
       return;
@@ -273,9 +460,7 @@ async function sendMessage() {
   } catch (error) {
 
     answer.innerHTML =
-      '<div class="error">❌ خطا در اتصال به هوش مصنوعی: ' +
-      escapeHtml(error.message) +
-      '</div>';
+      '<div class="answer">❌ خطا در اتصال به هوش مصنوعی</div>';
 
   }
 }
@@ -290,9 +475,135 @@ function clearChat() {
 }
 
 
+function showWithdraw() {
+
+  document
+    .getElementById("withdraw")
+    .classList.remove("hidden");
+
+}
+
+
+function hideWithdraw() {
+
+  document
+    .getElementById("withdraw")
+    .classList.add("hidden");
+
+}
+
+
+function showAccount() {
+
+  document
+    .getElementById("account")
+    .classList.remove("hidden");
+
+}
+
+
+function saveAccount() {
+
+  const name =
+    document.getElementById("name").value;
+
+  const email =
+    document.getElementById("email").value;
+
+  localStorage.setItem("name", name);
+  localStorage.setItem("email", email);
+
+  document.getElementById("accountMessage")
+    .innerHTML =
+    '<div class="notice">✅ اطلاعات ذخیره شد.</div>';
+
+}
+
+
+function requestWithdraw() {
+
+  const amount =
+    parseFloat(
+      document.getElementById("amount").value
+    );
+
+  const method =
+    document.getElementById("method").value;
+
+  const payment =
+    document.getElementById("payment").value.trim();
+
+  const message =
+    document.getElementById("withdrawMessage");
+
+
+  if (!amount || amount < 1) {
+
+    message.innerHTML =
+      '<div class="notice">❌ حداقل برداشت $1 است.</div>';
+
+    return;
+  }
+
+
+  if (amount > balance) {
+
+    message.innerHTML =
+      '<div class="notice">❌ موجودی کافی نیست.</div>';
+
+    return;
+  }
+
+
+  if (!payment) {
+
+    message.innerHTML =
+      '<div class="notice">❌ اطلاعات پرداخت را وارد کنید.</div>';
+
+    return;
+  }
+
+
+  balance -= amount;
+
+  updateBalance();
+
+
+  const request = {
+
+    amount: amount,
+
+    method: method,
+
+    payment: payment,
+
+    date: new Date().toLocaleString()
+
+  };
+
+
+  localStorage.setItem(
+    "withdrawRequest",
+    JSON.stringify(request)
+  );
+
+
+  message.innerHTML =
+    '<div class="notice">' +
+    '✅ درخواست برداشت ثبت شد.' +
+    '<br>مبلغ: $' +
+    amount.toFixed(2) +
+    '<br>روش: ' +
+    method +
+    '</div>';
+
+}
+
+
 function escapeHtml(text) {
 
-  const div = document.createElement("div");
+  const div =
+    document.createElement("div");
 
   div.textContent = text;
 
@@ -303,23 +614,27 @@ function escapeHtml(text) {
 
 document
   .getElementById("prompt")
-  .addEventListener("keydown", function(event) {
+  .addEventListener(
+    "keydown",
+    function(event) {
 
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey
-    ) {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
 
-      event.preventDefault();
+        event.preventDefault();
 
-      sendMessage();
+        sendMessage();
+
+      }
 
     }
-
-  });
+  );
 
 </script>
 
 </body>
+
 </html>
 `;
