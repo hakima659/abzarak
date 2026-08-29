@@ -1,4 +1,3 @@
-
 const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -23,10 +22,19 @@ header{
  color:white;
  padding:20px 15px;
  text-align:center;
+ box-shadow:0 3px 15px #0002;
 }
 
-header h2{margin:0 0 7px;font-size:23px}
-header p{margin:0;opacity:.9}
+header h2{
+ margin:0 0 7px;
+ font-size:23px;
+}
+
+header p{
+ margin:0;
+ opacity:.9;
+ font-size:14px;
+}
 
 .account{
  background:white;
@@ -42,8 +50,14 @@ header p{margin:0;opacity:.9}
  gap:12px;
 }
 
-.account-icon{font-size:30px}
-.account-title{font-weight:bold}
+.account-icon{
+ font-size:30px;
+}
+
+.account-title{
+ font-weight:bold;
+ font-size:17px;
+}
 
 .balance{
  margin-right:auto;
@@ -98,12 +112,14 @@ header p{margin:0;opacity:.9}
 .user{
  margin-right:auto;
  background:#dbeafe;
+ border-bottom-right-radius:5px;
 }
 
 .ai{
  margin-left:auto;
  background:white;
  box-shadow:0 3px 12px #0001;
+ border-bottom-left-radius:5px;
 }
 
 .bottom{
@@ -135,12 +151,18 @@ textarea{
  background:#f8fafc;
 }
 
+textarea:focus{
+ border-color:#1677ff;
+ background:white;
+}
+
 .send{
  border:0;
  border-radius:14px;
  padding:0 18px;
  background:#1677ff;
  color:white;
+ font-size:15px;
  font-weight:bold;
 }
 
@@ -171,25 +193,34 @@ textarea{
 </header>
 
 <div class="account">
+
 <div class="account-top">
+
 <div class="account-icon">💰</div>
-<div class="account-title">حساب من</div>
+
+<div class="account-title">
+حساب من
+</div>
 
 <div class="balance">
 <small>موجودی</small>
 <strong>$0.00</strong>
 </div>
+
 </div>
 
 <button class="withdraw" onclick="withdraw()">
 💵 برداشت
 </button>
+
 </div>
 
 <div id="chat">
+
 <div class="welcome">
 ✨ من آماده‌ام؛ هر سؤالی داری بپرس.
 </div>
+
 </div>
 
 <div class="bottom">
@@ -202,13 +233,19 @@ rows="1"
 placeholder="پیامت را بنویس..."
 ></textarea>
 
-<button class="send" onclick="sendMessage()">
+<button
+class="send"
+onclick="sendMessage()"
+>
 ارسال
 </button>
 
 </div>
 
-<button class="clear" onclick="clearChat()">
+<button
+class="clear"
+onclick="clearChat()"
+>
 🗑️ پاک کردن گفتگو
 </button>
 
@@ -240,7 +277,9 @@ async function sendMessage(){
 
  const welcome=document.querySelector(".welcome");
 
- if(welcome) welcome.remove();
+ if(welcome){
+  welcome.remove();
+ }
 
  addMessage(text,"user");
 
@@ -285,18 +324,17 @@ async function sendMessage(){
 
 function clearChat(){
 
- chat.innerHTML=`
- <div class="welcome">
- ✨ من آماده‌ام؛ هر سؤالی داری بپرس.
- </div>
- `;
+ chat.innerHTML=
+ '<div class="welcome">' +
+ '✨ من آماده‌ام؛ هر سؤالی داری بپرس.' +
+ '</div>';
 
 }
 
 function withdraw(){
 
  alert(
-  "💰 موجودی فعلی شما: $0.00\\n\\n"+
+  "💰 موجودی فعلی شما: $0.00\n\n"+
   "سیستم برداشت هنوز فعال نشده است."
  );
 
@@ -325,11 +363,13 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
-      return new Response(HTML, {
-        headers: {
-          "content-type": "text/html; charset=UTF-8"
+
+      return new Response(HTML,{
+        headers:{
+          "content-type":"text/html; charset=UTF-8"
         }
       });
+
     }
 
     if (request.method === "POST" && url.pathname === "/api/ai") {
@@ -339,25 +379,27 @@ export default {
         const body = await request.json();
         const prompt = body.prompt;
 
-        if (!prompt || !prompt.trim()) {
+        if(!prompt || !prompt.trim()){
+
           return Response.json(
-            { error: "لطفاً متن خود را وارد کنید." },
-            { status: 400 }
+            {error:"لطفاً متن خود را وارد کنید."},
+            {status:400}
           );
+
         }
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct",
           {
-            messages: [
+            messages:[
               {
-                role: "system",
+                role:"system",
                 content:
-                  "تو یک دستیار هوش مصنوعی فارسی‌زبان، دوستانه و مفید هستی."
+                "تو یک دستیار هوش مصنوعی فارسی‌زبان، دوستانه و مفید هستی."
               },
               {
-                role: "user",
-                content: prompt
+                role:"user",
+                content:prompt
               }
             ]
           }
@@ -365,26 +407,28 @@ export default {
 
         return Response.json({
           answer:
-            result.response ||
-            "پاسخی دریافت نشد."
+          result.response ||
+          "پاسخی دریافت نشد."
         });
 
-      } catch (error) {
+      }catch(error){
 
         return Response.json(
           {
             error:
-              "خطا در ارتباط با هوش مصنوعی: " +
-              error.message
+            "خطا در ارتباط با هوش مصنوعی: "+
+            error.message
           },
-          { status: 500 }
+          {status:500}
         );
 
       }
+
     }
 
-    return new Response("Not Found", {
-      status: 404
+    return new Response("Not Found",{
+      status:404
     });
+
   }
 };
