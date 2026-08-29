@@ -2,7 +2,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // =========================
     // صفحه اصلی
+    // =========================
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(HTML, {
         headers: {
@@ -11,13 +13,15 @@ export default {
       });
     }
 
+    // =========================
     // هوش مصنوعی
+    // =========================
     if (request.method === "POST" && url.pathname === "/api/ai") {
       try {
         const body = await request.json();
-        const prompt = body.prompt;
+        const prompt = String(body.prompt || "").trim();
 
-        if (!prompt || !prompt.trim()) {
+        if (!prompt) {
           return Response.json(
             { error: "لطفاً پیام خود را بنویسید." },
             { status: 400 }
@@ -35,7 +39,7 @@ export default {
               },
               {
                 role: "user",
-                content: prompt.trim()
+                content: prompt
               }
             ]
           }
@@ -44,12 +48,210 @@ export default {
         return Response.json({
           response: result.response || "پاسخی دریافت نشد."
         });
-
       } catch (error) {
         return Response.json(
           {
-            error: "خطا در دریافت پاسخ: " +
-              (error.message || String(error))
+            error:
+              "خطا در دریافت پاسخ هوش مصنوعی: " +
+              (error?.message || String(error))
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================
+    // ایجاد جدول‌های D1
+    // =========================
+    if (request.method === "POST" && url.pathname === "/api/setup") {
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT,
+            balance REAL DEFAULT 0,
+            created_at TEXT
+          )
+        `).run();
+
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS withdrawals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER,
+            amount REAL,
+            method TEXT,
+            payment TEXT,
+            status TEXT DEFAULT 'pending',
+            created_at TEXT
+          )
+        `).run();
+
+        return Response.json({
+          success: true,
+          message: "پایگاه داده آماده شد."
+        });
+      } catch (error) {
+        return Response.json(
+          {
+            error: error?.message || String(error)
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================
+    // دریافت حساب
+    // =========================
+    if (request.method === "GET" && url.pathname === "/api/account") {
+      try {
+        const account = await env.DB.prepare(
+          "SELECT * FROM accounts ORDER BY id ASC LIMIT 1"
+        ).first();
+
+        return Response.json({
+          account: account || null
+        });
+      } catch (error) {
+        return Response.json(
+          {
+            error: error?.message || String(error)
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================
+    // ذخیره حساب
+    // =========================
+    if (request.method === "POST" && url.pathname === "/api/account") {
+      try {
+        const body = await request.json();
+
+        const name = String(body.name || "").trim();
+        const email = String(body.email || "").trim();
+
+        if (!name || !email) {
+          return Response.json(
+            { error: "نام و ایمیل را وارد کنید." },
+            { status: 400 }
+          );
+        }
+
+        const existing = await env.DB.prepare(
+          "SELECT id FROM accounts ORDER BY id ASC LIMIT 1"
+        ).first();
+
+        if (existing) {
+          await env.DB.prepare(
+            "UPDATE accounts SET name = ?, email = ? WHERE id = ?"
+          )
+            .bind(name, email, existing.id)
+            .run();
+        } else {
+          await env.DB.prepare(
+            "INSERT INTO accounts (name, email, balance, created_at) VALUES (?, ?, ?, ?)"
+          )
+            .bind(
+              name,
+              email,
+              0,
+              new Date().toISOString()
+            )
+            .run();
+        }
+
+        return Response.json({
+          success: true,
+          message: "اطلاعات حساب ذخیره شد."
+        });
+      } catch (error) {
+        return Response.json(
+          {
+            error: error?.message || String(error)
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // =========================
+    // ثبت درخواست برداشت
+    // =========================
+    if (
+      request.method === "POST" &&
+      url.pathname === "/api/withdraw"
+    ) {
+      try {
+        const body = await request.json();
+
+        const amount = Number(body.amount);
+        const method = String(body.method || "").trim();
+        const payment = String(body.payment || "").trim();
+
+        if (!Number.isFinite(amount) || amount < 1) {
+          return Response.json(
+            { error: "حداقل مبلغ برداشت $1 است." },
+            { status: 400 }
+          );
+        }
+
+        if (!payment) {
+          return Response.json(
+            { error: "اطلاعات پرداخت را وارد کنید." },
+            { status: 400 }
+          );
+        }
+
+        const account = await env.DB.prepare(
+          "SELECT * FROM accounts ORDER BY id ASC LIMIT 1"
+        ).first();
+
+        if (!account) {
+          return Response.json(
+            { error: "ابتدا اطلاعات حساب را ذخیره کنید." },
+            { status: 400 }
+          );
+        }
+
+        if (Number(account.balance) < amount) {
+          return Response.json(
+            { error: "موجودی کافی نیست." },
+            { status: 400 }
+          );
+        }
+
+        await env.DB.prepare(
+          "UPDATE accounts SET balance = balance - ? WHERE id = ?"
+        )
+          .bind(amount, account.id)
+          .run();
+
+        await env.DB.prepare(
+          `INSERT INTO withdrawals
+           (account_id, amount, method, payment, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        )
+          .bind(
+            account.id,
+            amount,
+            method,
+            payment,
+            "pending",
+            new Date().toISOString()
+          )
+          .run();
+
+        return Response.json({
+          success: true,
+          message: "درخواست برداشت ثبت شد."
+        });
+      } catch (error) {
+        return Response.json(
+          {
+            error: error?.message || String(error)
           },
           { status: 500 }
         );
@@ -315,7 +517,7 @@ id="withdraw">
 
 <br>
 
-برداشت واقعی نیاز به اتصال سیستم پرداخت یا کیف پول دارد.
+درخواست برداشت در پایگاه داده ثبت می‌شود.
 
 </div>
 
@@ -385,21 +587,48 @@ onclick="hideWithdraw()">
 
 <script>
 
-let balance =
-parseFloat(localStorage.getItem("balance") || "0");
+let balance = 0;
 
-function updateBalance() {
+
+function updateBalance(value) {
+
+  balance = Number(value || 0);
 
   document.getElementById("balance")
     .textContent = balance.toFixed(2);
 
-  localStorage.setItem(
-    "balance",
-    balance.toFixed(2)
-  );
 }
 
-updateBalance();
+
+async function loadAccount() {
+
+  try {
+
+    const response =
+      await fetch("/api/account");
+
+    const data =
+      await response.json();
+
+    if (data.account) {
+
+      updateBalance(data.account.balance);
+
+      document.getElementById("name").value =
+        data.account.name || "";
+
+      document.getElementById("email").value =
+        data.account.email || "";
+
+    }
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+}
 
 
 async function sendMessage() {
@@ -502,25 +731,70 @@ function showAccount() {
 }
 
 
-function saveAccount() {
+async function saveAccount() {
 
   const name =
-    document.getElementById("name").value;
+    document.getElementById("name").value.trim();
 
   const email =
-    document.getElementById("email").value;
+    document.getElementById("email").value.trim();
 
-  localStorage.setItem("name", name);
-  localStorage.setItem("email", email);
+  const message =
+    document.getElementById("accountMessage");
 
-  document.getElementById("accountMessage")
-    .innerHTML =
-    '<div class="notice">✅ اطلاعات ذخیره شد.</div>';
+  if (!name || !email) {
+
+    message.innerHTML =
+      '<div class="notice">❌ نام و ایمیل را وارد کنید.</div>';
+
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/account", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          name: name,
+          email: email
+        })
+
+      });
+
+    const data =
+      await response.json();
+
+    if (data.error) {
+
+      message.innerHTML =
+        '<div class="notice">❌ ' +
+        escapeHtml(data.error) +
+        '</div>';
+
+      return;
+    }
+
+    message.innerHTML =
+      '<div class="notice">✅ اطلاعات ذخیره شد.</div>';
+
+  } catch (error) {
+
+    message.innerHTML =
+      '<div class="notice">❌ خطا در اتصال به سرور.</div>';
+
+  }
 
 }
 
 
-function requestWithdraw() {
+async function requestWithdraw() {
 
   const amount =
     parseFloat(
@@ -564,38 +838,53 @@ function requestWithdraw() {
   }
 
 
-  balance -= amount;
+  try {
 
-  updateBalance();
+    const response =
+      await fetch("/api/withdraw", {
 
+        method: "POST",
 
-  const request = {
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-    amount: amount,
+        body: JSON.stringify({
+          amount: amount,
+          method: method,
+          payment: payment
+        })
 
-    method: method,
+      });
 
-    payment: payment,
+    const data =
+      await response.json();
 
-    date: new Date().toLocaleString()
+    if (data.error) {
 
-  };
+      message.innerHTML =
+        '<div class="notice">❌ ' +
+        escapeHtml(data.error) +
+        '</div>';
 
+      return;
+    }
 
-  localStorage.setItem(
-    "withdrawRequest",
-    JSON.stringify(request)
-  );
+    message.innerHTML =
+      '<div class="notice">✅ درخواست برداشت ثبت شد.</div>';
 
+    document.getElementById("amount").value = "";
 
-  message.innerHTML =
-    '<div class="notice">' +
-    '✅ درخواست برداشت ثبت شد.' +
-    '<br>مبلغ: $' +
-    amount.toFixed(2) +
-    '<br>روش: ' +
-    method +
-    '</div>';
+    document.getElementById("payment").value = "";
+
+    await loadAccount();
+
+  } catch (error) {
+
+    message.innerHTML =
+      '<div class="notice">❌ خطا در اتصال به سرور.</div>';
+
+  }
 
 }
 
@@ -631,6 +920,9 @@ document
 
     }
   );
+
+
+loadAccount();
 
 </script>
 
