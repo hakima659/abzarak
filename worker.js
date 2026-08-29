@@ -2,7 +2,7 @@ const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>دستیار هوش مصنوعی</title>
 
 <style>
@@ -15,27 +15,27 @@ html,body{
   padding:0;
   width:100%;
   height:100%;
-  font-family:Arial,sans-serif;
-  background:#f1f5f9;
 }
 
 body{
-  min-height:100vh;
+  font-family:Arial,sans-serif;
+  background:#f1f5f9;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 
 header{
+  flex:none;
   background:linear-gradient(135deg,#1677ff,#6c4cff);
   color:white;
-  padding:18px 12px;
   text-align:center;
-  flex-shrink:0;
+  padding:18px 12px;
 }
 
 header h2{
   margin:0 0 6px;
-  font-size:22px;
+  font-size:21px;
 }
 
 header p{
@@ -44,12 +44,12 @@ header p{
 }
 
 .account{
+  flex:none;
   background:white;
   margin:10px;
-  padding:14px;
-  border-radius:17px;
-  box-shadow:0 3px 12px #0001;
-  flex-shrink:0;
+  padding:12px;
+  border-radius:16px;
+  box-shadow:0 2px 10px #0001;
 }
 
 .account-top{
@@ -59,12 +59,11 @@ header p{
 }
 
 .account-icon{
-  font-size:29px;
+  font-size:28px;
 }
 
 .account-title{
   font-weight:bold;
-  font-size:16px;
 }
 
 .balance{
@@ -84,26 +83,21 @@ header p{
 }
 
 .withdraw{
-  display:block;
   width:100%;
-  margin-top:11px;
-  padding:11px;
+  margin-top:10px;
+  padding:10px;
   border:0;
   border-radius:12px;
   background:#16a34a;
   color:white;
   font-size:15px;
   font-weight:bold;
-  cursor:pointer;
-  touch-action:manipulation;
 }
 
 #chat{
   flex:1;
-  min-height:0;
   overflow-y:auto;
-  padding:10px 14px 150px;
-  -webkit-overflow-scrolling:touch;
+  padding:5px 12px 170px;
 }
 
 .welcome{
@@ -114,9 +108,9 @@ header p{
 
 .msg{
   max-width:90%;
-  padding:12px 15px;
+  padding:12px 14px;
   margin:10px 0;
-  border-radius:17px;
+  border-radius:16px;
   line-height:1.8;
   white-space:pre-wrap;
   word-break:break-word;
@@ -130,7 +124,7 @@ header p{
 .ai{
   margin-left:auto;
   background:white;
-  box-shadow:0 3px 10px #0001;
+  box-shadow:0 2px 8px #0001;
 }
 
 .bottom{
@@ -141,85 +135,78 @@ header p{
   right:0;
   width:100%;
   background:white;
-  padding:9px;
+  padding:10px;
   box-shadow:0 -3px 15px #0002;
 }
 
 .row{
-  display:flex;
   width:100%;
-  max-width:900px;
-  margin:auto;
-  gap:7px;
+  display:flex;
+  align-items:stretch;
+  gap:8px;
 }
 
 #prompt{
-  display:block;
-  flex:1;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  flex:1 1 auto;
   width:100%;
   min-width:0;
-  min-height:48px;
-  max-height:120px;
-  border:1px solid #cbd5e1;
-  border-radius:15px;
+  height:52px;
+  border:2px solid #d5dbe3;
+  border-radius:14px;
   padding:12px;
-  background:#fff;
-  color:#111;
   font-family:Arial,sans-serif;
   font-size:16px;
+  color:#111;
+  background:#f8fafc;
   outline:none;
   resize:none;
-  pointer-events:auto;
-  user-select:text;
-  -webkit-user-select:text;
-  touch-action:manipulation;
 }
 
 #prompt:focus{
   border-color:#1677ff;
+  background:white;
 }
 
 .send{
-  flex-shrink:0;
-  min-width:70px;
+  flex:none;
+  width:75px;
+  height:52px;
   border:0;
   border-radius:14px;
-  padding:0 15px;
   background:#1677ff;
   color:white;
   font-size:15px;
   font-weight:bold;
-  cursor:pointer;
-  touch-action:manipulation;
 }
 
 .clear{
   display:block;
   width:100%;
-  max-width:900px;
-  margin:7px auto 0;
-  padding:9px;
+  height:42px;
+  margin-top:8px;
   border:0;
   border-radius:12px;
   background:#f1f5f9;
   color:#555;
-  cursor:pointer;
-  touch-action:manipulation;
+  font-size:14px;
 }
 
 @media(max-width:600px){
-
-  header h2{
-    font-size:20px;
+  .bottom{
+    padding:8px;
   }
 
-  .msg{
-    max-width:94%;
+  #prompt{
+    font-size:16px;
+    height:50px;
   }
 
   .send{
-    min-width:65px;
-    padding:0 12px;
+    width:70px;
+    height:50px;
   }
 }
 </style>
@@ -233,7 +220,6 @@ header p{
 </header>
 
 <div class="account">
-
   <div class="account-top">
 
     <div class="account-icon">💰</div>
@@ -249,18 +235,15 @@ header p{
 
   </div>
 
-  <button class="withdraw" type="button" onclick="withdraw()">
+  <button class="withdraw" onclick="withdraw()">
     💵 برداشت
   </button>
-
 </div>
 
 <div id="chat">
-
   <div class="welcome">
     ✨ من آماده‌ام؛ هر سؤالی داری بپرس.
   </div>
-
 </div>
 
 <div class="bottom">
@@ -270,14 +253,14 @@ header p{
     <textarea
       id="prompt"
       rows="1"
-      autocomplete="off"
-      autocorrect="on"
       placeholder="پیامت را بنویس..."
+      autocomplete="off"
+      spellcheck="false"
     ></textarea>
 
     <button
-      class="send"
       type="button"
+      class="send"
       onclick="sendMessage()"
     >
       ارسال
@@ -286,8 +269,8 @@ header p{
   </div>
 
   <button
-    class="clear"
     type="button"
+    class="clear"
     onclick="clearChat()"
   >
     🗑️ پاک کردن گفتگو
@@ -296,7 +279,6 @@ header p{
 </div>
 
 <script>
-
 const chat = document.getElementById("chat");
 const promptBox = document.getElementById("prompt");
 
@@ -375,9 +357,7 @@ async function sendMessage(){
 function clearChat(){
 
   chat.innerHTML =
-    '<div class="welcome">' +
-    '✨ من آماده‌ام؛ هر سؤالی داری بپرس.' +
-    '</div>';
+    '<div class="welcome">✨ من آماده‌ام؛ هر سؤالی داری بپرس.</div>';
 
 }
 
@@ -385,7 +365,7 @@ function withdraw(){
 
   alert(
     "💰 موجودی فعلی شما: $0.00\\n\\n" +
-    "سیستم برداشت هنوز فعال نشده است."
+    "سیستم برداشت پس از راه‌اندازی درآمد واقعی فعال خواهد شد."
   );
 
 }
@@ -402,14 +382,19 @@ promptBox.addEventListener("keydown",function(e){
 
 });
 
+promptBox.addEventListener("click",function(){
+
+  promptBox.focus();
+
+});
+
 </script>
 
 </body>
 </html>`;
 
 export default {
-
-  async fetch(request, env){
+  async fetch(request, env) {
 
     const url = new URL(request.url);
 
@@ -429,17 +414,13 @@ export default {
 
         const body = await request.json();
 
-        const userPrompt = body.prompt;
+        const prompt = body.prompt;
 
-        if(!userPrompt || !userPrompt.trim()){
+        if(!prompt || !prompt.trim()){
 
           return Response.json(
-            {
-              error:"لطفاً متن خود را وارد کنید."
-            },
-            {
-              status:400
-            }
+            {error:"لطفاً متن خود را وارد کنید."},
+            {status:400}
           );
 
         }
@@ -450,12 +431,11 @@ export default {
             messages:[
               {
                 role:"system",
-                content:
-                  "تو یک دستیار هوش مصنوعی فارسی‌زبان، دوستانه، دقیق و مفید هستی."
+                content:"تو یک دستیار هوش مصنوعی مفید و مودب هستی. به زبان کاربر پاسخ بده."
               },
               {
                 role:"user",
-                content:userPrompt
+                content:prompt
               }
             ]
           }
@@ -464,6 +444,7 @@ export default {
         return Response.json({
           answer:
             result.response ||
+            result.result?.response ||
             "پاسخی دریافت نشد."
         });
 
@@ -471,13 +452,9 @@ export default {
 
         return Response.json(
           {
-            error:
-              "خطا در ارتباط با هوش مصنوعی: " +
-              error.message
+            error:"خطا در دریافت پاسخ هوش مصنوعی: " + error.message
           },
-          {
-            status:500
-          }
+          {status:500}
         );
 
       }
@@ -489,5 +466,5 @@ export default {
     });
 
   }
-
 };
+  
