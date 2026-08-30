@@ -5,11 +5,13 @@ export default {
     // =========================================================
     // تنظیمات
     // =========================================================
+
     const ADMIN_PASSWORD = env.ADMIN_PASSWORD || "123456";
 
     // =========================================================
     // CORS
     // =========================================================
+
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -24,8 +26,9 @@ export default {
     }
 
     // =========================================================
-    // پاسخ JSON
+    // JSON
     // =========================================================
+
     function json(data, status = 200) {
       return new Response(JSON.stringify(data), {
         status,
@@ -37,9 +40,11 @@ export default {
     }
 
     // =========================================================
-    // ایجاد جداول D1
+    // پایگاه داده
     // =========================================================
+
     async function initDB() {
+
       await env.DB.prepare(`
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,15 +80,20 @@ export default {
     // =========================================================
     // کاربر
     // =========================================================
+
     async function getUser(username) {
+
       let user = await env.DB
         .prepare("SELECT * FROM users WHERE username = ?")
         .bind(username)
         .first();
 
       if (!user) {
+
         await env.DB
-          .prepare("INSERT INTO users (username, balance) VALUES (?, 0)")
+          .prepare(
+            "INSERT INTO users (username, balance) VALUES (?, 0)"
+          )
           .bind(username)
           .run();
 
@@ -99,7 +109,12 @@ export default {
     // =========================================================
     // صفحه اصلی
     // =========================================================
-    if (request.method === "GET" && url.pathname === "/") {
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/"
+    ) {
+
       return new Response(HTML, {
         headers: {
           ...corsHeaders,
@@ -109,17 +124,25 @@ export default {
     }
 
     // =========================================================
-    // ایجاد جداول
+    // آماده سازی D1
     // =========================================================
-    if (url.pathname === "/api/init" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/init" &&
+      request.method === "POST"
+    ) {
+
       try {
+
         await initDB();
 
         return json({
           success: true,
           message: "پایگاه داده آماده شد."
         });
+
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -128,16 +151,25 @@ export default {
     }
 
     // =========================================================
-    // دریافت حساب
+    // حساب کاربر
     // =========================================================
-    if (url.pathname === "/api/account" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/account" &&
+      request.method === "POST"
+    ) {
+
       try {
+
         await initDB();
 
         const body = await request.json();
-        const username = String(body.username || "").trim();
+
+        const username =
+          String(body.username || "").trim();
 
         if (!username) {
+
           return json({
             success: false,
             error: "نام کاربری وارد نشده است."
@@ -156,6 +188,7 @@ export default {
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -166,43 +199,50 @@ export default {
     // =========================================================
     // هوش مصنوعی
     // =========================================================
-    if (url.pathname === "/api/ai" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/ai" &&
+      request.method === "POST"
+    ) {
+
       try {
+
         await initDB();
 
         const body = await request.json();
 
-        const username = String(body.username || "guest").trim();
-        const prompt = String(body.prompt || "").trim();
+        const username =
+          String(body.username || "guest").trim();
+
+        const prompt =
+          String(body.prompt || "").trim();
 
         if (!prompt) {
+
           return json({
             success: false,
             error: "لطفاً پیام خود را وارد کنید."
           }, 400);
         }
 
-        // اگر Workers AI متصل نشده باشد
+        // بررسی اتصال Workers AI
+
         if (!env.AI) {
+
           return json({
             success: false,
-            error: "اتصال Workers AI انجام نشده است. Binding با نام AI اضافه کنید."
+            error:
+              "Workers AI متصل نیست. ابتدا Binding با نام AI را اضافه کنید."
           }, 500);
-  "@cf/meta/llama-3.1-8b-instruct",
-  {
-    messages: [
-      {
-        role: "system",
-        content:
-          "تو یک دستیار هوش مصنوعی فارسی هستی. پاسخ‌ها را واضح، مفید و تا حد امکان کوتاه بده."
-      },
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  }
-);
+        }
+
+        // =====================================================
+        // اجرای مدل فعال Cloudflare
+        // =====================================================
+
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct-fast",
+          {
             messages: [
               {
                 role: "system",
@@ -222,12 +262,19 @@ export default {
           result?.result?.response ||
           "پاسخی دریافت نشد.";
 
+        // ذخیره پیام
+
         await env.DB
           .prepare(`
-            INSERT INTO messages (username, prompt, answer)
+            INSERT INTO messages
+            (username, prompt, answer)
             VALUES (?, ?, ?)
           `)
-          .bind(username, prompt, answer)
+          .bind(
+            username,
+            prompt,
+            answer
+          )
           .run();
 
         return json({
@@ -236,28 +283,50 @@ export default {
         });
 
       } catch (error) {
+
         return json({
           success: false,
-          error: "خطا در دریافت پاسخ هوش مصنوعی: " + error.message
+          error:
+            "خطا در دریافت پاسخ هوش مصنوعی: " +
+            error.message
         }, 500);
       }
     }
 
     // =========================================================
-    // درخواست برداشت
+    // برداشت
     // =========================================================
-    if (url.pathname === "/api/withdraw" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/withdraw" &&
+      request.method === "POST"
+    ) {
+
       try {
+
         await initDB();
 
         const body = await request.json();
 
-        const username = String(body.username || "").trim();
-        const amount = Number(body.amount);
-        const method = String(body.method || "").trim();
-        const account = String(body.account || "").trim();
+        const username =
+          String(body.username || "").trim();
 
-        if (!username || !amount || !method || !account) {
+        const amount =
+          Number(body.amount);
+
+        const method =
+          String(body.method || "").trim();
+
+        const account =
+          String(body.account || "").trim();
+
+        if (
+          !username ||
+          !amount ||
+          !method ||
+          !account
+        ) {
+
           return json({
             success: false,
             error: "همه اطلاعات برداشت را کامل کنید."
@@ -265,20 +334,26 @@ export default {
         }
 
         if (amount < 10000) {
+
           return json({
             success: false,
-            error: "حداقل مبلغ برداشت ۱۰٬۰۰۰ تومان است."
+            error:
+              "حداقل مبلغ برداشت ۱۰٬۰۰۰ تومان است."
           }, 400);
         }
 
-        const user = await getUser(username);
+        const user =
+          await getUser(username);
 
-        const balance = Number(user.balance || 0);
+        const balance =
+          Number(user.balance || 0);
 
         if (amount > balance) {
+
           return json({
             success: false,
-            error: "موجودی شما کافی نیست."
+            error:
+              "موجودی شما کافی نیست."
           }, 400);
         }
 
@@ -288,7 +363,12 @@ export default {
             (username, amount, method, account, status)
             VALUES (?, ?, ?, ?, 'pending')
           `)
-          .bind(username, amount, method, account)
+          .bind(
+            username,
+            amount,
+            method,
+            account
+          )
           .run();
 
         await env.DB
@@ -297,15 +377,20 @@ export default {
             SET balance = balance - ?
             WHERE username = ?
           `)
-          .bind(amount, username)
+          .bind(
+            amount,
+            username
+          )
           .run();
 
         return json({
           success: true,
-          message: "درخواست برداشت ثبت شد."
+          message:
+            "درخواست برداشت ثبت شد."
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -316,24 +401,39 @@ export default {
     // =========================================================
     // ورود مدیریت
     // =========================================================
-    if (url.pathname === "/api/admin/login" && request.method === "POST") {
-      try {
-        const body = await request.json();
-        const password = String(body.password || "");
 
-        if (password !== ADMIN_PASSWORD) {
+    if (
+      url.pathname === "/api/admin/login" &&
+      request.method === "POST"
+    ) {
+
+      try {
+
+        const body =
+          await request.json();
+
+        const password =
+          String(body.password || "");
+
+        if (
+          password !== ADMIN_PASSWORD
+        ) {
+
           return json({
             success: false,
-            error: "رمز مدیریت اشتباه است."
+            error:
+              "رمز مدیریت اشتباه است."
           }, 401);
         }
 
         return json({
           success: true,
-          message: "ورود مدیریت موفق بود."
+          message:
+            "ورود مدیریت موفق بود."
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -344,43 +444,64 @@ export default {
     // =========================================================
     // اطلاعات مدیریت
     // =========================================================
-    if (url.pathname === "/api/admin/data" && request.method === "POST") {
-      try {
-        const body = await request.json();
-        const password = String(body.password || "");
 
-        if (password !== ADMIN_PASSWORD) {
+    if (
+      url.pathname === "/api/admin/data" &&
+      request.method === "POST"
+    ) {
+
+      try {
+
+        const body =
+          await request.json();
+
+        const password =
+          String(body.password || "");
+
+        if (
+          password !== ADMIN_PASSWORD
+        ) {
+
           return json({
             success: false,
-            error: "رمز مدیریت اشتباه است."
+            error:
+              "رمز مدیریت اشتباه است."
           }, 401);
         }
 
         await initDB();
 
-        const users = await env.DB
-          .prepare(`
-            SELECT id, username, balance, created_at
-            FROM users
-            ORDER BY id DESC
-          `)
-          .all();
+        const users =
+          await env.DB
+            .prepare(`
+              SELECT
+                id,
+                username,
+                balance,
+                created_at
+              FROM users
+              ORDER BY id DESC
+            `)
+            .all();
 
-        const withdrawals = await env.DB
-          .prepare(`
-            SELECT *
-            FROM withdrawals
-            ORDER BY id DESC
-          `)
-          .all();
+        const withdrawals =
+          await env.DB
+            .prepare(`
+              SELECT *
+              FROM withdrawals
+              ORDER BY id DESC
+            `)
+            .all();
 
         return json({
           success: true,
           users: users.results || [],
-          withdrawals: withdrawals.results || []
+          withdrawals:
+            withdrawals.results || []
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -389,31 +510,54 @@ export default {
     }
 
     // =========================================================
-    // افزایش موجودی توسط مدیریت
+    // افزایش موجودی
     // =========================================================
-    if (url.pathname === "/api/admin/add-balance" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/admin/add-balance" &&
+      request.method === "POST"
+    ) {
+
       try {
-        const body = await request.json();
 
-        const password = String(body.password || "");
-        const username = String(body.username || "").trim();
-        const amount = Number(body.amount);
+        const body =
+          await request.json();
 
-        if (password !== ADMIN_PASSWORD) {
+        const password =
+          String(body.password || "");
+
+        const username =
+          String(body.username || "").trim();
+
+        const amount =
+          Number(body.amount);
+
+        if (
+          password !== ADMIN_PASSWORD
+        ) {
+
           return json({
             success: false,
-            error: "رمز مدیریت اشتباه است."
+            error:
+              "رمز مدیریت اشتباه است."
           }, 401);
         }
 
-        if (!username || !amount || amount <= 0) {
+        if (
+          !username ||
+          !amount ||
+          amount <= 0
+        ) {
+
           return json({
             success: false,
-            error: "نام کاربری و مبلغ معتبر وارد کنید."
+            error:
+              "نام کاربری و مبلغ معتبر وارد کنید."
           }, 400);
         }
 
         await initDB();
+
         await getUser(username);
 
         await env.DB
@@ -422,15 +566,20 @@ export default {
             SET balance = balance + ?
             WHERE username = ?
           `)
-          .bind(amount, username)
+          .bind(
+            amount,
+            username
+          )
           .run();
 
         return json({
           success: true,
-          message: "موجودی افزایش یافت."
+          message:
+            "موجودی افزایش یافت."
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -441,52 +590,82 @@ export default {
     // =========================================================
     // تغییر وضعیت برداشت
     // =========================================================
-    if (url.pathname === "/api/admin/withdraw-status" && request.method === "POST") {
+
+    if (
+      url.pathname === "/api/admin/withdraw-status" &&
+      request.method === "POST"
+    ) {
+
       try {
-        const body = await request.json();
 
-        const password = String(body.password || "");
-        const id = Number(body.id);
-        const status = String(body.status || "");
+        const body =
+          await request.json();
 
-        if (password !== ADMIN_PASSWORD) {
+        const password =
+          String(body.password || "");
+
+        const id =
+          Number(body.id);
+
+        const status =
+          String(body.status || "");
+
+        if (
+          password !== ADMIN_PASSWORD
+        ) {
+
           return json({
             success: false,
-            error: "رمز مدیریت اشتباه است."
+            error:
+              "رمز مدیریت اشتباه است."
           }, 401);
         }
 
-        if (!id || !["pending", "paid", "rejected"].includes(status)) {
+        if (
+          !id ||
+          ![
+            "pending",
+            "paid",
+            "rejected"
+          ].includes(status)
+        ) {
+
           return json({
             success: false,
-            error: "اطلاعات نامعتبر است."
+            error:
+              "اطلاعات نامعتبر است."
           }, 400);
         }
 
         await initDB();
 
-        const withdrawal = await env.DB
-          .prepare(`
-            SELECT *
-            FROM withdrawals
-            WHERE id = ?
-          `)
-          .bind(id)
-          .first();
+        const withdrawal =
+          await env.DB
+            .prepare(`
+              SELECT *
+              FROM withdrawals
+              WHERE id = ?
+            `)
+            .bind(id)
+            .first();
 
         if (!withdrawal) {
+
           return json({
             success: false,
-            error: "درخواست پیدا نشد."
+            error:
+              "درخواست پیدا نشد."
           }, 404);
         }
 
-        // اگر قبلاً pending بوده و رد شود،
-        // پول به حساب کاربر برمی‌گردد.
+        // فقط در صورتی که برداشت pending
+        // بوده و رد شود، پول برگردانده شود.
+
         if (
           withdrawal.status === "pending" &&
           status === "rejected"
         ) {
+
           await env.DB
             .prepare(`
               UPDATE users
@@ -506,15 +685,20 @@ export default {
             SET status = ?
             WHERE id = ?
           `)
-          .bind(status, id)
+          .bind(
+            status,
+            id
+          )
           .run();
 
         return json({
           success: true,
-          message: "وضعیت برداشت تغییر کرد."
+          message:
+            "وضعیت برداشت تغییر کرد."
         });
 
       } catch (error) {
+
         return json({
           success: false,
           error: error.message
@@ -525,9 +709,11 @@ export default {
     // =========================================================
     // مسیر نامعتبر
     // =========================================================
+
     return json({
       success: false,
-      error: "صفحه یا API مورد نظر پیدا نشد."
+      error:
+        "صفحه یا API مورد نظر پیدا نشد."
     }, 404);
   }
 };
@@ -540,11 +726,19 @@ export default {
 const HTML = `
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-<title>ابزارک هوش مصنوعی</title>
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
+>
+
+<title>
+ابزارک هوش مصنوعی
+</title>
 
 <style>
 
@@ -558,8 +752,14 @@ body{
     Tahoma,
     Arial,
     sans-serif;
+
   background:
-    linear-gradient(135deg,#f5f7fb,#e8eef8);
+    linear-gradient(
+      135deg,
+      #f5f7fb,
+      #e8eef8
+    );
+
   color:#222;
 }
 
@@ -573,8 +773,10 @@ body{
   border-radius:20px;
   padding:20px;
   margin-bottom:18px;
+
   box-shadow:
-    0 8px 30px rgba(0,0,0,.08);
+    0 8px 30px
+    rgba(0,0,0,.08);
 }
 
 h1{
@@ -596,8 +798,10 @@ button{
   padding:13px;
   margin-top:8px;
   margin-bottom:10px;
+
   border-radius:12px;
   border:1px solid #ddd;
+
   font-family:inherit;
   font-size:15px;
 }
@@ -655,19 +859,6 @@ button:hover{
   display:none;
 }
 
-.row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.message{
-  padding:12px;
-  border-radius:12px;
-  margin-top:8px;
-  background:#f3f4f6;
-}
-
 .small{
   font-size:13px;
   color:#777;
@@ -697,10 +888,6 @@ th{
 
 @media(max-width:600px){
 
-  .row{
-    grid-template-columns:1fr;
-  }
-
   .container{
     width:96%;
   }
@@ -708,19 +895,23 @@ th{
   .card{
     padding:15px;
   }
-
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
+  <!-- عنوان -->
+
   <div class="card">
 
-    <h1>🤖 دستیار هوش مصنوعی</h1>
+    <h1>
+      🤖 دستیار هوش مصنوعی
+    </h1>
 
     <div class="subtitle">
       سوالت را بنویس و از دستیار هوش مصنوعی کمک بگیر.
@@ -733,7 +924,9 @@ th{
 
   <div class="card">
 
-    <h2>👤 حساب من</h2>
+    <h2>
+      👤 حساب من
+    </h2>
 
     <input
       id="username"
@@ -741,16 +934,22 @@ th{
       value="user1"
     >
 
-    <button onclick="loadAccount()">
+    <button
+      onclick="loadAccount()"
+    >
       ورود به حساب
     </button>
 
     <div class="balance">
+
       💰
+
       <span id="balance">
         0
       </span>
+
       تومان
+
     </div>
 
     <div
@@ -765,7 +964,9 @@ th{
 
   <div class="card">
 
-    <h2>🤖 هوش مصنوعی</h2>
+    <h2>
+      🤖 هوش مصنوعی
+    </h2>
 
     <textarea
       id="prompt"
@@ -798,7 +999,9 @@ th{
 
   <div class="card">
 
-    <h2>💸 درخواست برداشت</h2>
+    <h2>
+      💸 درخواست برداشت
+    </h2>
 
     <div class="small">
       حداقل مبلغ برداشت: ۱۰٬۰۰۰ تومان
@@ -850,7 +1053,9 @@ th{
 
   <div class="card admin">
 
-    <h2>🔐 مدیریت</h2>
+    <h2>
+      🔐 مدیریت
+    </h2>
 
     <input
       id="adminPassword"
@@ -864,11 +1069,16 @@ th{
       ورود مدیریت
     </button>
 
-    <div id="adminPanel" class="hidden">
+    <div
+      id="adminPanel"
+      class="hidden"
+    >
 
       <hr>
 
-      <h3>➕ افزایش موجودی</h3>
+      <h3>
+        ➕ افزایش موجودی
+      </h3>
 
       <input
         id="adminUsername"
@@ -888,7 +1098,9 @@ th{
         افزایش موجودی
       </button>
 
-      <h3>📊 اطلاعات</h3>
+      <h3>
+        📊 اطلاعات
+      </h3>
 
       <button
         onclick="loadAdminData()"
@@ -912,14 +1124,15 @@ th{
 
 const API = "";
 
+
 // =========================================================
-// پیام
+// نمایش پیام
 // =========================================================
 
 function show(id,text){
 
-  document.getElementById(id).textContent = text;
-
+  document.getElementById(id)
+    .textContent = text;
 }
 
 
@@ -930,7 +1143,9 @@ function show(id,text){
 async function loadAccount(){
 
   const username =
-    document.getElementById("username").value.trim();
+    document.getElementById(
+      "username"
+    ).value.trim();
 
   if(!username){
 
@@ -945,19 +1160,21 @@ async function loadAccount(){
   try{
 
     const response =
-      await fetch(API + "/api/account",{
+      await fetch(
+        API + "/api/account",
+        {
+          method:"POST",
 
-        method:"POST",
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
 
-        headers:{
-          "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-          username
-        })
-
-      });
+          body:JSON.stringify({
+            username
+          })
+        }
+      );
 
     const data =
       await response.json();
@@ -972,10 +1189,12 @@ async function loadAccount(){
       return;
     }
 
-    document.getElementById("balance")
-      .textContent =
-      Number(data.user.balance)
-        .toLocaleString("fa-IR");
+    document.getElementById(
+      "balance"
+    ).textContent =
+      Number(
+        data.user.balance
+      ).toLocaleString("fa-IR");
 
     show(
       "accountMessage",
@@ -988,9 +1207,7 @@ async function loadAccount(){
       "accountMessage",
       "خطا در اتصال."
     );
-
   }
-
 }
 
 
@@ -1001,12 +1218,14 @@ async function loadAccount(){
 async function askAI(){
 
   const prompt =
-    document.getElementById("prompt")
-      .value.trim();
+    document.getElementById(
+      "prompt"
+    ).value.trim();
 
   const username =
-    document.getElementById("username")
-      .value.trim() || "guest";
+    document.getElementById(
+      "username"
+    ).value.trim() || "guest";
 
   if(!prompt){
 
@@ -1023,35 +1242,39 @@ async function askAI(){
     "⏳ در حال دریافت پاسخ..."
   );
 
-  document.getElementById("answer")
-    .textContent =
+  document.getElementById(
+    "answer"
+  ).textContent =
     "لطفاً صبر کنید...";
 
   try{
 
     const response =
-      await fetch(API + "/api/ai",{
+      await fetch(
+        API + "/api/ai",
+        {
+          method:"POST",
 
-        method:"POST",
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
 
-        headers:{
-          "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-          username,
-          prompt
-        })
-
-      });
+          body:JSON.stringify({
+            username,
+            prompt
+          })
+        }
+      );
 
     const data =
       await response.json();
 
     if(!data.success){
 
-      document.getElementById("answer")
-        .textContent =
+      document.getElementById(
+        "answer"
+      ).textContent =
         data.error || "خطا";
 
       show(
@@ -1062,8 +1285,9 @@ async function askAI(){
       return;
     }
 
-    document.getElementById("answer")
-      .textContent =
+    document.getElementById(
+      "answer"
+    ).textContent =
       data.answer;
 
     show(
@@ -1073,17 +1297,16 @@ async function askAI(){
 
   }catch(error){
 
-    document.getElementById("answer")
-      .textContent =
+    document.getElementById(
+      "answer"
+    ).textContent =
       "خطا در اتصال به سرور.";
 
     show(
       "aiStatus",
       "❌ خطا"
     );
-
   }
-
 }
 
 
@@ -1094,22 +1317,26 @@ async function askAI(){
 async function withdraw(){
 
   const username =
-    document.getElementById("username")
-      .value.trim();
+    document.getElementById(
+      "username"
+    ).value.trim();
 
   const amount =
     Number(
-      document.getElementById("withdrawAmount")
-        .value
+      document.getElementById(
+        "withdrawAmount"
+      ).value
     );
 
   const method =
-    document.getElementById("withdrawMethod")
-      .value;
+    document.getElementById(
+      "withdrawMethod"
+    ).value;
 
   const account =
-    document.getElementById("withdrawAccount")
-      .value.trim();
+    document.getElementById(
+      "withdrawAccount"
+    ).value.trim();
 
   if(!username){
 
@@ -1150,7 +1377,8 @@ async function withdraw(){
           method:"POST",
 
           headers:{
-            "Content-Type":"application/json"
+            "Content-Type":
+              "application/json"
           },
 
           body:JSON.stringify({
@@ -1183,7 +1411,6 @@ async function withdraw(){
       ).value = "";
 
       loadAccount();
-
     }
 
   }catch(error){
@@ -1192,9 +1419,7 @@ async function withdraw(){
       "withdrawMessage",
       "خطا در اتصال."
     );
-
   }
-
 }
 
 
@@ -1218,7 +1443,8 @@ async function adminLogin(){
           method:"POST",
 
           headers:{
-            "Content-Type":"application/json"
+            "Content-Type":
+              "application/json"
           },
 
           body:JSON.stringify({
@@ -1233,7 +1459,8 @@ async function adminLogin(){
     if(!data.success){
 
       alert(
-        data.error || "رمز اشتباه است."
+        data.error ||
+        "رمز اشتباه است."
       );
 
       return;
@@ -1241,7 +1468,9 @@ async function adminLogin(){
 
     document.getElementById(
       "adminPanel"
-    ).classList.remove("hidden");
+    ).classList.remove(
+      "hidden"
+    );
 
     alert(
       "ورود مدیریت موفق بود."
@@ -1254,9 +1483,7 @@ async function adminLogin(){
     alert(
       "خطا در اتصال."
     );
-
   }
-
 }
 
 
@@ -1292,7 +1519,8 @@ async function addBalance(){
           method:"POST",
 
           headers:{
-            "Content-Type":"application/json"
+            "Content-Type":
+              "application/json"
           },
 
           body:JSON.stringify({
@@ -1315,7 +1543,6 @@ async function addBalance(){
     if(data.success){
 
       loadAdminData();
-
     }
 
   }catch(error){
@@ -1323,9 +1550,7 @@ async function addBalance(){
     alert(
       "خطا در اتصال."
     );
-
   }
-
 }
 
 
@@ -1340,140 +1565,187 @@ async function loadAdminData(){
       "adminPassword"
     ).value;
 
-  const response =
-    await fetch(
-      API + "/api/admin/data",
-      {
-        method:"POST",
+  try{
 
-        headers:{
-          "Content-Type":"application/json"
-        },
+    const response =
+      await fetch(
+        API + "/api/admin/data",
+        {
+          method:"POST",
 
-        body:JSON.stringify({
-          password
-        })
-      }
-    );
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
 
-  const data =
-    await response.json();
+          body:JSON.stringify({
+            password
+          })
+        }
+      );
 
-  if(!data.success){
+    const data =
+      await response.json();
+
+    if(!data.success){
+
+      document.getElementById(
+        "adminData"
+      ).textContent =
+        data.error;
+
+      return;
+    }
+
+    let html = "";
+
+    html +=
+      "<h4>👥 کاربران</h4>";
+
+    html += "<table>";
+
+    html += `
+      <tr>
+        <th>ID</th>
+        <th>نام</th>
+        <th>موجودی</th>
+        <th>تاریخ</th>
+      </tr>
+    `;
+
+    for(
+      const user of data.users
+    ){
+
+      html += `
+        <tr>
+
+          <td>
+            ${user.id}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              user.username
+            )}
+          </td>
+
+          <td>
+            ${Number(
+              user.balance
+            ).toLocaleString("fa-IR")}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              user.created_at
+            )}
+          </td>
+
+        </tr>
+      `;
+    }
+
+    html += "</table>";
+
+    html +=
+      "<h4>💸 برداشت‌ها</h4>";
+
+    html += "<table>";
+
+    html += `
+      <tr>
+        <th>ID</th>
+        <th>کاربر</th>
+        <th>مبلغ</th>
+        <th>روش</th>
+        <th>حساب</th>
+        <th>وضعیت</th>
+        <th>عملیات</th>
+      </tr>
+    `;
+
+    for(
+      const w of data.withdrawals
+    ){
+
+      html += `
+        <tr>
+
+          <td>
+            ${w.id}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              w.username
+            )}
+          </td>
+
+          <td>
+            ${Number(
+              w.amount
+            ).toLocaleString("fa-IR")}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              w.method
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              w.account
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              w.status
+            )}
+          </td>
+
+          <td>
+
+            <button
+              onclick="changeWithdrawalStatus(
+                ${w.id},
+                'paid'
+              )"
+            >
+              پرداخت شد
+            </button>
+
+            <button
+              class="red"
+              onclick="changeWithdrawalStatus(
+                ${w.id},
+                'rejected'
+              )"
+            >
+              رد
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+    }
+
+    html += "</table>";
+
+    document.getElementById(
+      "adminData"
+    ).innerHTML = html;
+
+  }catch(error){
 
     document.getElementById(
       "adminData"
     ).textContent =
-      data.error;
-
-    return;
+      "خطا در اتصال.";
   }
-
-  let html = "";
-
-  html += "<h4>👥 کاربران</h4>";
-
-  html += "<table>";
-
-  html += `
-    <tr>
-      <th>ID</th>
-      <th>نام</th>
-      <th>موجودی</th>
-      <th>تاریخ</th>
-    </tr>
-  `;
-
-  for(
-    const user of data.users
-  ){
-
-    html += `
-      <tr>
-        <td>${user.id}</td>
-        <td>${escapeHtml(user.username)}</td>
-        <td>${Number(user.balance).toLocaleString("fa-IR")}</td>
-        <td>${escapeHtml(user.created_at)}</td>
-      </tr>
-    `;
-
-  }
-
-  html += "</table>";
-
-  html += "<h4>💸 برداشت‌ها</h4>";
-
-  html += "<table>";
-
-  html += `
-    <tr>
-      <th>ID</th>
-      <th>کاربر</th>
-      <th>مبلغ</th>
-      <th>روش</th>
-      <th>حساب</th>
-      <th>وضعیت</th>
-      <th>عملیات</th>
-    </tr>
-  `;
-
-  for(
-    const w of data.withdrawals
-  ){
-
-    html += `
-      <tr>
-
-        <td>${w.id}</td>
-
-        <td>
-          ${escapeHtml(w.username)}
-        </td>
-
-        <td>
-          ${Number(w.amount).toLocaleString("fa-IR")}
-        </td>
-
-        <td>
-          ${escapeHtml(w.method)}
-        </td>
-
-        <td>
-          ${escapeHtml(w.account)}
-        </td>
-
-        <td>
-          ${escapeHtml(w.status)}
-        </td>
-
-        <td>
-
-          <button
-            onclick="changeWithdrawalStatus(${w.id},'paid')"
-          >
-            پرداخت شد
-          </button>
-
-          <button
-            class="red"
-            onclick="changeWithdrawalStatus(${w.id},'rejected')"
-          >
-            رد
-          </button>
-
-        </td>
-
-      </tr>
-    `;
-
-  }
-
-  html += "</table>";
-
-  document.getElementById(
-    "adminData"
-  ).innerHTML = html;
-
 }
 
 
@@ -1491,39 +1763,48 @@ async function changeWithdrawalStatus(
       "adminPassword"
     ).value;
 
-  const response =
-    await fetch(
-      API + "/api/admin/withdraw-status",
-      {
-        method:"POST",
+  try{
 
-        headers:{
-          "Content-Type":"application/json"
-        },
+    const response =
+      await fetch(
+        API +
+        "/api/admin/withdraw-status",
+        {
+          method:"POST",
 
-        body:JSON.stringify({
-          password,
-          id,
-          status
-        })
-      }
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            password,
+            id,
+            status
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    alert(
+      data.success
+        ? "وضعیت تغییر کرد."
+        : data.error
     );
 
-  const data =
-    await response.json();
+    if(data.success){
 
-  alert(
-    data.success
-      ? "وضعیت تغییر کرد."
-      : data.error
-  );
+      loadAdminData();
+    }
 
-  if(data.success){
+  }catch(error){
 
-    loadAdminData();
-
+    alert(
+      "خطا در اتصال."
+    );
   }
-
 }
 
 
@@ -1534,12 +1815,26 @@ async function changeWithdrawalStatus(
 function escapeHtml(value){
 
   return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
 </script>
