@@ -2,91 +2,202 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // =========================
-    // صفحه اصلی
-    // =========================
-    if (request.method === "GET" && url.pathname === "/") {
-      return new Response(HTML, {
+    // =========================================================
+    // تنظیمات
+    // =========================================================
+    const ADMIN_PASSWORD = env.ADMIN_PASSWORD || "123456";
+
+    // =========================================================
+    // CORS
+    // =========================================================
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+
+    // =========================================================
+    // پاسخ JSON
+    // =========================================================
+    function json(data, status = 200) {
+      return new Response(JSON.stringify(data), {
+        status,
         headers: {
-          "content-type": "text/html; charset=UTF-8"
+          ...corsHeaders,
+          "Content-Type": "application/json; charset=UTF-8"
         }
       });
     }
 
-    // =========================
-    // آماده سازی D1
-    // =========================
-    if (request.method === "POST" && url.pathname === "/api/setup") {
+    // =========================================================
+    // ایجاد جداول D1
+    // =========================================================
+    async function initDB() {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          balance REAL DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS withdrawals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT NOT NULL,
+          amount REAL NOT NULL,
+          method TEXT NOT NULL,
+          account TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT NOT NULL,
+          prompt TEXT NOT NULL,
+          answer TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+    }
+
+    // =========================================================
+    // کاربر
+    // =========================================================
+    async function getUser(username) {
+      let user = await env.DB
+        .prepare("SELECT * FROM users WHERE username = ?")
+        .bind(username)
+        .first();
+
+      if (!user) {
+        await env.DB
+          .prepare("INSERT INTO users (username, balance) VALUES (?, 0)")
+          .bind(username)
+          .run();
+
+        user = await env.DB
+          .prepare("SELECT * FROM users WHERE username = ?")
+          .bind(username)
+          .first();
+      }
+
+      return user;
+    }
+
+    // =========================================================
+    // صفحه اصلی
+    // =========================================================
+    if (request.method === "GET" && url.pathname === "/") {
+      return new Response(HTML, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=UTF-8"
+        }
+      });
+    }
+
+    // =========================================================
+    // ایجاد جداول
+    // =========================================================
+    if (url.pathname === "/api/init" && request.method === "POST") {
       try {
-        await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS accounts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            email TEXT,
-            balance REAL DEFAULT 0,
-            plan TEXT DEFAULT 'free',
-            created_at TEXT
-          )
-        `).run();
+        await initDB();
 
-        await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS deposits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_id INTEGER,
-            amount REAL,
-            description TEXT,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT
-          )
-        `).run();
-
-        await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS withdrawals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_id INTEGER,
-            amount REAL,
-            method TEXT,
-            payment TEXT,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT
-          )
-        `).run();
-
-        return Response.json({
+        return json({
           success: true,
           message: "پایگاه داده آماده شد."
         });
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
-    // هوش مصنوعی
-    // =========================
-    if (request.method === "POST" && url.pathname === "/api/ai") {
+    // =========================================================
+    // دریافت حساب
+    // =========================================================
+    if (url.pathname === "/api/account" && request.method === "POST") {
       try {
+        await initDB();
+
         const body = await request.json();
+        const username = String(body.username || "").trim();
+
+        if (!username) {
+          return json({
+            success: false,
+            error: "نام کاربری وارد نشده است."
+          }, 400);
+        }
+
+        const user = await getUser(username);
+
+        return json({
+          success: true,
+          user: {
+            username: user.username,
+            balance: Number(user.balance || 0),
+            created_at: user.created_at
+          }
+        });
+
+      } catch (error) {
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
+      }
+    }
+
+    // =========================================================
+    // هوش مصنوعی
+    // =========================================================
+    if (url.pathname === "/api/ai" && request.method === "POST") {
+      try {
+        await initDB();
+
+        const body = await request.json();
+
+        const username = String(body.username || "guest").trim();
         const prompt = String(body.prompt || "").trim();
 
         if (!prompt) {
-          return Response.json(
-            { error: "لطفاً پیام خود را بنویسید." },
-            { status: 400 }
-          );
+          return json({
+            success: false,
+            error: "لطفاً پیام خود را وارد کنید."
+          }, 400);
+        }
+
+        // اگر Workers AI متصل نشده باشد
+        if (!env.AI) {
+          return json({
+            success: false,
+            error: "اتصال Workers AI انجام نشده است. Binding با نام AI اضافه کنید."
+          }, 500);
         }
 
         const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fast",
+          "@cf/meta/llama-3.1-8b-instruct",
           {
             messages: [
               {
                 role: "system",
                 content:
-                  "تو یک دستیار هوش مصنوعی فارسی هستی. پاسخ‌ها را واضح، مفید و دوستانه به زبان فارسی بده."
+                  "تو یک دستیار هوش مصنوعی فارسی هستی. پاسخ‌ها را واضح، مفید و تا حد امکان کوتاه بده."
               },
               {
                 role: "user",
@@ -96,645 +207,500 @@ export default {
           }
         );
 
-        return Response.json({
-          response: result.response || "پاسخی دریافت نشد."
-        });
-      } catch (error) {
-        return Response.json(
-          {
-            error:
-              "خطا در دریافت پاسخ هوش مصنوعی: " +
-              (error?.message || String(error))
-          },
-          { status: 500 }
-        );
-      }
-    }
+        const answer =
+          result?.response ||
+          result?.result?.response ||
+          "پاسخی دریافت نشد.";
 
-    // =========================
-    // دریافت حساب
-    // =========================
-    if (request.method === "GET" && url.pathname === "/api/account") {
-      try {
-        const account = await env.DB.prepare(
-          "SELECT * FROM accounts ORDER BY id ASC LIMIT 1"
-        ).first();
-
-        return Response.json({
-          account: account || null
-        });
-      } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
-      }
-    }
-
-    // =========================
-    // ذخیره حساب
-    // =========================
-    if (request.method === "POST" && url.pathname === "/api/account") {
-      try {
-        const body = await request.json();
-
-        const name = String(body.name || "").trim();
-        const email = String(body.email || "").trim();
-
-        if (!name || !email) {
-          return Response.json(
-            { error: "نام و ایمیل را وارد کنید." },
-            { status: 400 }
-          );
-        }
-
-        const existing = await env.DB.prepare(
-          "SELECT id FROM accounts ORDER BY id ASC LIMIT 1"
-        ).first();
-
-        if (existing) {
-          await env.DB.prepare(
-            "UPDATE accounts SET name = ?, email = ? WHERE id = ?"
-          )
-            .bind(name, email, existing.id)
-            .run();
-        } else {
-          await env.DB.prepare(
-            `INSERT INTO accounts
-             (name, email, balance, plan, created_at)
-             VALUES (?, ?, 0, 'free', ?)`
-          )
-            .bind(name, email, new Date().toISOString())
-            .run();
-        }
-
-        return Response.json({
-          success: true,
-          message: "اطلاعات حساب ذخیره شد."
-        });
-      } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
-      }
-    }
-
-    // =========================
-    // ثبت واریز
-    // =========================
-    if (request.method === "POST" && url.pathname === "/api/deposit") {
-      try {
-        const body = await request.json();
-
-        const amount = Number(body.amount);
-        const description = String(body.description || "").trim();
-
-        if (!Number.isFinite(amount) || amount <= 0) {
-          return Response.json(
-            { error: "مبلغ واریز معتبر نیست." },
-            { status: 400 }
-          );
-        }
-
-        const account = await env.DB.prepare(
-          "SELECT * FROM accounts ORDER BY id ASC LIMIT 1"
-        ).first();
-
-        if (!account) {
-          return Response.json(
-            { error: "ابتدا حساب کاربری را ایجاد کنید." },
-            { status: 400 }
-          );
-        }
-
-        await env.DB.prepare(`
-          INSERT INTO deposits
-          (account_id, amount, description, status, created_at)
-          VALUES (?, ?, ?, 'pending', ?)
-        `)
-          .bind(
-            account.id,
-            amount,
-            description,
-            new Date().toISOString()
-          )
+        await env.DB
+          .prepare(`
+            INSERT INTO messages (username, prompt, answer)
+            VALUES (?, ?, ?)
+          `)
+          .bind(username, prompt, answer)
           .run();
 
-        return Response.json({
+        return json({
           success: true,
-          message: "درخواست واریز ثبت شد و منتظر تأیید مدیر است."
+          answer
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: "خطا در دریافت پاسخ هوش مصنوعی: " + error.message
+        }, 500);
       }
     }
 
-    // =========================
-    // ثبت برداشت
-    // =========================
-    if (request.method === "POST" && url.pathname === "/api/withdraw") {
+    // =========================================================
+    // درخواست برداشت
+    // =========================================================
+    if (url.pathname === "/api/withdraw" && request.method === "POST") {
       try {
+        await initDB();
+
         const body = await request.json();
 
+        const username = String(body.username || "").trim();
         const amount = Number(body.amount);
         const method = String(body.method || "").trim();
-        const payment = String(body.payment || "").trim();
+        const account = String(body.account || "").trim();
 
-        if (!Number.isFinite(amount) || amount < 1) {
-          return Response.json(
-            { error: "حداقل مبلغ برداشت $1 است." },
-            { status: 400 }
-          );
+        if (!username || !amount || !method || !account) {
+          return json({
+            success: false,
+            error: "همه اطلاعات برداشت را کامل کنید."
+          }, 400);
         }
 
-        if (!payment) {
-          return Response.json(
-            { error: "اطلاعات دریافت را وارد کنید." },
-            { status: 400 }
-          );
+        if (amount < 10000) {
+          return json({
+            success: false,
+            error: "حداقل مبلغ برداشت ۱۰٬۰۰۰ تومان است."
+          }, 400);
         }
 
-        const account = await env.DB.prepare(
-          "SELECT * FROM accounts ORDER BY id ASC LIMIT 1"
-        ).first();
+        const user = await getUser(username);
 
-        if (!account) {
-          return Response.json(
-            { error: "ابتدا حساب کاربری را ذخیره کنید." },
-            { status: 400 }
-          );
+        const balance = Number(user.balance || 0);
+
+        if (amount > balance) {
+          return json({
+            success: false,
+            error: "موجودی شما کافی نیست."
+          }, 400);
         }
 
-        if (Number(account.balance) < amount) {
-          return Response.json(
-            { error: "موجودی کافی نیست." },
-            { status: 400 }
-          );
-        }
-
-        await env.DB.prepare(`
-          INSERT INTO withdrawals
-          (account_id, amount, method, payment, status, created_at)
-          VALUES (?, ?, ?, ?, 'pending', ?)
-        `)
-          .bind(
-            account.id,
-            amount,
-            method,
-            payment,
-            new Date().toISOString()
-          )
+        await env.DB
+          .prepare(`
+            INSERT INTO withdrawals
+            (username, amount, method, account, status)
+            VALUES (?, ?, ?, ?, 'pending')
+          `)
+          .bind(username, amount, method, account)
           .run();
 
-        await env.DB.prepare(
-          "UPDATE accounts SET balance = balance - ? WHERE id = ?"
-        )
-          .bind(amount, account.id)
+        await env.DB
+          .prepare(`
+            UPDATE users
+            SET balance = balance - ?
+            WHERE username = ?
+          `)
+          .bind(amount, username)
           .run();
 
-        return Response.json({
+        return json({
           success: true,
           message: "درخواست برداشت ثبت شد."
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
+    // =========================================================
     // ورود مدیریت
-    // =========================
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/login"
-    ) {
+    // =========================================================
+    if (url.pathname === "/api/admin/login" && request.method === "POST") {
       try {
         const body = await request.json();
         const password = String(body.password || "");
 
-        const adminPassword = env.ADMIN_PASSWORD || "123456";
-
-        if (password !== adminPassword) {
-          return Response.json(
-            { error: "رمز مدیریت اشتباه است." },
-            { status: 401 }
-          );
+        if (password !== ADMIN_PASSWORD) {
+          return json({
+            success: false,
+            error: "رمز مدیریت اشتباه است."
+          }, 401);
         }
 
-        return Response.json({
+        return json({
           success: true,
-          token: "ADMIN_OK"
+          message: "ورود مدیریت موفق بود."
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
+    // =========================================================
     // اطلاعات مدیریت
-    // =========================
-    if (
-      request.method === "GET" &&
-      url.pathname === "/api/admin/data"
-    ) {
-      const token = request.headers.get("x-admin-token");
-
-      if (token !== "ADMIN_OK") {
-        return Response.json(
-          { error: "دسترسی غیرمجاز." },
-          { status: 401 }
-        );
-      }
-
+    // =========================================================
+    if (url.pathname === "/api/admin/data" && request.method === "POST") {
       try {
-        const accounts = await env.DB.prepare(`
-          SELECT *
-          FROM accounts
-          ORDER BY id DESC
-        `).all();
+        const body = await request.json();
+        const password = String(body.password || "");
 
-        const deposits = await env.DB.prepare(`
-          SELECT deposits.*, accounts.name, accounts.email
-          FROM deposits
-          LEFT JOIN accounts
-          ON deposits.account_id = accounts.id
-          ORDER BY deposits.id DESC
-        `).all();
+        if (password !== ADMIN_PASSWORD) {
+          return json({
+            success: false,
+            error: "رمز مدیریت اشتباه است."
+          }, 401);
+        }
 
-        const withdrawals = await env.DB.prepare(`
-          SELECT withdrawals.*, accounts.name, accounts.email
-          FROM withdrawals
-          LEFT JOIN accounts
-          ON withdrawals.account_id = accounts.id
-          ORDER BY withdrawals.id DESC
-        `).all();
+        await initDB();
 
-        return Response.json({
-          accounts: accounts.results || [],
-          deposits: deposits.results || [],
+        const users = await env.DB
+          .prepare(`
+            SELECT id, username, balance, created_at
+            FROM users
+            ORDER BY id DESC
+          `)
+          .all();
+
+        const withdrawals = await env.DB
+          .prepare(`
+            SELECT *
+            FROM withdrawals
+            ORDER BY id DESC
+          `)
+          .all();
+
+        return json({
+          success: true,
+          users: users.results || [],
           withdrawals: withdrawals.results || []
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
-    // تایید واریز
-    // =========================
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/deposit/approve"
-    ) {
-      const token = request.headers.get("x-admin-token");
-
-      if (token !== "ADMIN_OK") {
-        return Response.json(
-          { error: "دسترسی غیرمجاز." },
-          { status: 401 }
-        );
-      }
-
+    // =========================================================
+    // افزایش موجودی توسط مدیریت
+    // =========================================================
+    if (url.pathname === "/api/admin/add-balance" && request.method === "POST") {
       try {
         const body = await request.json();
-        const id = Number(body.id);
 
-        const deposit = await env.DB.prepare(
-          "SELECT * FROM deposits WHERE id = ?"
-        )
-          .bind(id)
-          .first();
+        const password = String(body.password || "");
+        const username = String(body.username || "").trim();
+        const amount = Number(body.amount);
 
-        if (!deposit) {
-          return Response.json(
-            { error: "واریز پیدا نشد." },
-            { status: 404 }
-          );
+        if (password !== ADMIN_PASSWORD) {
+          return json({
+            success: false,
+            error: "رمز مدیریت اشتباه است."
+          }, 401);
         }
 
-        if (deposit.status !== "pending") {
-          return Response.json(
-            { error: "این تراکنش قبلاً بررسی شده است." },
-            { status: 400 }
-          );
+        if (!username || !amount || amount <= 0) {
+          return json({
+            success: false,
+            error: "نام کاربری و مبلغ معتبر وارد کنید."
+          }, 400);
         }
 
-        await env.DB.prepare(
-          "UPDATE deposits SET status = 'approved' WHERE id = ?"
-        )
-          .bind(id)
+        await initDB();
+        await getUser(username);
+
+        await env.DB
+          .prepare(`
+            UPDATE users
+            SET balance = balance + ?
+            WHERE username = ?
+          `)
+          .bind(amount, username)
           .run();
 
-        await env.DB.prepare(
-          "UPDATE accounts SET balance = balance + ? WHERE id = ?"
-        )
-          .bind(deposit.amount, deposit.account_id)
-          .run();
-
-        return Response.json({
+        return json({
           success: true,
-          message: "واریز تأیید شد و موجودی افزایش یافت."
+          message: "موجودی افزایش یافت."
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
-    // رد واریز
-    // =========================
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/deposit/reject"
-    ) {
-      const token = request.headers.get("x-admin-token");
-
-      if (token !== "ADMIN_OK") {
-        return Response.json(
-          { error: "دسترسی غیرمجاز." },
-          { status: 401 }
-        );
-      }
-
+    // =========================================================
+    // تغییر وضعیت برداشت
+    // =========================================================
+    if (url.pathname === "/api/admin/withdraw-status" && request.method === "POST") {
       try {
         const body = await request.json();
+
+        const password = String(body.password || "");
         const id = Number(body.id);
+        const status = String(body.status || "");
 
-        await env.DB.prepare(
-          "UPDATE deposits SET status = 'rejected' WHERE id = ? AND status = 'pending'"
-        )
-          .bind(id)
-          .run();
+        if (password !== ADMIN_PASSWORD) {
+          return json({
+            success: false,
+            error: "رمز مدیریت اشتباه است."
+          }, 401);
+        }
 
-        return Response.json({
-          success: true,
-          message: "واریز رد شد."
-        });
-      } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
-      }
-    }
+        if (!id || !["pending", "paid", "rejected"].includes(status)) {
+          return json({
+            success: false,
+            error: "اطلاعات نامعتبر است."
+          }, 400);
+        }
 
-    // =========================
-    // تایید برداشت
-    // =========================
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/withdraw/approve"
-    ) {
-      const token = request.headers.get("x-admin-token");
+        await initDB();
 
-      if (token !== "ADMIN_OK") {
-        return Response.json(
-          { error: "دسترسی غیرمجاز." },
-          { status: 401 }
-        );
-      }
-
-      try {
-        const body = await request.json();
-        const id = Number(body.id);
-
-        const withdrawal = await env.DB.prepare(
-          "SELECT * FROM withdrawals WHERE id = ?"
-        )
+        const withdrawal = await env.DB
+          .prepare(`
+            SELECT *
+            FROM withdrawals
+            WHERE id = ?
+          `)
           .bind(id)
           .first();
 
         if (!withdrawal) {
-          return Response.json(
-            { error: "درخواست برداشت پیدا نشد." },
-            { status: 404 }
-          );
+          return json({
+            success: false,
+            error: "درخواست پیدا نشد."
+          }, 404);
         }
 
-        if (withdrawal.status !== "pending") {
-          return Response.json(
-            { error: "این درخواست قبلاً بررسی شده است." },
-            { status: 400 }
-          );
+        // اگر قبلاً pending بوده و رد شود،
+        // پول به حساب کاربر برمی‌گردد.
+        if (
+          withdrawal.status === "pending" &&
+          status === "rejected"
+        ) {
+          await env.DB
+            .prepare(`
+              UPDATE users
+              SET balance = balance + ?
+              WHERE username = ?
+            `)
+            .bind(
+              Number(withdrawal.amount),
+              withdrawal.username
+            )
+            .run();
         }
 
-        await env.DB.prepare(
-          "UPDATE withdrawals SET status = 'approved' WHERE id = ?"
-        )
-          .bind(id)
+        await env.DB
+          .prepare(`
+            UPDATE withdrawals
+            SET status = ?
+            WHERE id = ?
+          `)
+          .bind(status, id)
           .run();
 
-        return Response.json({
+        return json({
           success: true,
-          message: "برداشت تأیید شد."
+          message: "وضعیت برداشت تغییر کرد."
         });
+
       } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
       }
     }
 
-    // =========================
-    // رد برداشت
-    // =========================
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/withdraw/reject"
-    ) {
-      const token = request.headers.get("x-admin-token");
-
-      if (token !== "ADMIN_OK") {
-        return Response.json(
-          { error: "دسترسی غیرمجاز." },
-          { status: 401 }
-        );
-      }
-
-      try {
-        const body = await request.json();
-        const id = Number(body.id);
-
-        const withdrawal = await env.DB.prepare(
-          "SELECT * FROM withdrawals WHERE id = ?"
-        )
-          .bind(id)
-          .first();
-
-        if (!withdrawal) {
-          return Response.json(
-            { error: "درخواست برداشت پیدا نشد." },
-            { status: 404 }
-          );
-        }
-
-        if (withdrawal.status !== "pending") {
-          return Response.json(
-            { error: "این درخواست قبلاً بررسی شده است." },
-            { status: 400 }
-          );
-        }
-
-        await env.DB.prepare(
-          "UPDATE withdrawals SET status = 'rejected' WHERE id = ?"
-        )
-          .bind(id)
-          .run();
-
-        await env.DB.prepare(
-          "UPDATE accounts SET balance = balance + ? WHERE id = ?"
-        )
-          .bind(withdrawal.amount, withdrawal.account_id)
-          .run();
-
-        return Response.json({
-          success: true,
-          message: "برداشت رد شد و مبلغ به موجودی برگشت."
-        });
-      } catch (error) {
-        return Response.json(
-          { error: error?.message || String(error) },
-          { status: 500 }
-        );
-      }
-    }
-
-    return new Response("Not Found", { status: 404 });
+    // =========================================================
+    // مسیر نامعتبر
+    // =========================================================
+    return json({
+      success: false,
+      error: "صفحه یا API مورد نظر پیدا نشد."
+    }, 404);
   }
 };
+
+
+// =============================================================
+// HTML
+// =============================================================
 
 const HTML = `
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ابزارک AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>ابزارک هوش مصنوعی</title>
 
 <style>
-*{box-sizing:border-box}
+
+*{
+  box-sizing:border-box;
+}
 
 body{
- margin:0;
- padding:15px;
- background:#f4f6fb;
- font-family:Tahoma,Arial,sans-serif
+  margin:0;
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+  background:
+    linear-gradient(135deg,#f5f7fb,#e8eef8);
+  color:#222;
 }
 
 .container{
- max-width:750px;
- margin:auto
+  width:min(950px,94%);
+  margin:25px auto;
 }
 
 .card{
- background:white;
- border-radius:18px;
- padding:18px;
- margin-bottom:15px;
- box-shadow:0 4px 20px rgba(0,0,0,.08)
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.08);
 }
 
-h1,h2,h3{margin-top:5px}
+h1{
+  text-align:center;
+  margin-top:0;
+  color:#333;
+}
 
 .subtitle{
- text-align:center;
- color:#777;
- margin-bottom:20px
+  text-align:center;
+  color:#777;
 }
 
-.balance{
- text-align:center;
- font-size:30px;
- font-weight:bold;
- margin:10px
-}
-
-.balance-label{
- text-align:center;
- color:#777
-}
-
+input,
+select,
+textarea,
 button{
- border:none;
- border-radius:10px;
- padding:12px 16px;
- font-size:15px;
- cursor:pointer;
- margin:4px
-}
-
-.primary{background:#2563eb;color:white}
-.success{background:#16a34a;color:white}
-.danger{background:#dc2626;color:white}
-.gray{background:#eee}
-
-input,textarea,select{
- width:100%;
- padding:13px;
- border:1px solid #ddd;
- border-radius:10px;
- margin-top:8px;
- margin-bottom:10px;
- font-size:15px;
- font-family:Tahoma
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  margin-bottom:10px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-family:inherit;
+  font-size:15px;
 }
 
 textarea{
- min-height:110px;
- resize:vertical
+  min-height:110px;
+  resize:vertical;
 }
 
-.hidden{display:none}
-
-.notice{
- background:#fff7ed;
- padding:12px;
- border-radius:10px;
- margin:10px 0;
- line-height:1.8
+button{
+  cursor:pointer;
+  border:none;
+  background:#222;
+  color:white;
+  font-weight:bold;
 }
 
-.plan{
- border:1px solid #ddd;
- border-radius:14px;
- padding:15px;
- margin:10px 0
+button:hover{
+  opacity:.9;
+}
+
+.ai-button{
+  background:#2563eb;
+}
+
+.green{
+  background:#16a34a;
+}
+
+.red{
+  background:#dc2626;
+}
+
+.admin{
+  background:#111827;
+  color:white;
+}
+
+.balance{
+  font-size:30px;
+  font-weight:bold;
+  text-align:center;
+  margin:15px 0;
 }
 
 .answer{
- margin-top:15px;
- background:#f8fafc;
- padding:15px;
- border-radius:12px;
- line-height:2;
- white-space:pre-wrap
+  white-space:pre-wrap;
+  background:#f6f7f9;
+  border-radius:12px;
+  padding:15px;
+  min-height:60px;
 }
 
-.item{
- background:#f8fafc;
- padding:12px;
- border-radius:10px;
- margin:8px 0;
- line-height:2
+.hidden{
+  display:none;
 }
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.message{
+  padding:12px;
+  border-radius:12px;
+  margin-top:8px;
+  background:#f3f4f6;
+}
+
+.small{
+  font-size:13px;
+  color:#777;
+}
+
+.admin-box{
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th,
+td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+  white-space:nowrap;
+}
+
+th{
+  background:#f3f4f6;
+}
+
+@media(max-width:600px){
+
+  .row{
+    grid-template-columns:1fr;
+  }
+
+  .container{
+    width:96%;
+  }
+
+  .card{
+    padding:15px;
+  }
+
+}
+
 </style>
 </head>
 
@@ -742,910 +708,829 @@ textarea{
 
 <div class="container">
 
-<div class="card">
-<h1>🤖 ابزارک AI</h1>
+  <div class="card">
 
-<div class="subtitle">
-ابزارهای سریع و کاربردی برای کارهای روزمره و تولید محتوا
-</div>
+    <h1>🤖 دستیار هوش مصنوعی</h1>
 
-<textarea id="prompt" placeholder="سوالت را بنویس..."></textarea>
+    <div class="subtitle">
+      سوالت را بنویس و از دستیار هوش مصنوعی کمک بگیر.
+    </div>
 
-<button class="primary" onclick="sendMessage()">ارسال</button>
-<button class="gray" onclick="clearChat()">🗑️ پاک کردن گفتگو</button>
+  </div>
 
-<div id="answer"></div>
-</div>
 
-<div class="card">
-<h2>🚀 اشتراک ابزارک</h2>
+  <!-- حساب -->
 
-<div class="plan">
-<h3>🆓 رایگان</h3>
-<strong>۰ تومان</strong>
-<p>استفاده محدود از ابزارهای پایه</p>
-<button class="gray">پلن فعلی</button>
-</div>
+  <div class="card">
 
-<div class="plan">
-<h3>⭐ حرفه‌ای</h3>
-<strong>۳۹۹٬۰۰۰ تومان</strong>
-<p>اشتراک یک‌ماهه</p>
-<p>استفاده بیشتر از ابزارها و امکانات حرفه‌ای</p>
-<button class="primary" onclick="requestPlan('professional')">
-خرید اشتراک حرفه‌ای
-</button>
-</div>
+    <h2>👤 حساب من</h2>
 
-<div class="plan">
-<h3>👑 ویژه</h3>
-<strong>۷۹۹٬۰۰۰ تومان</strong>
-<p>اشتراک یک‌ماهه</p>
-<p>سقف استفاده بسیار بالا و امکانات ویژه</p>
-<button class="primary" onclick="requestPlan('special')">
-خرید اشتراک ویژه
-</button>
-</div>
-</div>
+    <input
+      id="username"
+      placeholder="نام کاربری"
+      value="user1"
+    >
 
-<div class="card">
-<h2>💳 وضعیت اشتراک</h2>
-<div id="planStatus">پلن فعلی: رایگان</div>
-</div>
+    <button onclick="loadAccount()">
+      ورود به حساب
+    </button>
 
-<div class="card">
-<h2>💰 موجودی قابل برداشت</h2>
+    <div class="balance">
+      💰
+      <span id="balance">
+        0
+      </span>
+      تومان
+    </div>
 
-<div class="balance">
-$<span id="balance">0.00</span>
-</div>
+    <div
+      id="accountMessage"
+      class="small"
+    ></div>
 
-<div class="notice">
-موجودی فقط پس از ثبت و تأیید تراکنش افزایش پیدا می‌کند.
-</div>
+  </div>
 
-<button class="success" onclick="showDeposit()">💵 واریز</button>
-<button class="gray" onclick="showAccount()">👤 حساب کاربری</button>
-<button class="gray" onclick="showWithdraw()">💸 درخواست برداشت</button>
-</div>
 
-<div class="card hidden" id="account">
-<h2>👤 حساب کاربری</h2>
+  <!-- هوش مصنوعی -->
 
-<input id="name" placeholder="نام شما">
-<input id="email" type="email" placeholder="ایمیل شما">
+  <div class="card">
 
-<button class="primary" onclick="saveAccount()">
-ذخیره اطلاعات
-</button>
+    <h2>🤖 هوش مصنوعی</h2>
 
-<div id="accountMessage"></div>
-</div>
+    <textarea
+      id="prompt"
+      placeholder="پیامت را بنویس..."
+    ></textarea>
 
-<div class="card hidden" id="deposit">
-<h2>💵 ثبت واریز</h2>
+    <button
+      class="ai-button"
+      onclick="askAI()"
+    >
+      ارسال
+    </button>
 
-<div class="notice">
-مبلغ واریز را وارد کنید. پس از بررسی و تأیید مدیر، مبلغ به موجودی اضافه می‌شود.
-</div>
+    <div
+      id="aiStatus"
+      class="small"
+    ></div>
 
-<input id="depositAmount" type="number" step="0.01" placeholder="مبلغ">
-<input id="depositDescription" placeholder="شماره پیگیری یا توضیح">
+    <div
+      id="answer"
+      class="answer"
+    >
+      پاسخ اینجا نمایش داده می‌شود.
+    </div>
 
-<button class="success" onclick="requestDeposit()">
-ثبت درخواست واریز
-</button>
+  </div>
 
-<button class="gray" onclick="hideDeposit()">بستن</button>
 
-<div id="depositMessage"></div>
-</div>
+  <!-- برداشت -->
 
-<div class="card hidden" id="withdraw">
-<h2>💸 درخواست برداشت</h2>
+  <div class="card">
 
-<select id="method">
-<option value="Bank">حساب بانکی</option>
-<option value="USDT">USDT</option>
-<option value="Wallet">کیف پول</option>
-</select>
+    <h2>💸 درخواست برداشت</h2>
 
-<input id="withdrawAmount" type="number" step="0.01" placeholder="مبلغ برداشت">
-<input id="payment" placeholder="شماره حساب / آدرس کیف پول">
+    <div class="small">
+      حداقل مبلغ برداشت: ۱۰٬۰۰۰ تومان
+    </div>
 
-<button class="success" onclick="requestWithdraw()">
-ثبت درخواست برداشت
-</button>
+    <input
+      id="withdrawAmount"
+      type="number"
+      placeholder="مبلغ برداشت"
+    >
 
-<button class="gray" onclick="hideWithdraw()">بستن</button>
+    <select id="withdrawMethod">
 
-<div id="withdrawMessage"></div>
-</div>
+      <option value="">
+        روش پرداخت را انتخاب کنید
+      </option>
 
-<div class="card">
-<h2>🧰 ابزارهای کاربردی</h2>
+      <option value="bank">
+        کارت بانکی
+      </option>
 
-<div class="item">
-🧮 محاسبه درصد
-<input id="percentA" type="number" placeholder="عدد">
-<input id="percentB" type="number" placeholder="درصد">
-<button class="primary" onclick="calcPercent()">محاسبه</button>
-<div id="percentResult"></div>
-</div>
+      <option value="usdt">
+        USDT
+      </option>
 
-<div class="item">
-💵 دلار به تومان
-<input id="usd" type="number" placeholder="مبلغ دلار">
-<input id="rate" type="number" placeholder="نرخ دلار">
-<button class="primary" onclick="calcDollar()">محاسبه</button>
-<div id="dollarResult"></div>
-</div>
+    </select>
 
-<div class="item">
-🏷️ محاسبه تخفیف
-<input id="price" type="number" placeholder="قیمت">
-<input id="discount" type="number" placeholder="درصد تخفیف">
-<button class="primary" onclick="calcDiscount()">محاسبه</button>
-<div id="discountResult"></div>
-</div>
+    <input
+      id="withdrawAccount"
+      placeholder="شماره کارت / آدرس کیف پول"
+    >
 
-<div class="item">
-📈 محاسبه سود
-<input id="buy" type="number" placeholder="قیمت خرید">
-<input id="sell" type="number" placeholder="قیمت فروش">
-<button class="primary" onclick="calcProfit()">محاسبه</button>
-<div id="profitResult"></div>
-</div>
+    <button
+      class="green"
+      onclick="withdraw()"
+    >
+      ثبت درخواست برداشت
+    </button>
 
-<div class="item">
-📏 کیلومتر به متر
-<input id="km" type="number" placeholder="کیلومتر">
-<button class="primary" onclick="calcKm()">تبدیل</button>
-<div id="kmResult"></div>
-</div>
+    <div
+      id="withdrawMessage"
+      class="small"
+    ></div>
 
-<div class="item">
-💳 محاسبه اقساط
-<input id="loan" type="number" placeholder="مبلغ">
-<input id="months" type="number" placeholder="تعداد ماه">
-<button class="primary" onclick="calcLoan()">محاسبه</button>
-<div id="loanResult"></div>
-</div>
+  </div>
 
-<div class="item">
-🎂 محاسبه سن
-<input id="birth" type="number" placeholder="سال تولد">
-<button class="primary" onclick="calcAge()">محاسبه</button>
-<div id="ageResult"></div>
-</div>
 
-<div class="item">
-📝 تولید متن معرفی
-<input id="introName" placeholder="نام / موضوع">
-<button class="primary" onclick="makeIntro()">تولید متن</button>
-<div id="introResult"></div>
-</div>
+  <!-- مدیریت -->
 
-</div>
+  <div class="card admin">
 
-<div class="card">
-<h3>📋 وضعیت حساب</h3>
-<div id="status">حساب فعال است.</div>
-</div>
+    <h2>🔐 مدیریت</h2>
 
-<div class="card">
-<h2>🔐 پنل مدیریت</h2>
+    <input
+      id="adminPassword"
+      type="password"
+      placeholder="رمز مدیریت"
+    >
 
-<input id="adminPassword" type="password" placeholder="رمز مدیریت">
+    <button
+      onclick="adminLogin()"
+    >
+      ورود مدیریت
+    </button>
 
-<button class="danger" onclick="adminLogin()">
-ورود مدیر
-</button>
+    <div id="adminPanel" class="hidden">
 
-<div id="adminMessage"></div>
-</div>
+      <hr>
 
-<div class="card hidden" id="adminPanel">
+      <h3>➕ افزایش موجودی</h3>
 
-<h2>📊 مدیریت</h2>
+      <input
+        id="adminUsername"
+        placeholder="نام کاربری"
+      >
 
-<button class="primary" onclick="loadAdminData()">
-🔄 بروزرسانی
-</button>
+      <input
+        id="adminAmount"
+        type="number"
+        placeholder="مبلغ"
+      >
 
-<h3>👥 کاربران</h3>
-<div id="adminAccounts"></div>
+      <button
+        class="green"
+        onclick="addBalance()"
+      >
+        افزایش موجودی
+      </button>
 
-<h3>💵 واریزها</h3>
-<div id="adminDeposits"></div>
+      <h3>📊 اطلاعات</h3>
 
-<h3>💸 برداشت‌ها</h3>
-<div id="adminWithdrawals"></div>
+      <button
+        onclick="loadAdminData()"
+      >
+        بروزرسانی اطلاعات
+      </button>
+
+      <div
+        id="adminData"
+        class="admin-box"
+      ></div>
+
+    </div>
+
+  </div>
 
 </div>
 
-</div>
 
 <script>
 
-let balance = 0;
-let adminToken = "";
+const API = "";
 
-function updateBalance(value){
-  balance = Number(value || 0);
-  document.getElementById("balance").textContent =
-    balance.toFixed(2);
+// =========================================================
+// پیام
+// =========================================================
+
+function show(id,text){
+
+  document.getElementById(id).textContent = text;
+
 }
+
+
+// =========================================================
+// حساب
+// =========================================================
 
 async function loadAccount(){
-  try{
-    const r = await fetch("/api/account");
-    const d = await r.json();
 
-    if(d.account){
-      updateBalance(d.account.balance);
+  const username =
+    document.getElementById("username").value.trim();
 
-      document.getElementById("name").value =
-        d.account.name || "";
+  if(!username){
 
-      document.getElementById("email").value =
-        d.account.email || "";
+    show(
+      "accountMessage",
+      "نام کاربری را وارد کنید."
+    );
 
-      let plan = d.account.plan || "free";
-
-      document.getElementById("planStatus").textContent =
-        "پلن فعلی: " +
-        (
-          plan === "professional"
-          ? "⭐ حرفه‌ای"
-          : plan === "special"
-          ? "👑 ویژه"
-          : "🆓 رایگان"
-        );
-    }
-  }catch(e){
-    console.log(e);
-  }
-}
-
-async function sendMessage(){
-
-  const prompt =
-    document.getElementById("prompt").value.trim();
-
-  const answer =
-    document.getElementById("answer");
-
-  if(!prompt){
-    answer.innerHTML =
-      '<div class="answer">لطفاً پیام خود را بنویسید.</div>';
     return;
   }
 
-  answer.innerHTML =
-    '<div class="answer">⏳ در حال دریافت پاسخ...</div>';
-
   try{
-    const r = await fetch("/api/ai",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({prompt})
-    });
 
-    const d = await r.json();
+    const response =
+      await fetch(API + "/api/account",{
 
-    if(d.error){
-      answer.innerHTML =
-        '<div class="answer">❌ ' +
-        escapeHtml(d.error) +
-        '</div>';
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+          username
+        })
+
+      });
+
+    const data =
+      await response.json();
+
+    if(!data.success){
+
+      show(
+        "accountMessage",
+        data.error || "خطا"
+      );
+
       return;
     }
 
-    answer.innerHTML =
-      '<div class="answer">' +
-      escapeHtml(d.response) +
-      '</div>';
+    document.getElementById("balance")
+      .textContent =
+      Number(data.user.balance)
+        .toLocaleString("fa-IR");
 
-  }catch(e){
-    answer.innerHTML =
-      '<div class="answer">❌ خطا در اتصال به سرور</div>';
+    show(
+      "accountMessage",
+      "حساب با موفقیت آماده شد."
+    );
+
+  }catch(error){
+
+    show(
+      "accountMessage",
+      "خطا در اتصال."
+    );
+
   }
+
 }
 
-function clearChat(){
-  document.getElementById("prompt").value="";
-  document.getElementById("answer").innerHTML="";
-}
 
-function showAccount(){
-  document.getElementById("account").classList.remove("hidden");
-}
+// =========================================================
+// هوش مصنوعی
+// =========================================================
 
-function showDeposit(){
-  document.getElementById("deposit").classList.remove("hidden");
-}
+async function askAI(){
 
-function hideDeposit(){
-  document.getElementById("deposit").classList.add("hidden");
-}
+  const prompt =
+    document.getElementById("prompt")
+      .value.trim();
 
-function showWithdraw(){
-  document.getElementById("withdraw").classList.remove("hidden");
-}
+  const username =
+    document.getElementById("username")
+      .value.trim() || "guest";
 
-function hideWithdraw(){
-  document.getElementById("withdraw").classList.add("hidden");
-}
+  if(!prompt){
 
-async function saveAccount(){
+    show(
+      "aiStatus",
+      "لطفاً پیام خود را بنویس."
+    );
 
-  const name =
-    document.getElementById("name").value.trim();
-
-  const email =
-    document.getElementById("email").value.trim();
-
-  const msg =
-    document.getElementById("accountMessage");
-
-  if(!name || !email){
-    msg.innerHTML =
-      '<div class="notice">❌ نام و ایمیل را وارد کنید.</div>';
     return;
   }
 
-  try{
-    const r = await fetch("/api/account",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({name,email})
-    });
-
-    const d = await r.json();
-
-    msg.innerHTML =
-      '<div class="notice">' +
-      (
-        d.error
-        ? "❌ " + escapeHtml(d.error)
-        : "✅ اطلاعات ذخیره شد."
-      ) +
-      '</div>';
-
-  }catch(e){
-    msg.innerHTML =
-      '<div class="notice">❌ خطا در اتصال</div>';
-  }
-}
-
-async function requestDeposit(){
-
-  const amount =
-    Number(document.getElementById("depositAmount").value);
-
-  const description =
-    document.getElementById("depositDescription").value.trim();
-
-  const msg =
-    document.getElementById("depositMessage");
-
-  if(!Number.isFinite(amount) || amount <= 0){
-    msg.innerHTML =
-      '<div class="notice">❌ مبلغ معتبر وارد کنید.</div>';
-    return;
-  }
-
-  try{
-    const r = await fetch("/api/deposit",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        amount,
-        description
-      })
-    });
-
-    const d = await r.json();
-
-    msg.innerHTML =
-      '<div class="notice">' +
-      (
-        d.error
-        ? "❌ " + escapeHtml(d.error)
-        : "✅ " + escapeHtml(d.message)
-      ) +
-      '</div>';
-
-    if(d.success){
-      document.getElementById("depositAmount").value="";
-      document.getElementById("depositDescription").value="";
-    }
-
-  }catch(e){
-    msg.innerHTML =
-      '<div class="notice">❌ خطا در اتصال</div>';
-  }
-}
-
-async function requestWithdraw(){
-
-  const amount =
-    Number(document.getElementById("withdrawAmount").value);
-
-  const method =
-    document.getElementById("method").value;
-
-  const payment =
-    document.getElementById("payment").value.trim();
-
-  const msg =
-    document.getElementById("withdrawMessage");
-
-  if(!Number.isFinite(amount) || amount < 1){
-    msg.innerHTML =
-      '<div class="notice">❌ حداقل برداشت $1 است.</div>';
-    return;
-  }
-
-  if(amount > balance){
-    msg.innerHTML =
-      '<div class="notice">❌ موجودی کافی نیست.</div>';
-    return;
-  }
-
-  if(!payment){
-    msg.innerHTML =
-      '<div class="notice">❌ اطلاعات دریافت را وارد کنید.</div>';
-    return;
-  }
-
-  try{
-    const r = await fetch("/api/withdraw",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        amount,
-        method,
-        payment
-      })
-    });
-
-    const d = await r.json();
-
-    msg.innerHTML =
-      '<div class="notice">' +
-      (
-        d.error
-        ? "❌ " + escapeHtml(d.error)
-        : "✅ " + escapeHtml(d.message)
-      ) +
-      '</div>';
-
-    await loadAccount();
-
-  }catch(e){
-    msg.innerHTML =
-      '<div class="notice">❌ خطا در اتصال</div>';
-  }
-}
-
-function requestPlan(plan){
-
-  const amount =
-    plan === "professional"
-    ? 399000
-    : 799000;
-
-  const description =
-    plan === "professional"
-    ? "خرید اشتراک حرفه‌ای"
-    : "خرید اشتراک ویژه";
-
-  const ok = confirm(
-    description +
-    "\\nمبلغ: " +
-    amount.toLocaleString("fa-IR") +
-    " تومان" +
-    "\\n\\nپرداخت واقعی هنوز به درگاه متصل نیست. آیا درخواست واریز را ثبت کنم؟"
+  show(
+    "aiStatus",
+    "⏳ در حال دریافت پاسخ..."
   );
 
-  if(!ok) return;
+  document.getElementById("answer")
+    .textContent =
+    "لطفاً صبر کنید...";
 
-  document.getElementById("deposit").classList.remove("hidden");
+  try{
 
-  document.getElementById("depositAmount").value = amount;
+    const response =
+      await fetch(API + "/api/ai",{
 
-  document.getElementById("depositDescription").value =
-    description;
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+          username,
+          prompt
+        })
+
+      });
+
+    const data =
+      await response.json();
+
+    if(!data.success){
+
+      document.getElementById("answer")
+        .textContent =
+        data.error || "خطا";
+
+      show(
+        "aiStatus",
+        "❌ خطا"
+      );
+
+      return;
+    }
+
+    document.getElementById("answer")
+      .textContent =
+      data.answer;
+
+    show(
+      "aiStatus",
+      "✅ پاسخ دریافت شد."
+    );
+
+  }catch(error){
+
+    document.getElementById("answer")
+      .textContent =
+      "خطا در اتصال به سرور.";
+
+    show(
+      "aiStatus",
+      "❌ خطا"
+    );
+
+  }
+
 }
+
+
+// =========================================================
+// برداشت
+// =========================================================
+
+async function withdraw(){
+
+  const username =
+    document.getElementById("username")
+      .value.trim();
+
+  const amount =
+    Number(
+      document.getElementById("withdrawAmount")
+        .value
+    );
+
+  const method =
+    document.getElementById("withdrawMethod")
+      .value;
+
+  const account =
+    document.getElementById("withdrawAccount")
+      .value.trim();
+
+  if(!username){
+
+    show(
+      "withdrawMessage",
+      "ابتدا نام کاربری را وارد کنید."
+    );
+
+    return;
+  }
+
+  if(!amount || amount < 10000){
+
+    show(
+      "withdrawMessage",
+      "حداقل برداشت ۱۰٬۰۰۰ تومان است."
+    );
+
+    return;
+  }
+
+  if(!method || !account){
+
+    show(
+      "withdrawMessage",
+      "اطلاعات برداشت را کامل کنید."
+    );
+
+    return;
+  }
+
+  try{
+
+    const response =
+      await fetch(
+        API + "/api/withdraw",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+            username,
+            amount,
+            method,
+            account
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    show(
+      "withdrawMessage",
+      data.success
+        ? "✅ درخواست برداشت ثبت شد."
+        : "❌ " + data.error
+    );
+
+    if(data.success){
+
+      document.getElementById(
+        "withdrawAmount"
+      ).value = "";
+
+      document.getElementById(
+        "withdrawAccount"
+      ).value = "";
+
+      loadAccount();
+
+    }
+
+  }catch(error){
+
+    show(
+      "withdrawMessage",
+      "خطا در اتصال."
+    );
+
+  }
+
+}
+
+
+// =========================================================
+// ورود مدیریت
+// =========================================================
 
 async function adminLogin(){
 
   const password =
-    document.getElementById("adminPassword").value;
-
-  const msg =
-    document.getElementById("adminMessage");
-
-  if(!password){
-    msg.innerHTML =
-      '<div class="notice">❌ رمز مدیریت را وارد کنید.</div>';
-    return;
-  }
+    document.getElementById(
+      "adminPassword"
+    ).value;
 
   try{
 
-    const r = await fetch("/api/admin/login",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({password})
-    });
+    const response =
+      await fetch(
+        API + "/api/admin/login",
+        {
+          method:"POST",
 
-    const d = await r.json();
+          headers:{
+            "Content-Type":"application/json"
+          },
 
-    if(!d.success){
-      msg.innerHTML =
-        '<div class="notice">❌ ' +
-        escapeHtml(d.error) +
-        '</div>';
+          body:JSON.stringify({
+            password
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(!data.success){
+
+      alert(
+        data.error || "رمز اشتباه است."
+      );
+
       return;
     }
 
-    adminToken = d.token;
+    document.getElementById(
+      "adminPanel"
+    ).classList.remove("hidden");
 
-    document.getElementById("adminPanel")
-      .classList.remove("hidden");
-
-    msg.innerHTML =
-      '<div class="notice">✅ ورود مدیر موفق بود.</div>';
+    alert(
+      "ورود مدیریت موفق بود."
+    );
 
     loadAdminData();
 
-  }catch(e){
-    msg.innerHTML =
-      '<div class="notice">❌ خطا در ورود</div>';
+  }catch(error){
+
+    alert(
+      "خطا در اتصال."
+    );
+
   }
+
 }
+
+
+// =========================================================
+// افزایش موجودی
+// =========================================================
+
+async function addBalance(){
+
+  const password =
+    document.getElementById(
+      "adminPassword"
+    ).value;
+
+  const username =
+    document.getElementById(
+      "adminUsername"
+    ).value.trim();
+
+  const amount =
+    Number(
+      document.getElementById(
+        "adminAmount"
+      ).value
+    );
+
+  try{
+
+    const response =
+      await fetch(
+        API + "/api/admin/add-balance",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+            password,
+            username,
+            amount
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    alert(
+      data.success
+        ? "موجودی افزایش یافت."
+        : data.error
+    );
+
+    if(data.success){
+
+      loadAdminData();
+
+    }
+
+  }catch(error){
+
+    alert(
+      "خطا در اتصال."
+    );
+
+  }
+
+}
+
+
+// =========================================================
+// اطلاعات مدیریت
+// =========================================================
 
 async function loadAdminData(){
 
-  if(!adminToken) return;
+  const password =
+    document.getElementById(
+      "adminPassword"
+    ).value;
 
-  try{
+  const response =
+    await fetch(
+      API + "/api/admin/data",
+      {
+        method:"POST",
 
-    const r = await fetch("/api/admin/data",{
-      headers:{
-        "x-admin-token":adminToken
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+          password
+        })
       }
-    });
+    );
 
-    const d = await r.json();
+  const data =
+    await response.json();
 
-    if(d.error){
-      alert(d.error);
-      return;
-    }
+  if(!data.success){
 
-    renderAccounts(d.accounts || []);
-    renderDeposits(d.deposits || []);
-    renderWithdrawals(d.withdrawals || []);
+    document.getElementById(
+      "adminData"
+    ).textContent =
+      data.error;
 
-  }catch(e){
-    alert("خطا در دریافت اطلاعات مدیریت");
-  }
-}
-
-function renderAccounts(items){
-
-  const box =
-    document.getElementById("adminAccounts");
-
-  if(!items.length){
-    box.innerHTML =
-      '<div class="item">کاربری وجود ندارد.</div>';
     return;
   }
 
   let html = "";
 
-  items.forEach(function(a){
+  html += "<h4>👥 کاربران</h4>";
 
-    html +=
-      '<div class="item">' +
-      '👤 ' + escapeHtml(a.name || "-") +
-      '<br>📧 ' + escapeHtml(a.email || "-") +
-      '<br>💰 موجودی: $' +
-      Number(a.balance || 0).toFixed(2) +
-      '<br>⭐ پلن: ' +
-      escapeHtml(a.plan || "free") +
-      '</div>';
+  html += "<table>";
 
-  });
+  html += `
+    <tr>
+      <th>ID</th>
+      <th>نام</th>
+      <th>موجودی</th>
+      <th>تاریخ</th>
+    </tr>
+  `;
 
-  box.innerHTML = html;
-}
+  for(
+    const user of data.users
+  ){
 
-function renderDeposits(items){
+    html += `
+      <tr>
+        <td>${user.id}</td>
+        <td>${escapeHtml(user.username)}</td>
+        <td>${Number(user.balance).toLocaleString("fa-IR")}</td>
+        <td>${escapeHtml(user.created_at)}</td>
+      </tr>
+    `;
 
-  const box =
-    document.getElementById("adminDeposits");
-
-  if(!items.length){
-    box.innerHTML =
-      '<div class="item">واریزی وجود ندارد.</div>';
-    return;
   }
 
-  let html = "";
+  html += "</table>";
 
-  items.forEach(function(d){
+  html += "<h4>💸 برداشت‌ها</h4>";
 
-    html +=
-      '<div class="item">' +
-      '💵 مبلغ: ' +
-      Number(d.amount).toLocaleString() +
-      '<br>👤 ' +
-      escapeHtml(d.name || "-") +
-      '<br>📌 وضعیت: ' +
-      statusText(d.status) +
-      '<br>📝 ' +
-      escapeHtml(d.description || "-");
+  html += "<table>";
 
-    if(d.status === "pending"){
+  html += `
+    <tr>
+      <th>ID</th>
+      <th>کاربر</th>
+      <th>مبلغ</th>
+      <th>روش</th>
+      <th>حساب</th>
+      <th>وضعیت</th>
+      <th>عملیات</th>
+    </tr>
+  `;
 
-      html +=
-        '<br>' +
-        '<button class="success" onclick="approveDeposit(' +
-        Number(d.id) +
-        ')">✅ تأیید</button>' +
+  for(
+    const w of data.withdrawals
+  ){
 
-        '<button class="danger" onclick="rejectDeposit(' +
-        Number(d.id) +
-        ')">❌ رد</button>';
-    }
+    html += `
+      <tr>
 
-    html += '</div>';
-  });
+        <td>${w.id}</td>
 
-  box.innerHTML = html;
-}
+        <td>
+          ${escapeHtml(w.username)}
+        </td>
 
-function renderWithdrawals(items){
+        <td>
+          ${Number(w.amount).toLocaleString("fa-IR")}
+        </td>
 
-  const box =
-    document.getElementById("adminWithdrawals");
+        <td>
+          ${escapeHtml(w.method)}
+        </td>
 
-  if(!items.length){
-    box.innerHTML =
-      '<div class="item">درخواستی وجود ندارد.</div>';
-    return;
+        <td>
+          ${escapeHtml(w.account)}
+        </td>
+
+        <td>
+          ${escapeHtml(w.status)}
+        </td>
+
+        <td>
+
+          <button
+            onclick="changeWithdrawalStatus(${w.id},'paid')"
+          >
+            پرداخت شد
+          </button>
+
+          <button
+            class="red"
+            onclick="changeWithdrawalStatus(${w.id},'rejected')"
+          >
+            رد
+          </button>
+
+        </td>
+
+      </tr>
+    `;
+
   }
 
-  let html = "";
+  html += "</table>";
 
-  items.forEach(function(w){
+  document.getElementById(
+    "adminData"
+  ).innerHTML = html;
 
-    html +=
-      '<div class="item">' +
-      '💸 مبلغ: $' +
-      Number(w.amount).toFixed(2) +
-      '<br>👤 ' +
-      escapeHtml(w.name || "-") +
-      '<br>💳 روش: ' +
-      escapeHtml(w.method || "-") +
-      '<br>📌 ' +
-      statusText(w.status) +
-      '<br>📍 ' +
-      escapeHtml(w.payment || "-");
-
-    if(w.status === "pending"){
-
-      html +=
-        '<br>' +
-        '<button class="success" onclick="approveWithdraw(' +
-        Number(w.id) +
-        ')">✅ تأیید</button>' +
-
-        '<button class="danger" onclick="rejectWithdraw(' +
-        Number(w.id) +
-        ')">❌ رد و برگشت موجودی</button>';
-    }
-
-    html += '</div>';
-  });
-
-  box.innerHTML = html;
 }
 
-function statusText(s){
 
-  if(s === "pending") return "⏳ در انتظار";
-  if(s === "approved") return "✅ تأیید شده";
-  if(s === "rejected") return "❌ رد شده";
+// =========================================================
+// تغییر وضعیت برداشت
+// =========================================================
 
-  return s || "-";
-}
+async function changeWithdrawalStatus(
+  id,
+  status
+){
 
-async function adminAction(url,id){
+  const password =
+    document.getElementById(
+      "adminPassword"
+    ).value;
 
-  try{
+  const response =
+    await fetch(
+      API + "/api/admin/withdraw-status",
+      {
+        method:"POST",
 
-    const r = await fetch(url,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "x-admin-token":adminToken
-      },
-      body:JSON.stringify({id})
-    });
+        headers:{
+          "Content-Type":"application/json"
+        },
 
-    const d = await r.json();
+        body:JSON.stringify({
+          password,
+          id,
+          status
+        })
+      }
+    );
 
-    alert(d.message || d.error || "انجام شد");
+  const data =
+    await response.json();
 
-    await loadAdminData();
-    await loadAccount();
+  alert(
+    data.success
+      ? "وضعیت تغییر کرد."
+      : data.error
+  );
 
-  }catch(e){
+  if(data.success){
 
-    alert("خطا در انجام عملیات");
-  }
-}
+    loadAdminData();
 
-function approveDeposit(id){
-  adminAction("/api/admin/deposit/approve",id);
-}
-
-function rejectDeposit(id){
-  adminAction("/api/admin/deposit/reject",id);
-}
-
-function approveWithdraw(id){
-  adminAction("/api/admin/withdraw/approve",id);
-}
-
-function rejectWithdraw(id){
-  adminAction("/api/admin/withdraw/reject",id);
-}
-
-function calcPercent(){
-
-  const a =
-    Number(document.getElementById("percentA").value);
-
-  const b =
-    Number(document.getElementById("percentB").value);
-
-  document.getElementById("percentResult").innerHTML =
-    "نتیجه: " + ((a*b)/100);
-}
-
-function calcDollar(){
-
-  const usd =
-    Number(document.getElementById("usd").value);
-
-  const rate =
-    Number(document.getElementById("rate").value);
-
-  document.getElementById("dollarResult").innerHTML =
-    "نتیجه: " + (usd*rate).toLocaleString();
-}
-
-function calcDiscount(){
-
-  const price =
-    Number(document.getElementById("price").value);
-
-  const discount =
-    Number(document.getElementById("discount").value);
-
-  const result =
-    price - (price*discount/100);
-
-  document.getElementById("discountResult").innerHTML =
-    "قیمت نهایی: " + result.toLocaleString();
-}
-
-function calcProfit(){
-
-  const buy =
-    Number(document.getElementById("buy").value);
-
-  const sell =
-    Number(document.getElementById("sell").value);
-
-  document.getElementById("profitResult").innerHTML =
-    "سود: " + (sell-buy).toLocaleString();
-}
-
-function calcKm(){
-
-  const km =
-    Number(document.getElementById("km").value);
-
-  document.getElementById("kmResult").innerHTML =
-    "نتیجه: " + (km*1000) + " متر";
-}
-
-function calcLoan(){
-
-  const loan =
-    Number(document.getElementById("loan").value);
-
-  const months =
-    Number(document.getElementById("months").value);
-
-  if(months <= 0){
-    document.getElementById("loanResult").innerHTML =
-      "تعداد ماه معتبر نیست.";
-    return;
   }
 
-  document.getElementById("loanResult").innerHTML =
-    "قسط ماهانه: " +
-    (loan/months).toLocaleString();
 }
 
-function calcAge(){
 
-  const birth =
-    Number(document.getElementById("birth").value);
+// =========================================================
+// جلوگیری از HTML Injection
+// =========================================================
 
-  const year =
-    new Date().getFullYear();
+function escapeHtml(value){
 
-  document.getElementById("ageResult").innerHTML =
-    "سن تقریبی: " + (year-birth);
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
 }
-
-function makeIntro(){
-
-  const name =
-    document.getElementById("introName").value.trim();
-
-  document.getElementById("introResult").innerHTML =
-    name
-    ? "سلام! من " +
-      escapeHtml(name) +
-      " هستم و آماده ارائه خدمات و کمک به شما هستم."
-    : "لطفاً نام یا موضوع را وارد کنید.";
-}
-
-function escapeHtml(text){
-
-  const div =
-    document.createElement("div");
-
-  div.textContent = text;
-
-  return div.innerHTML;
-}
-
-document
-.getElementById("prompt")
-.addEventListener("keydown",function(event){
-
-  if(event.key === "Enter" && !event.shiftKey){
-
-    event.preventDefault();
-
-    sendMessage();
-  }
-});
-
-loadAccount();
 
 </script>
 
