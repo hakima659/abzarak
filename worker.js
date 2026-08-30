@@ -1,4 +1,3 @@
-
 const MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
 
 export default {
@@ -37,20 +36,12 @@ export default {
     if (!env.DB) {
       return json({
         ok: false,
-        error: "Binding دیتابیس DB پیدا نشد."
-      }, 500);
-    }
-
-    if (!env.AI) {
-      return json({
-        ok: false,
-        error:
-          "Binding هوش مصنوعی AI پیدا نشد. نام Binding باید دقیقاً AI باشد."
+        error: "D1 binding با نام DB متصل نیست."
       }, 500);
     }
 
     // =========================
-    // ساخت جدول‌ها
+    // Database
     // =========================
 
     try {
@@ -82,13 +73,13 @@ export default {
     } catch (e) {
       return json({
         ok: false,
-        error: "خطا در آماده‌سازی D1",
+        error: "خطا در اتصال D1",
         detail: e.message
       }, 500);
     }
 
     // =========================
-    // صفحه اصلی
+    // HOME
     // =========================
 
     if (
@@ -104,7 +95,7 @@ export default {
     }
 
     // =========================
-    // حساب کاربر
+    // ACCOUNT
     // =========================
 
     if (
@@ -124,15 +115,15 @@ export default {
       try {
         await env.DB.prepare(`
           INSERT OR IGNORE INTO users
-          (id,name,balance)
-          VALUES (?, ?, 0)
+          (id, name, balance)
+          VALUES (?, 'کاربر جدید', 0)
         `)
-          .bind(userId, "کاربر جدید")
+          .bind(userId)
           .run();
 
         const user =
           await env.DB.prepare(`
-            SELECT id,name,balance,created_at
+            SELECT id, name, balance, created_at
             FROM users
             WHERE id = ?
           `)
@@ -159,7 +150,7 @@ export default {
     }
 
     // =========================
-    // هوش مصنوعی
+    // CHAT
     // =========================
 
     if (
@@ -204,29 +195,34 @@ export default {
         }, 400);
       }
 
+      if (!env.AI) {
+        return json({
+          ok: false,
+          error:
+            "Workers AI binding با نام AI متصل نیست."
+        }, 500);
+      }
+
       try {
-        // ساخت کاربر
         await env.DB.prepare(`
           INSERT OR IGNORE INTO users
-          (id,name,balance)
-          VALUES (?, ?, 0)
+          (id, name, balance)
+          VALUES (?, 'کاربر جدید', 0)
         `)
-          .bind(userId, "کاربر جدید")
+          .bind(userId)
           .run();
 
-        // ذخیره پیام
         await env.DB.prepare(`
           INSERT INTO messages
-          (user_id,role,content)
+          (user_id, role, content)
           VALUES (?, 'user', ?)
         `)
           .bind(userId, message)
           .run();
 
-        // تاریخچه
         const history =
           await env.DB.prepare(`
-            SELECT role,content
+            SELECT role, content
             FROM messages
             WHERE user_id = ?
             ORDER BY id DESC
@@ -239,7 +235,7 @@ export default {
           {
             role: "system",
             content:
-              "تو یک دستیار هوش مصنوعی فارسی دقیق، مفید و مودب هستی. پاسخ‌ها را فارسی بده مگر کاربر زبان دیگری بخواهد."
+              "تو یک دستیار هوش مصنوعی فارسی دقیق، مفید و مودب هستی. پاسخ را فارسی بده مگر کاربر زبان دیگری بخواهد."
           }
         ];
 
@@ -257,26 +253,25 @@ export default {
           });
         }
 
-        // اجرای AI
         let result;
 
         try {
-          result = await env.AI.run(
-            MODEL,
-            {
-              messages,
-              max_tokens: 700,
-              temperature: 0.6
-            }
-          );
-        } catch (aiError) {
+          result =
+            await env.AI.run(
+              MODEL,
+              {
+                messages,
+                max_tokens: 700,
+                temperature: 0.6
+              }
+            );
+        } catch (e) {
           return json({
             ok: false,
             error:
-              "خطا در اجرای Workers AI",
+              "خطا در اجرای هوش مصنوعی",
             detail:
-              aiError.message ||
-              String(aiError)
+              e.message || String(e)
           }, 502);
         }
 
@@ -295,13 +290,12 @@ export default {
           }, 502);
         }
 
-        // ذخیره پاسخ AI
         await env.DB.prepare(`
           INSERT INTO messages
-          (user_id,role,content)
+          (user_id, role, content)
           VALUES (?, 'assistant', ?)
         `)
-          .bind(userId, answer)
+          .bind(userId, String(answer))
           .run();
 
         return json({
@@ -313,14 +307,14 @@ export default {
         return json({
           ok: false,
           error: "خطای سرور در بخش AI",
-          detail: e.message ||
-            String(e)
+          detail:
+            e.message || String(e)
         }, 500);
       }
     }
 
     // =========================
-    // پاک کردن گفتگو
+    // CLEAR CHAT
     // =========================
 
     if (
@@ -359,7 +353,7 @@ export default {
     }
 
     // =========================
-    // برداشت
+    // WITHDRAW
     // =========================
 
     if (
@@ -407,7 +401,7 @@ export default {
         return json({
           ok: false,
           error:
-            "حداقل مبلغ برداشت 10 دلار است"
+            "حداقل برداشت 10 دلار است"
         }, 400);
       }
 
@@ -460,7 +454,7 @@ export default {
 
           env.DB.prepare(`
             INSERT INTO withdrawals
-            (user_id,amount,wallet,status)
+            (user_id, amount, wallet, status)
             VALUES (?, ?, ?, 'pending')
           `)
             .bind(
@@ -487,7 +481,7 @@ export default {
     }
 
     // =========================
-    // مدیریت کاربران
+    // ADMIN USERS
     // =========================
 
     if (
@@ -512,7 +506,11 @@ export default {
       try {
         const users =
           await env.DB.prepare(`
-            SELECT id,name,balance,created_at
+            SELECT
+              id,
+              name,
+              balance,
+              created_at
             FROM users
             ORDER BY created_at DESC
             LIMIT 500
@@ -524,7 +522,6 @@ export default {
           users:
             users.results || []
         });
-
       } catch (e) {
         return json({
           ok: false,
@@ -536,7 +533,7 @@ export default {
     }
 
     // =========================
-    // افزایش موجودی مدیریت
+    // ADMIN CREDIT
     // =========================
 
     if (
@@ -583,7 +580,7 @@ export default {
         return json({
           ok: false,
           error:
-            "شناسه کاربر و مبلغ لازم است"
+            "اطلاعات ناقص است"
         }, 400);
       }
 
@@ -612,21 +609,11 @@ export default {
           .bind(amount, userId)
           .run();
 
-        const updated =
-          await env.DB.prepare(`
-            SELECT balance
-            FROM users
-            WHERE id = ?
-          `)
-            .bind(userId)
-            .first();
-
         return json({
           ok: true,
-          balance:
-            Number(updated.balance || 0)
+          message:
+            "موجودی تغییر کرد"
         });
-
       } catch (e) {
         return json({
           ok: false,
@@ -638,7 +625,7 @@ export default {
     }
 
     // =========================
-    // درخواست‌های برداشت مدیریت
+    // ADMIN WITHDRAWALS
     // =========================
 
     if (
@@ -676,7 +663,6 @@ export default {
           withdrawals:
             withdrawals.results || []
         });
-
       } catch (e) {
         return json({
           ok: false,
@@ -696,16 +682,20 @@ export default {
 
 
 // ======================================================
-// APP
+// FULL HTML
 // ======================================================
 
 const HTML = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1"
+>
 
 <title>ابزارک AI</title>
 
@@ -718,7 +708,9 @@ box-sizing:border-box;
 body{
 margin:0;
 font-family:
-Tahoma,Arial,sans-serif;
+Tahoma,
+Arial,
+sans-serif;
 background:
 linear-gradient(
 135deg,
@@ -840,6 +832,7 @@ color:#fff;
 
 button:disabled{
 opacity:.5;
+cursor:not-allowed;
 }
 
 .green{
@@ -900,7 +893,9 @@ width:100%;
 
 <div class="logo">🤖</div>
 
-<h1>ابزارک AI</h1>
+<h1>
+ابزارک AI
+</h1>
 
 <div class="small">
 دستیار هوش مصنوعی فارسی + حساب کاربری
@@ -912,7 +907,8 @@ width:100%;
 
 <div
 class="balance"
-id="balance">
+id="balance"
+>
 $0.00
 </div>
 
@@ -923,11 +919,14 @@ $0.00
 
 <div class="card">
 
-<h2>💬 دستیار هوش مصنوعی</h2>
+<h2>
+💬 دستیار هوش مصنوعی
+</h2>
 
 <div
 id="chat"
-class="chat">
+class="chat"
+>
 
 <div class="msg ai">
 سلام! 👋
@@ -939,35 +938,43 @@ class="chat">
 
 <div
 id="status"
-class="status">
-</div>
+class="status"
+></div>
 
 <div class="composer">
 
 <textarea
 id="message"
-placeholder="پیامت را بنویس...">
-</textarea>
+placeholder="پیامت را بنویس..."
+></textarea>
 
 <button
-id="send">
+id="send"
+>
 ارسال
 </button>
 
 </div>
 
+<div style="margin-top:8px">
+
 <button
 class="red"
-id="clear">
+id="clear"
+>
 🗑️ پاک کردن گفتگو
 </button>
+
+</div>
 
 </div>
 
 
 <div class="card">
 
-<h2>💵 برداشت</h2>
+<h2>
+💵 برداشت
+</h2>
 
 <div class="small">
 حداقل برداشت: 10 دلار
@@ -978,23 +985,26 @@ id="amount"
 type="number"
 min="10"
 step="0.01"
-placeholder="مبلغ برداشت به دلار">
+placeholder="مبلغ برداشت به دلار"
+>
 
 <input
 id="wallet"
 type="text"
-placeholder="آدرس کیف پول USDT">
+placeholder="آدرس کیف پول USDT"
+>
 
 <button
 class="green"
-id="withdraw">
+id="withdraw"
+>
 درخواست برداشت
 </button>
 
 <div
 id="withdrawStatus"
-class="status">
-</div>
+class="status"
+></div>
 
 </div>
 
@@ -1004,8 +1014,9 @@ class="status">
 <script>
 
 const userId =
-localStorage.getItem("ai_user_id")
-||
+localStorage.getItem(
+"ai_user_id"
+) ||
 crypto.randomUUID();
 
 localStorage.setItem(
@@ -1023,17 +1034,20 @@ path,
 options={}
 ){
 
+const headers = {
+...(options.headers || {}),
+"X-User-ID":
+userId,
+"Content-Type":
+"application/json"
+};
+
 const response =
 await fetch(
 path,
 {
 ...options,
-headers:{
-...(options.headers || {}),
-"X-User-ID":userId,
-"Content-Type":
-"application/json"
-}
+headers
 }
 );
 
@@ -1116,8 +1130,7 @@ document.createElement(
 );
 
 div.className =
-"msg "
-+
+"msg " +
 (
 type === "user"
 ? "user"
@@ -1178,6 +1191,15 @@ message:text
 }
 );
 
+if(!data.ok){
+
+throw new Error(
+data.error ||
+"خطا در دریافت پاسخ"
+);
+
+}
+
 addMessage(
 data.answer,
 "ai"
@@ -1190,8 +1212,7 @@ $("status")
 }catch(e){
 
 addMessage(
-"❌ "
-+
+"❌ " +
 e.message,
 "ai"
 );
@@ -1223,11 +1244,10 @@ sendMessage
 $("message")
 .addEventListener(
 "keydown",
-e=>{
+e => {
 
 if(
-e.key === "Enter"
-&&
+e.key === "Enter" &&
 !e.shiftKey
 ){
 
@@ -1244,7 +1264,7 @@ sendMessage();
 $("clear")
 .addEventListener(
 "click",
-async()=>{
+async () => {
 
 try{
 
@@ -1256,18 +1276,15 @@ method:"POST"
 );
 
 $("chat").innerHTML =
-`
-<div class="msg ai">
-گفتگو پاک شد. 👋
-</div>
-`;
+'<div class="msg ai">' +
+'گفتگو پاک شد. 👋' +
+'</div>';
 
 }catch(e){
 
 $("status")
 .textContent =
-"❌ "
-+
+"❌ " +
 e.message;
 
 }
@@ -1279,7 +1296,7 @@ e.message;
 $("withdraw")
 .addEventListener(
 "click",
-async()=>{
+async () => {
 
 const amount =
 Number(
@@ -1287,7 +1304,9 @@ $("amount").value
 );
 
 const wallet =
-$("wallet").value.trim();
+$("wallet")
+.value
+.trim();
 
 $("withdrawStatus")
 .textContent =
@@ -1310,8 +1329,7 @@ wallet
 
 $("withdrawStatus")
 .textContent =
-"✅ "
-+
+"✅ " +
 data.message;
 
 $("amount").value =
@@ -1326,8 +1344,7 @@ await loadAccount();
 
 $("withdrawStatus")
 .textContent =
-"❌ "
-+
+"❌ " +
 e.message;
 
 }
@@ -1341,4 +1358,5 @@ loadAccount();
 </script>
 
 </body>
+
 </html>`;
