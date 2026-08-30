@@ -189,8 +189,7 @@ export default {
             error: "اتصال Workers AI انجام نشده است. Binding با نام AI اضافه کنید."
           }, 500);
         const result = await env.AI.run(
-  "@cf/meta/llama-3.1-8b-instruct-fast",
-  {
+  ,"cf/meta/llama-3.1-8b-instruct-fast@
             messages: [
               {
                 role: "system",
