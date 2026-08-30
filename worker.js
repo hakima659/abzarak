@@ -187,7 +187,7 @@ export default {
           return json({
             success: false,
             error: "اتصال Workers AI انجام نشده است. Binding با نام AI اضافه کنید."
-          }, 500);const result = await env.AI.run(
+          }, 500);const result = await env.AI.run
   "@cf/meta/llama-3.1-8b-instruct",
   {
     messages: [
