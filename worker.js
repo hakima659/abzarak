@@ -187,9 +187,22 @@ export default {
           return json({
             success: false,
             error: "اتصال Workers AI انجام نشده است. Binding با نام AI اضافه کنید."
-          }, 500);
-        const result = await env.AI.run(
-  ,"cf/meta/llama-3.1-8b-instruct-fast@
+          }, 500);const result = await env.AI.run(
+  "@cf/meta/llama-3.1-8b-instruct",
+  {
+    messages: [
+      {
+        role: "system",
+        content:
+          "تو یک دستیار هوش مصنوعی فارسی هستی. پاسخ‌ها را واضح، مفید و تا حد امکان کوتاه بده."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ]
+  }
+);
             messages: [
               {
                 role: "system",
