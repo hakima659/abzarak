@@ -1,3 +1,4 @@
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -75,6 +76,17 @@ export default {
           created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
       `).run();
+
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS deposits (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT NOT NULL,
+          amount REAL NOT NULL,
+          reference TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
     }
 
     // =========================================================
@@ -84,38 +96,31 @@ export default {
     async function getUser(username) {
 
       let user = await env.DB
-        .prepare("SELECT * FROM users WHERE username = ?")
+        .prepare(
+          "SELECT * FROM users WHERE username = ?"
+        )
         .bind(username)
         .first();
 
-      // =========================================================
-// کاربر
-// =========================================================
+      if (!user) {
 
-async function getUser(username) {
+        await env.DB
+          .prepare(
+            "INSERT INTO users (username, balance) VALUES (?, 0)"
+          )
+          .bind(username)
+          .run();
 
-  let user = await env.DB
-    .prepare("SELECT * FROM users WHERE username = ?")
-    .bind(username)
-    .first();
+        user = await env.DB
+          .prepare(
+            "SELECT * FROM users WHERE username = ?"
+          )
+          .bind(username)
+          .first();
+      }
 
-  if (!user) {
-
-    await env.DB
-      .prepare(
-        "INSERT INTO users (username, balance) VALUES (?, 0)"
-      )
-      .bind(username)
-      .run();
-
-    user = await env.DB
-      .prepare("SELECT * FROM users WHERE username = ?")
-      .bind(username)
-      .first();
-  }
-
-  return user;
-}
+      return user;
+    }
 
     // =========================================================
     // صفحه اصلی
@@ -236,20 +241,14 @@ async function getUser(username) {
           }, 400);
         }
 
-        // بررسی اتصال Workers AI
-
         if (!env.AI) {
 
           return json({
             success: false,
             error:
-              "Workers AI متصل نیست. ابتدا Binding با نام AI را اضافه کنید."
+              "Workers AI متصل نیست. Binding با نام AI را اضافه کنید."
           }, 500);
         }
-
-        // =====================================================
-        // اجرای مدل فعال Cloudflare
-        // =====================================================
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct-fast",
@@ -272,8 +271,6 @@ async function getUser(username) {
           result?.response ||
           result?.result?.response ||
           "پاسخی دریافت نشد.";
-
-        // ذخیره پیام
 
         await env.DB
           .prepare(`
@@ -300,6 +297,72 @@ async function getUser(username) {
           error:
             "خطا در دریافت پاسخ هوش مصنوعی: " +
             error.message
+        }, 500);
+      }
+    }
+
+    // =========================================================
+    // ثبت واریز
+    // =========================================================
+
+    if (
+      url.pathname === "/api/deposit" &&
+      request.method === "POST"
+    ) {
+
+      try {
+
+        await initDB();
+
+        const body = await request.json();
+
+        const username =
+          String(body.username || "").trim();
+
+        const amount =
+          Number(body.amount);
+
+        const reference =
+          String(body.reference || "").trim();
+
+        if (
+          !username ||
+          !amount ||
+          amount <= 0
+        ) {
+
+          return json({
+            success: false,
+            error: "مبلغ معتبر وارد کنید."
+          }, 400);
+        }
+
+        await getUser(username);
+
+        await env.DB
+          .prepare(`
+            INSERT INTO deposits
+            (username, amount, reference, status)
+            VALUES (?, ?, ?, 'pending')
+          `)
+          .bind(
+            username,
+            amount,
+            reference
+          )
+          .run();
+
+        return json({
+          success: true,
+          message:
+            "درخواست واریز ثبت شد و منتظر تأیید مدیر است."
+        });
+
+      } catch (error) {
+
+        return json({
+          success: false,
+          error: error.message
         }, 500);
       }
     }
@@ -340,7 +403,8 @@ async function getUser(username) {
 
           return json({
             success: false,
-            error: "همه اطلاعات برداشت را کامل کنید."
+            error:
+              "همه اطلاعات برداشت را کامل کنید."
           }, 400);
         }
 
@@ -504,11 +568,22 @@ async function getUser(username) {
             `)
             .all();
 
+        const deposits =
+          await env.DB
+            .prepare(`
+              SELECT *
+              FROM deposits
+              ORDER BY id DESC
+            `)
+            .all();
+
         return json({
           success: true,
           users: users.results || [],
           withdrawals:
-            withdrawals.results || []
+            withdrawals.results || [],
+          deposits:
+            deposits.results || []
         });
 
       } catch (error) {
@@ -599,6 +674,122 @@ async function getUser(username) {
     }
 
     // =========================================================
+    // تأیید یا رد واریز
+    // =========================================================
+
+    if (
+      url.pathname === "/api/admin/deposit-status" &&
+      request.method === "POST"
+    ) {
+
+      try {
+
+        const body =
+          await request.json();
+
+        const password =
+          String(body.password || "");
+
+        const id =
+          Number(body.id);
+
+        const status =
+          String(body.status || "");
+
+        if (
+          password !== ADMIN_PASSWORD
+        ) {
+
+          return json({
+            success: false,
+            error:
+              "رمز مدیریت اشتباه است."
+          }, 401);
+        }
+
+        if (
+          !id ||
+          ![
+            "pending",
+            "approved",
+            "rejected"
+          ].includes(status)
+        ) {
+
+          return json({
+            success: false,
+            error:
+              "اطلاعات نامعتبر است."
+          }, 400);
+        }
+
+        await initDB();
+
+        const deposit =
+          await env.DB
+            .prepare(`
+              SELECT *
+              FROM deposits
+              WHERE id = ?
+            `)
+            .bind(id)
+            .first();
+
+        if (!deposit) {
+
+          return json({
+            success: false,
+            error:
+              "واریز پیدا نشد."
+          }, 404);
+        }
+
+        if (
+          deposit.status === "pending" &&
+          status === "approved"
+        ) {
+
+          await env.DB
+            .prepare(`
+              UPDATE users
+              SET balance = balance + ?
+              WHERE username = ?
+            `)
+            .bind(
+              Number(deposit.amount),
+              deposit.username
+            )
+            .run();
+        }
+
+        await env.DB
+          .prepare(`
+            UPDATE deposits
+            SET status = ?
+            WHERE id = ?
+          `)
+          .bind(
+            status,
+            id
+          )
+          .run();
+
+        return json({
+          success: true,
+          message:
+            "وضعیت واریز تغییر کرد."
+        });
+
+      } catch (error) {
+
+        return json({
+          success: false,
+          error: error.message
+        }, 500);
+      }
+    }
+
+    // =========================================================
     // تغییر وضعیت برداشت
     // =========================================================
 
@@ -665,12 +856,9 @@ async function getUser(username) {
           return json({
             success: false,
             error:
-              "درخواست پیدا نشد."
+              "درخواست برداشت پیدا نشد."
           }, 404);
         }
-
-        // فقط در صورتی که برداشت pending
-        // بوده و رد شود، پول برگردانده شود.
 
         if (
           withdrawal.status === "pending" &&
@@ -846,6 +1034,10 @@ button:hover{
   background:#dc2626;
 }
 
+.orange{
+  background:#d97706;
+}
+
 .admin{
   background:#111827;
   color:white;
@@ -875,6 +1067,10 @@ button:hover{
   color:#777;
 }
 
+.admin .small{
+  color:#d1d5db;
+}
+
 .admin-box{
   overflow:auto;
 }
@@ -895,6 +1091,12 @@ td{
 
 th{
   background:#f3f4f6;
+}
+
+hr{
+  border:none;
+  border-top:1px solid #374151;
+  margin:20px 0;
 }
 
 @media(max-width:600px){
@@ -921,11 +1123,11 @@ th{
   <div class="card">
 
     <h1>
-      🤖 دستیار هوش مصنوعی
+      🤖 ابزارک هوش مصنوعی
     </h1>
 
     <div class="subtitle">
-      سوالت را بنویس و از دستیار هوش مصنوعی کمک بگیر.
+      ابزارهای سریع و کاربردی برای کارهای روزمره و تولید محتوا
     </div>
 
   </div>
@@ -1006,55 +1208,372 @@ th{
   </div>
 
 
-  <!-- برداشت -->
+  <!-- اشتراک -->
 
   <div class="card">
 
     <h2>
-      💸 درخواست برداشت
+      🚀 اشتراک ابزارک
     </h2>
 
-    <div class="small">
-      حداقل مبلغ برداشت: ۱۰٬۰۰۰ تومان
+    <div class="card">
+
+      <h3>
+        🆓 رایگان
+      </h3>
+
+      <strong>
+        ۰ تومان
+      </strong>
+
+      <p>
+        استفاده محدود از ابزارهای پایه
+      </p>
+
+      <button>
+        پلن فعلی
+      </button>
+
     </div>
 
+    <div class="card">
+
+      <h3>
+        ⭐ حرفه‌ای
+      </h3>
+
+      <strong>
+        ۳۹۹٬۰۰۰ تومان
+      </strong>
+
+      <p>
+        اشتراک یک‌ماهه
+      </p>
+
+      <p>
+        استفاده بیشتر از ابزارها و امکانات حرفه‌ای
+      </p>
+
+      <button
+        class="orange"
+        onclick="alert('پرداخت اشتراک در مرحله بعد فعال می‌شود.')"
+      >
+        خرید اشتراک حرفه‌ای
+      </button>
+
+    </div>
+
+    <div class="card">
+
+      <h3>
+        👑 ویژه
+      </h3>
+
+      <strong>
+        ۷۹۹٬۰۰۰ تومان
+      </strong>
+
+      <p>
+        اشتراک یک‌ماهه
+      </p>
+
+      <p>
+        سقف استفاده بسیار بالا و امکانات ویژه
+      </p>
+
+      <button
+        class="orange"
+        onclick="alert('پرداخت اشتراک در مرحله بعد فعال می‌شود.')"
+      >
+        خرید اشتراک ویژه
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- وضعیت اشتراک -->
+
+  <div class="card">
+
+    <h2>
+      💳 وضعیت اشتراک
+    </h2>
+
+    <p>
+      پلن فعلی:
+      <strong>
+        رایگان
+      </strong>
+    </p>
+
+  </div>
+
+
+  <!-- موجودی -->
+
+  <div class="card">
+
+    <h2>
+      💰 موجودی قابل برداشت
+    </h2>
+
+    <div class="balance">
+
+      $
+
+      <span id="dollarBalance">
+        0.00
+      </span>
+
+    </div>
+
+    <p class="small">
+      موجودی فقط پس از ثبت و تأیید تراکنش افزایش پیدا می‌کند.
+    </p>
+
+    <button
+      onclick="openDeposit()"
+    >
+      💵 واریز
+    </button>
+
+    <button
+      onclick="loadAccount()"
+    >
+      👤 حساب کاربری
+    </button>
+
+    <button
+      onclick="document.getElementById('withdrawAmount').scrollIntoView({behavior:'smooth'})"
+    >
+      💸 درخواست برداشت
+    </button>
+
+  </div>
+
+
+  <!-- واریز -->
+
+  <div
+    id="depositCard"
+    class="card hidden"
+  >
+
+    <h2>
+      💵 ثبت واریز
+    </h2>
+
+    <p class="small">
+      مبلغ واریز را وارد کنید. پس از بررسی و تأیید مدیر، مبلغ به موجودی اضافه می‌شود.
+    </p>
+
     <input
-      id="withdrawAmount"
+      id="depositAmount"
       type="number"
-      placeholder="مبلغ برداشت"
+      placeholder="مبلغ"
     >
 
-    <select id="withdrawMethod">
-
-      <option value="">
-        روش پرداخت را انتخاب کنید
-      </option>
-
-      <option value="bank">
-        کارت بانکی
-      </option>
-
-      <option value="usdt">
-        USDT
-      </option>
-
-    </select>
-
     <input
-      id="withdrawAccount"
-      placeholder="شماره کارت / آدرس کیف پول"
+      id="depositReference"
+      placeholder="شماره پیگیری یا توضیح"
     >
 
     <button
       class="green"
-      onclick="withdraw()"
+      onclick="deposit()"
     >
-      ثبت درخواست برداشت
+      ثبت درخواست واریز
+    </button>
+
+    <button
+      onclick="document.getElementById('depositCard').classList.add('hidden')"
+    >
+      بستن
     </button>
 
     <div
-      id="withdrawMessage"
+      id="depositMessage"
       class="small"
+    ></div>
+
+  </div>
+
+
+  <!-- ابزارهای کاربردی -->
+
+  <div class="card">
+
+    <h2>
+      🧰 ابزارهای کاربردی
+    </h2>
+
+    <h3>
+      🧮 محاسبه درصد
+    </h3>
+
+    <input
+      id="percentNumber"
+      type="number"
+      placeholder="عدد"
+    >
+
+    <input
+      id="percentValue"
+      type="number"
+      placeholder="درصد"
+    >
+
+    <button onclick="calculatePercent()">
+      محاسبه
+    </button>
+
+    <div id="percentResult"></div>
+
+
+    <h3>
+      💵 دلار به تومان
+    </h3>
+
+    <input
+      id="dollarAmount"
+      type="number"
+      placeholder="مبلغ دلار"
+    >
+
+    <input
+      id="dollarRate"
+      type="number"
+      placeholder="نرخ دلار"
+    >
+
+    <button onclick="calculateDollar()">
+      محاسبه
+    </button>
+
+    <div id="dollarResult"></div>
+
+
+    <h3>
+      🏷️ محاسبه تخفیف
+    </h3>
+
+    <input
+      id="discountPrice"
+      type="number"
+      placeholder="قیمت"
+    >
+
+    <input
+      id="discountPercent"
+      type="number"
+      placeholder="درصد تخفیف"
+    >
+
+    <button onclick="calculateDiscount()">
+      محاسبه
+    </button>
+
+    <div id="discountResult"></div>
+
+
+    <h3>
+      📈 محاسبه سود
+    </h3>
+
+    <input
+      id="buyPrice"
+      type="number"
+      placeholder="قیمت خرید"
+    >
+
+    <input
+      id="sellPrice"
+      type="number"
+      placeholder="قیمت فروش"
+    >
+
+    <button onclick="calculateProfit()">
+      محاسبه
+    </button>
+
+    <div id="profitResult"></div>
+
+
+    <h3>
+      📏 کیلومتر به متر
+    </h3>
+
+    <input
+      id="km"
+      type="number"
+      placeholder="کیلومتر"
+    >
+
+    <button onclick="convertKm()">
+      تبدیل
+    </button>
+
+    <div id="kmResult"></div>
+
+
+    <h3>
+      💳 محاسبه اقساط
+    </h3>
+
+    <input
+      id="loanAmount"
+      type="number"
+      placeholder="مبلغ"
+    >
+
+    <input
+      id="loanMonths"
+      type="number"
+      placeholder="تعداد ماه"
+    >
+
+    <button onclick="calculateLoan()">
+      محاسبه
+    </button>
+
+    <div id="loanResult"></div>
+
+
+    <h3>
+      🎂 محاسبه سن
+    </h3>
+
+    <input
+      id="birthYear"
+      type="number"
+      placeholder="سال تولد"
+    >
+
+    <button onclick="calculateAge()">
+      محاسبه
+    </button>
+
+    <div id="ageResult"></div>
+
+
+    <h3>
+      📝 تولید متن معرفی
+    </h3>
+
+    <input
+      id="introTopic"
+      placeholder="نام / موضوع"
+    >
+
+    <button onclick="generateIntro()">
+      تولید متن
+    </button>
+
+    <div
+      id="introResult"
+      class="answer"
     ></div>
 
   </div>
@@ -1065,7 +1584,7 @@ th{
   <div class="card admin">
 
     <h2>
-      🔐 مدیریت
+      🔐 پنل مدیریت
     </h2>
 
     <input
@@ -1077,8 +1596,13 @@ th{
     <button
       onclick="adminLogin()"
     >
-      ورود مدیریت
+      ورود مدیر
     </button>
+
+    <div
+      id="adminLoginMessage"
+      class="small"
+    ></div>
 
     <div
       id="adminPanel"
@@ -1109,6 +1633,8 @@ th{
         افزایش موجودی
       </button>
 
+      <hr>
+
       <h3>
         📊 اطلاعات
       </h3>
@@ -1116,7 +1642,7 @@ th{
       <button
         onclick="loadAdminData()"
       >
-        بروزرسانی اطلاعات
+        🔄 بروزرسانی
       </button>
 
       <div
@@ -1140,10 +1666,14 @@ const API = "";
 // نمایش پیام
 // =========================================================
 
-function show(id,text){
+function show(id, text){
 
-  document.getElementById(id)
-    .textContent = text;
+  const element =
+    document.getElementById(id);
+
+  if(element){
+    element.textContent = text;
+  }
 }
 
 
@@ -1200,12 +1730,20 @@ async function loadAccount(){
       return;
     }
 
+    const balance =
+      Number(
+        data.user.balance || 0
+      );
+
     document.getElementById(
       "balance"
     ).textContent =
-      Number(
-        data.user.balance
-      ).toLocaleString("fa-IR");
+      balance.toLocaleString("fa-IR");
+
+    document.getElementById(
+      "dollarBalance"
+    ).textContent =
+      balance.toFixed(2);
 
     show(
       "accountMessage",
@@ -1316,6 +1854,117 @@ async function askAI(){
     show(
       "aiStatus",
       "❌ خطا"
+    );
+  }
+}
+
+
+// =========================================================
+// واریز
+// =========================================================
+
+function openDeposit(){
+
+  document.getElementById(
+    "depositCard"
+  ).classList.remove(
+    "hidden"
+  );
+
+  document.getElementById(
+    "depositCard"
+  ).scrollIntoView({
+    behavior:"smooth"
+  });
+}
+
+
+async function deposit(){
+
+  const username =
+    document.getElementById(
+      "username"
+    ).value.trim();
+
+  const amount =
+    Number(
+      document.getElementById(
+        "depositAmount"
+      ).value
+    );
+
+  const reference =
+    document.getElementById(
+      "depositReference"
+    ).value.trim();
+
+  if(!username){
+
+    show(
+      "depositMessage",
+      "ابتدا نام کاربری را وارد کنید."
+    );
+
+    return;
+  }
+
+  if(!amount || amount <= 0){
+
+    show(
+      "depositMessage",
+      "مبلغ معتبر وارد کنید."
+    );
+
+    return;
+  }
+
+  try{
+
+    const response =
+      await fetch(
+        API + "/api/deposit",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            username,
+            amount,
+            reference
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    show(
+      "depositMessage",
+      data.success
+        ? "✅ درخواست واریز ثبت شد."
+        : "❌ " + data.error
+    );
+
+    if(data.success){
+
+      document.getElementById(
+        "depositAmount"
+      ).value = "";
+
+      document.getElementById(
+        "depositReference"
+      ).value = "";
+    }
+
+  }catch(error){
+
+    show(
+      "depositMessage",
+      "خطا در اتصال."
     );
   }
 }
@@ -1469,9 +2118,13 @@ async function adminLogin(){
 
     if(!data.success){
 
-      alert(
-        data.error ||
-        "رمز اشتباه است."
+      show(
+        "adminLoginMessage",
+        "❌ " +
+        (
+          data.error ||
+          "رمز اشتباه است."
+        )
       );
 
       return;
@@ -1483,15 +2136,17 @@ async function adminLogin(){
       "hidden"
     );
 
-    alert(
-      "ورود مدیریت موفق بود."
+    show(
+      "adminLoginMessage",
+      "✅ ورود مدیر موفق بود."
     );
 
     loadAdminData();
 
   }catch(error){
 
-    alert(
+    show(
+      "adminLoginMessage",
       "خطا در اتصال."
     );
   }
@@ -1554,6 +2209,7 @@ async function addBalance(){
     if(data.success){
 
       loadAdminData();
+      loadAccount();
     }
 
   }catch(error){
@@ -1610,6 +2266,8 @@ async function loadAdminData(){
 
     let html = "";
 
+    // کاربران
+
     html +=
       "<h4>👥 کاربران</h4>";
 
@@ -1643,7 +2301,7 @@ async function loadAdminData(){
 
           <td>
             ${Number(
-              user.balance
+              user.balance || 0
             ).toLocaleString("fa-IR")}
           </td>
 
@@ -1658,6 +2316,93 @@ async function loadAdminData(){
     }
 
     html += "</table>";
+
+
+    // واریزها
+
+    html +=
+      "<h4>💵 واریزها</h4>";
+
+    html += "<table>";
+
+    html += `
+      <tr>
+        <th>ID</th>
+        <th>کاربر</th>
+        <th>مبلغ</th>
+        <th>پیگیری</th>
+        <th>وضعیت</th>
+        <th>عملیات</th>
+      </tr>
+    `;
+
+    for(
+      const d of data.deposits
+    ){
+
+      html += `
+        <tr>
+
+          <td>
+            ${d.id}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              d.username
+            )}
+          </td>
+
+          <td>
+            ${Number(
+              d.amount || 0
+            ).toLocaleString("fa-IR")}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              d.reference || "-"
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              d.status
+            )}
+          </td>
+
+          <td>
+
+            <button
+              class="green"
+              onclick="changeDepositStatus(
+                ${d.id},
+                'approved'
+              )"
+            >
+              تأیید
+            </button>
+
+            <button
+              class="red"
+              onclick="changeDepositStatus(
+                ${d.id},
+                'rejected'
+              )"
+            >
+              رد
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+    }
+
+    html += "</table>";
+
+
+    // برداشت‌ها
 
     html +=
       "<h4>💸 برداشت‌ها</h4>";
@@ -1695,7 +2440,7 @@ async function loadAdminData(){
 
           <td>
             ${Number(
-              w.amount
+              w.amount || 0
             ).toLocaleString("fa-IR")}
           </td>
 
@@ -1720,6 +2465,7 @@ async function loadAdminData(){
           <td>
 
             <button
+              class="green"
               onclick="changeWithdrawalStatus(
                 ${w.id},
                 'paid'
@@ -1756,6 +2502,66 @@ async function loadAdminData(){
       "adminData"
     ).textContent =
       "خطا در اتصال.";
+  }
+}
+
+
+// =========================================================
+// تغییر وضعیت واریز
+// =========================================================
+
+async function changeDepositStatus(
+  id,
+  status
+){
+
+  const password =
+    document.getElementById(
+      "adminPassword"
+    ).value;
+
+  try{
+
+    const response =
+      await fetch(
+        API +
+        "/api/admin/deposit-status",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            password,
+            id,
+            status
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    alert(
+      data.success
+        ? "وضعیت واریز تغییر کرد."
+        : data.error
+    );
+
+    if(data.success){
+
+      loadAdminData();
+      loadAccount();
+    }
+
+  }catch(error){
+
+    alert(
+      "خطا در اتصال."
+    );
   }
 }
 
@@ -1801,13 +2607,14 @@ async function changeWithdrawalStatus(
 
     alert(
       data.success
-        ? "وضعیت تغییر کرد."
+        ? "وضعیت برداشت تغییر کرد."
         : data.error
     );
 
     if(data.success){
 
       loadAdminData();
+      loadAccount();
     }
 
   }catch(error){
@@ -1816,6 +2623,232 @@ async function changeWithdrawalStatus(
       "خطا در اتصال."
     );
   }
+}
+
+
+// =========================================================
+// ابزارهای کاربردی
+// =========================================================
+
+function calculatePercent(){
+
+  const number =
+    Number(
+      document.getElementById(
+        "percentNumber"
+      ).value
+    );
+
+  const percent =
+    Number(
+      document.getElementById(
+        "percentValue"
+      ).value
+    );
+
+  const result =
+    number * percent / 100;
+
+  document.getElementById(
+    "percentResult"
+  ).textContent =
+    "نتیجه: " +
+    result.toLocaleString("fa-IR");
+}
+
+
+function calculateDollar(){
+
+  const dollar =
+    Number(
+      document.getElementById(
+        "dollarAmount"
+      ).value
+    );
+
+  const rate =
+    Number(
+      document.getElementById(
+        "dollarRate"
+      ).value
+    );
+
+  const result =
+    dollar * rate;
+
+  document.getElementById(
+    "dollarResult"
+  ).textContent =
+    "نتیجه: " +
+    result.toLocaleString("fa-IR") +
+    " تومان";
+}
+
+
+function calculateDiscount(){
+
+  const price =
+    Number(
+      document.getElementById(
+        "discountPrice"
+      ).value
+    );
+
+  const percent =
+    Number(
+      document.getElementById(
+        "discountPercent"
+      ).value
+    );
+
+  const discount =
+    price * percent / 100;
+
+  const finalPrice =
+    price - discount;
+
+  document.getElementById(
+    "discountResult"
+  ).textContent =
+    "مبلغ تخفیف: " +
+    discount.toLocaleString("fa-IR") +
+    " | قیمت نهایی: " +
+    finalPrice.toLocaleString("fa-IR");
+}
+
+
+function calculateProfit(){
+
+  const buy =
+    Number(
+      document.getElementById(
+        "buyPrice"
+      ).value
+    );
+
+  const sell =
+    Number(
+      document.getElementById(
+        "sellPrice"
+      ).value
+    );
+
+  const profit =
+    sell - buy;
+
+  document.getElementById(
+    "profitResult"
+  ).textContent =
+    "سود: " +
+    profit.toLocaleString("fa-IR");
+}
+
+
+function convertKm(){
+
+  const km =
+    Number(
+      document.getElementById(
+        "km"
+      ).value
+    );
+
+  const meter =
+    km * 1000;
+
+  document.getElementById(
+    "kmResult"
+  ).textContent =
+    meter.toLocaleString("fa-IR") +
+    " متر";
+}
+
+
+function calculateLoan(){
+
+  const amount =
+    Number(
+      document.getElementById(
+        "loanAmount"
+      ).value
+    );
+
+  const months =
+    Number(
+      document.getElementById(
+        "loanMonths"
+      ).value
+    );
+
+  if(!months){
+
+    document.getElementById(
+      "loanResult"
+    ).textContent =
+      "تعداد ماه معتبر نیست.";
+
+    return;
+  }
+
+  const monthly =
+    amount / months;
+
+  document.getElementById(
+    "loanResult"
+  ).textContent =
+    "قسط ماهانه: " +
+    monthly.toLocaleString("fa-IR");
+}
+
+
+function calculateAge(){
+
+  const birthYear =
+    Number(
+      document.getElementById(
+        "birthYear"
+      ).value
+    );
+
+  const currentYear = 1405;
+
+  const age =
+    currentYear - birthYear;
+
+  document.getElementById(
+    "ageResult"
+  ).textContent =
+    "سن تقریبی: " +
+    age.toLocaleString("fa-IR") +
+    " سال";
+}
+
+
+function generateIntro(){
+
+  const topic =
+    document.getElementById(
+      "introTopic"
+    ).value.trim();
+
+  if(!topic){
+
+    document.getElementById(
+      "introResult"
+    ).textContent =
+      "لطفاً نام یا موضوع را وارد کنید.";
+
+    return;
+  }
+
+  document.getElementById(
+    "introResult"
+  ).textContent =
+    "معرفی " +
+    topic +
+    ":\n" +
+    topic +
+    " یک موضوع کاربردی و جذاب است که می‌تواند برای کاربران مفید و ارزشمند باشد. هدف ما ارائه اطلاعات ساده، واضح و کاربردی درباره این موضوع است.";
 }
 
 
