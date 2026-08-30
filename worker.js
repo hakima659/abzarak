@@ -97,7 +97,16 @@ export default {
           .bind(username)
           .run();
 
-        user = await env.DB
+        user = await env.DBawait env.DB.prepare(`
+  CREATE TABLE IF NOT EXISTS deposits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    amount REAL NOT NULL,
+    reference TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
           .prepare("SELECT * FROM users WHERE username = ?")
           .bind(username)
           .first();
