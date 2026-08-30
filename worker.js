@@ -88,32 +88,34 @@ export default {
         .bind(username)
         .first();
 
-      if (!user) {
+      // =========================================================
+// کاربر
+// =========================================================
 
-        await env.DB
-          .prepare(
-            "INSERT INTO users (username, balance) VALUES (?, 0)"
-          )
-          .bind(username)
-          .run();
+async function getUser(username) {
 
-        user = await env.DBawait env.DB.prepare(`
-  CREATE TABLE IF NOT EXISTS deposits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
-    amount REAL NOT NULL,
-    reference TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`).run();
-          .prepare("SELECT * FROM users WHERE username = ?")
-          .bind(username)
-          .first();
-      }
+  let user = await env.DB
+    .prepare("SELECT * FROM users WHERE username = ?")
+    .bind(username)
+    .first();
 
-      return user;
-    }
+  if (!user) {
+
+    await env.DB
+      .prepare(
+        "INSERT INTO users (username, balance) VALUES (?, 0)"
+      )
+      .bind(username)
+      .run();
+
+    user = await env.DB
+      .prepare("SELECT * FROM users WHERE username = ?")
+      .bind(username)
+      .first();
+  }
+
+  return user;
+}
 
     // =========================================================
     // صفحه اصلی
