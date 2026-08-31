@@ -1,625 +1,593 @@
-const MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
-    const cors = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers":
-        "Content-Type, X-User-ID, X-Admin-Password",
-      "Access-Control-Allow-Methods":
-        "GET, POST, OPTIONS"
-    };
 
     const json = (data, status = 200) =>
       new Response(JSON.stringify(data), {
         status,
         headers: {
-          ...cors,
-          "Content-Type":
-            "application/json; charset=UTF-8"
+          "content-type": "application/json; charset=UTF-8",
+          "cache-control": "no-store"
         }
       });
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: cors
-      });
+    // =========================
+    // امنیت و توابع کمکی
+    // =========================
+
+    async function hashPassword(password) {
+      const data = new TextEncoder().encode(password);
+      const hash = await crypto.subtle.digest("SHA-256", data);
+      return [...new Uint8Array(hash)]
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
     }
 
-    // =========================
-    // بررسی Binding ها
-    // =========================
-
-    if (!env.DB) {
-      return json({
-        ok: false,
-        error: "D1 binding با نام DB متصل نیست."
-      }, 500);
+    function randomToken() {
+      return crypto.randomUUID() + "-" + crypto.randomUUID();
     }
 
-    // =========================
-    // Database
-    // =========================
+    async function body(request) {
+      try {
+        return await request.json();
+      } catch {
+        return {};
+      }
+    }
 
-    try {
-      await env.DB.exec(`
+    function getToken(request) {
+      const h = request.headers.get("authorization") || "";
+      if (!h.startsWith("Bearer ")) return "";
+      return h.substring(7);
+    }
+
+    async function getUser(request) {
+      const token = getToken(request);
+      if (!token || !env.DB) return null;
+
+      const result = await env.DB
+        .prepare(`
+          SELECT u.*
+          FROM sessions s
+          JOIN users u ON u.id = s.user_id
+          WHERE s.token = ?
+          LIMIT 1
+        `)
+        .bind(token)
+        .first();
+
+      return result || null;
+    }
+
+    async function ensureTables() {
+      await env.DB.prepare(`
         CREATE TABLE IF NOT EXISTS users (
-          id TEXT PRIMARY KEY,
-          name TEXT DEFAULT 'کاربر',
-          balance REAL DEFAULT 0,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS messages (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id TEXT NOT NULL,
-          role TEXT NOT NULL,
-          content TEXT NOT NULL,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
+          name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          balance REAL NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'فعال',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
 
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          token TEXT NOT NULL UNIQUE,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS transactions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          type TEXT NOT NULL,
+          amount REAL NOT NULL,
+          description TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+
+      await env.DB.prepare(`
         CREATE TABLE IF NOT EXISTS withdrawals (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id TEXT NOT NULL,
+          user_id INTEGER NOT NULL,
           amount REAL NOT NULL,
-          wallet TEXT NOT NULL,
-          status TEXT DEFAULT 'pending',
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-    } catch (e) {
-      return json({
-        ok: false,
-        error: "خطا در اتصال D1",
-        detail: e.message
-      }, 500);
+          method TEXT NOT NULL,
+          address TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'در انتظار',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
     }
 
     // =========================
-    // HOME
+    // API: ثبت نام
     // =========================
 
-    if (
-      request.method === "GET" &&
-      url.pathname === "/"
-    ) {
-      return new Response(HTML, {
-        headers: {
-          "Content-Type":
-            "text/html; charset=UTF-8"
-        }
-      });
-    }
-
-    // =========================
-    // ACCOUNT
-    // =========================
-
-    if (
-      request.method === "GET" &&
-      url.pathname === "/api/account"
-    ) {
-      const userId =
-        request.headers.get("X-User-ID");
-
-      if (!userId) {
-        return json({
-          ok: false,
-          error: "شناسه کاربر وجود ندارد"
-        }, 400);
-      }
-
+    if (url.pathname === "/api/register" && request.method === "POST") {
       try {
-        await env.DB.prepare(`
-          INSERT OR IGNORE INTO users
-          (id, name, balance)
-          VALUES (?, 'کاربر جدید', 0)
-        `)
-          .bind(userId)
+        await ensureTables();
+
+        const data = await body(request);
+
+        const name = String(data.name || "").trim();
+        const email = String(data.email || "").trim().toLowerCase();
+        const password = String(data.password || "");
+
+        if (!name || !email || password.length < 6) {
+          return json({
+            ok: false,
+            error: "نام، ایمیل و رمز حداقل ۶ کاراکتری لازم است."
+          }, 400);
+        }
+
+        const exists = await env.DB
+          .prepare("SELECT id FROM users WHERE email = ? LIMIT 1")
+          .bind(email)
+          .first();
+
+        if (exists) {
+          return json({
+            ok: false,
+            error: "این ایمیل قبلاً ثبت شده است."
+          }, 400);
+        }
+
+        const passwordHash = await hashPassword(password);
+
+        const inserted = await env.DB
+          .prepare(`
+            INSERT INTO users
+            (name,email,password_hash,balance,status)
+            VALUES (?,?,?,?,?)
+          `)
+          .bind(name, email, passwordHash, 0, "فعال")
           .run();
 
-        const user =
-          await env.DB.prepare(`
-            SELECT id, name, balance, created_at
-            FROM users
-            WHERE id = ?
+        const userId = inserted.meta.last_row_id;
+        const token = randomToken();
+
+        await env.DB
+          .prepare(`
+            INSERT INTO sessions (user_id,token)
+            VALUES (?,?)
           `)
-            .bind(userId)
-            .first();
+          .bind(userId, token)
+          .run();
+
+        return json({
+          ok: true,
+          token
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در ثبت‌نام",
+          detail: String(e.message || e)
+        }, 500);
+      }
+    }
+
+    // =========================
+    // API: ورود
+    // =========================
+
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      try {
+        await ensureTables();
+
+        const data = await body(request);
+
+        const email = String(data.email || "").trim().toLowerCase();
+        const password = String(data.password || "");
+
+        if (!email || !password) {
+          return json({
+            ok: false,
+            error: "ایمیل و رمز عبور را وارد کنید."
+          }, 400);
+        }
+
+        const passwordHash = await hashPassword(password);
+
+        const user = await env.DB
+          .prepare(`
+            SELECT *
+            FROM users
+            WHERE email = ?
+            AND password_hash = ?
+            LIMIT 1
+          `)
+          .bind(email, passwordHash)
+          .first();
+
+        if (!user) {
+          return json({
+            ok: false,
+            error: "ایمیل یا رمز عبور اشتباه است."
+          }, 401);
+        }
+
+        const token = randomToken();
+
+        await env.DB
+          .prepare(`
+            INSERT INTO sessions (user_id,token)
+            VALUES (?,?)
+          `)
+          .bind(user.id, token)
+          .run();
+
+        return json({
+          ok: true,
+          token
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در ورود",
+          detail: String(e.message || e)
+        }, 500);
+      }
+    }
+
+    // =========================
+    // API: اطلاعات کاربر
+    // =========================
+
+    if (url.pathname === "/api/me" && request.method === "GET") {
+      try {
+        await ensureTables();
+
+        const user = await getUser(request);
+
+        if (!user) {
+          return json({
+            ok: false,
+            error: "وارد حساب نشده‌اید."
+          }, 401);
+        }
 
         return json({
           ok: true,
           user: {
             id: user.id,
             name: user.name,
-            balance:
-              Number(user.balance || 0),
-            created_at: user.created_at
+            email: user.email,
+            balance: Number(user.balance || 0),
+            status: user.status
           }
         });
+
       } catch (e) {
         return json({
           ok: false,
           error: "خطا در دریافت حساب",
-          detail: e.message
+          detail: String(e.message || e)
         }, 500);
       }
     }
 
     // =========================
-    // CHAT
+    // API: هوش مصنوعی
     // =========================
 
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/chat"
-    ) {
-      const userId =
-        request.headers.get("X-User-ID");
-
-      if (!userId) {
-        return json({
-          ok: false,
-          error: "شناسه کاربر وجود ندارد"
-        }, 400);
-      }
-
-      let body;
-
+    if (url.pathname === "/api/ai" && request.method === "POST") {
       try {
-        body = await request.json();
-      } catch {
-        return json({
-          ok: false,
-          error: "اطلاعات پیام نامعتبر است"
-        }, 400);
-      }
+        await ensureTables();
 
-      const message =
-        String(body.message || "").trim();
-
-      if (!message) {
-        return json({
-          ok: false,
-          error: "پیامت را بنویس"
-        }, 400);
-      }
-
-      if (message.length > 10000) {
-        return json({
-          ok: false,
-          error: "پیام خیلی طولانی است"
-        }, 400);
-      }
-
-      if (!env.AI) {
-        return json({
-          ok: false,
-          error:
-            "Workers AI binding با نام AI متصل نیست."
-        }, 500);
-      }
-
-      try {
-        await env.DB.prepare(`
-          INSERT OR IGNORE INTO users
-          (id, name, balance)
-          VALUES (?, 'کاربر جدید', 0)
-        `)
-          .bind(userId)
-          .run();
-
-        await env.DB.prepare(`
-          INSERT INTO messages
-          (user_id, role, content)
-          VALUES (?, 'user', ?)
-        `)
-          .bind(userId, message)
-          .run();
-
-        const history =
-          await env.DB.prepare(`
-            SELECT role, content
-            FROM messages
-            WHERE user_id = ?
-            ORDER BY id DESC
-            LIMIT 10
-          `)
-            .bind(userId)
-            .all();
-
-        const messages = [
-          {
-            role: "system",
-            content:
-              "تو یک دستیار هوش مصنوعی فارسی دقیق، مفید و مودب هستی. پاسخ را فارسی بده مگر کاربر زبان دیگری بخواهد."
-          }
-        ];
-
-        for (
-          const item of
-          (history.results || []).reverse()
-        ) {
-          messages.push({
-            role:
-              item.role === "assistant"
-                ? "assistant"
-                : "user",
-            content:
-              String(item.content)
-          });
-        }
-
-        let result;
-
-        try {
-          result =
-            await env.AI.run(
-              MODEL,
-              {
-                messages,
-                max_tokens: 700,
-                temperature: 0.6
-              }
-            );
-        } catch (e) {
-          return json({
-            ok: false,
-            error:
-              "خطا در اجرای هوش مصنوعی",
-            detail:
-              e.message || String(e)
-          }, 502);
-        }
-
-        const answer =
-          result?.response ??
-          result?.result?.response ??
-          "";
-
-        if (!answer) {
-          return json({
-            ok: false,
-            error:
-              "هوش مصنوعی پاسخ خالی برگرداند.",
-            detail:
-              JSON.stringify(result)
-          }, 502);
-        }
-
-        await env.DB.prepare(`
-          INSERT INTO messages
-          (user_id, role, content)
-          VALUES (?, 'assistant', ?)
-        `)
-          .bind(userId, String(answer))
-          .run();
-
-        return json({
-          ok: true,
-          answer: String(answer)
-        });
-
-      } catch (e) {
-        return json({
-          ok: false,
-          error: "خطای سرور در بخش AI",
-          detail:
-            e.message || String(e)
-        }, 500);
-      }
-    }
-
-    // =========================
-    // CLEAR CHAT
-    // =========================
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/clear"
-    ) {
-      const userId =
-        request.headers.get("X-User-ID");
-
-      if (!userId) {
-        return json({
-          ok: false,
-          error: "شناسه کاربر وجود ندارد"
-        }, 400);
-      }
-
-      try {
-        await env.DB.prepare(`
-          DELETE FROM messages
-          WHERE user_id = ?
-        `)
-          .bind(userId)
-          .run();
-
-        return json({
-          ok: true,
-          message: "گفتگو پاک شد"
-        });
-      } catch (e) {
-        return json({
-          ok: false,
-          error: "خطا در پاک کردن گفتگو",
-          detail: e.message
-        }, 500);
-      }
-    }
-
-    // =========================
-    // WITHDRAW
-    // =========================
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/withdraw"
-    ) {
-      const userId =
-        request.headers.get("X-User-ID");
-
-      if (!userId) {
-        return json({
-          ok: false,
-          error: "شناسه کاربر وجود ندارد"
-        }, 400);
-      }
-
-      let body;
-
-      try {
-        body = await request.json();
-      } catch {
-        return json({
-          ok: false,
-          error: "اطلاعات نامعتبر است"
-        }, 400);
-      }
-
-      const amount =
-        Number(body.amount);
-
-      const wallet =
-        String(body.wallet || "").trim();
-
-      if (
-        !Number.isFinite(amount) ||
-        amount <= 0
-      ) {
-        return json({
-          ok: false,
-          error: "مبلغ نامعتبر است"
-        }, 400);
-      }
-
-      if (amount < 10) {
-        return json({
-          ok: false,
-          error:
-            "حداقل برداشت 10 دلار است"
-        }, 400);
-      }
-
-      if (
-        !wallet ||
-        wallet.length < 10
-      ) {
-        return json({
-          ok: false,
-          error:
-            "آدرس کیف پول USDT را وارد کن"
-        }, 400);
-      }
-
-      try {
-        const user =
-          await env.DB.prepare(`
-            SELECT balance
-            FROM users
-            WHERE id = ?
-          `)
-            .bind(userId)
-            .first();
+        const user = await getUser(request);
 
         if (!user) {
           return json({
             ok: false,
-            error: "حساب پیدا نشد"
-          }, 404);
+            error: "ابتدا وارد حساب شوید."
+          }, 401);
         }
 
-        const balance =
-          Number(user.balance || 0);
+        const data = await body(request);
+        const message = String(data.message || "").trim();
 
-        if (amount > balance) {
+        if (!message) {
           return json({
             ok: false,
-            error: "موجودی کافی نیست",
-            balance
+            error: "پیام خالی است."
           }, 400);
         }
 
-        await env.DB.batch([
-          env.DB.prepare(`
-            UPDATE users
-            SET balance = balance - ?
-            WHERE id = ?
-          `)
-            .bind(amount, userId),
+        if (!env.AI) {
+          return json({
+            ok: false,
+            error: "Binding مربوط به Workers AI با نام AI متصل نیست."
+          }, 500);
+        }
 
-          env.DB.prepare(`
-            INSERT INTO withdrawals
-            (user_id, amount, wallet, status)
-            VALUES (?, ?, ?, 'pending')
-          `)
-            .bind(
-              userId,
-              amount,
-              wallet
-            )
-        ]);
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct",
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "تو یک دستیار هوش مصنوعی فارسی‌زبان هستی. پاسخ‌ها را واضح، مفید و تا حد امکان به زبان فارسی ارائه کن."
+              },
+              {
+                role: "user",
+                content: message
+              }
+            ]
+          }
+        );
+
+        const answer =
+          result?.response ||
+          result?.result?.response ||
+          "پاسخی دریافت نشد.";
 
         return json({
           ok: true,
-          message:
-            "درخواست برداشت ثبت شد"
+          answer
         });
 
       } catch (e) {
         return json({
           ok: false,
-          error:
-            "خطا در ثبت برداشت",
-          detail: e.message
+          error: "خطا در هوش مصنوعی",
+          detail: String(e.message || e)
         }, 500);
       }
+    }
+
+    // =========================
+    // API: درخواست برداشت
+    // =========================
+
+    if (url.pathname === "/api/withdraw" && request.method === "POST") {
+      try {
+        await ensureTables();
+
+        const user = await getUser(request);
+
+        if (!user) {
+          return json({
+            ok: false,
+            error: "ابتدا وارد حساب شوید."
+          }, 401);
+        }
+
+        const data = await body(request);
+
+        const amount = Number(data.amount);
+        const method = String(data.method || "USDT").trim();
+        const address = String(data.address || "").trim();
+
+        if (!Number.isFinite(amount) || amount < 10) {
+          return json({
+            ok: false,
+            error: "حداقل مبلغ برداشت $10 است."
+          }, 400);
+        }
+
+        if (!address) {
+          return json({
+            ok: false,
+            error: "آدرس کیف پول USDT را وارد کنید."
+          }, 400);
+        }
+
+        if (Number(user.balance) < amount) {
+          return json({
+            ok: false,
+            error: "موجودی حساب کافی نیست."
+          }, 400);
+        }
+
+        // کسر موجودی و ثبت برداشت در یک تراکنش منطقی
+        await env.DB
+          .prepare(`
+            UPDATE users
+            SET balance = balance - ?
+            WHERE id = ?
+            AND balance >= ?
+          `)
+          .bind(amount, user.id, amount)
+          .run();
+
+        const updated = await env.DB
+          .prepare(`
+            SELECT balance
+            FROM users
+            WHERE id = ?
+          `)
+          .bind(user.id)
+          .first();
+
+        if (!updated || Number(updated.balance) < 0) {
+          return json({
+            ok: false,
+            error: "خطا در کسر موجودی."
+          }, 400);
+        }
+
+        await env.DB
+          .prepare(`
+            INSERT INTO withdrawals
+            (user_id,amount,method,address,status)
+            VALUES (?,?,?,?,?)
+          `)
+          .bind(
+            user.id,
+            amount,
+            method,
+            address,
+            "در انتظار"
+          )
+          .run();
+
+        await env.DB
+          .prepare(`
+            INSERT INTO transactions
+            (user_id,type,amount,description)
+            VALUES (?,?,?,?)
+          `)
+          .bind(
+            user.id,
+            "برداشت",
+            -amount,
+            "درخواست برداشت " + method
+          )
+          .run();
+
+        return json({
+          ok: true,
+          message: "درخواست برداشت با موفقیت ثبت شد."
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در ثبت برداشت",
+          detail: String(e.message || e)
+        }, 500);
+      }
+    }
+
+    // =========================
+    // API: تراکنش‌ها
+    // =========================
+
+    if (url.pathname === "/api/transactions" && request.method === "GET") {
+      try {
+        await ensureTables();
+
+        const user = await getUser(request);
+
+        if (!user) {
+          return json({
+            ok: false,
+            error: "ابتدا وارد حساب شوید."
+          }, 401);
+        }
+
+        const result = await env.DB
+          .prepare(`
+            SELECT
+              id,
+              type,
+              amount,
+              description,
+              created_at
+            FROM transactions
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT 100
+          `)
+          .bind(user.id)
+          .all();
+
+        return json({
+          ok: true,
+          transactions: result.results || []
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در دریافت تراکنش‌ها",
+          detail: String(e.message || e)
+        }, 500);
+      }
+    }
+
+    // =========================
+    // ADMIN LOGIN
+    // =========================
+
+    if (url.pathname === "/api/admin/login" && request.method === "POST") {
+      try {
+        const data = await body(request);
+        const password = String(data.password || "");
+
+        if (!env.ADMIN_PASSWORD) {
+          return json({
+            ok: false,
+            error: "ADMIN_PASSWORD در تنظیمات Worker تعریف نشده است."
+          }, 500);
+        }
+
+        if (password !== env.ADMIN_PASSWORD) {
+          return json({
+            ok: false,
+            error: "رمز مدیریت اشتباه است."
+          }, 401);
+        }
+
+        const token = randomToken();
+
+        return json({
+          ok: true,
+          token
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در ورود مدیریت"
+        }, 500);
+      }
+    }
+
+    function checkAdmin(request) {
+      const t = request.headers.get("x-admin-token") || "";
+      return t.length > 20;
     }
 
     // =========================
     // ADMIN USERS
     // =========================
 
-    if (
-      request.method === "GET" &&
-      url.pathname === "/api/admin/users"
-    ) {
-      const password =
-        request.headers.get(
-          "X-Admin-Password"
-        );
-
-      if (
-        !env.ADMIN_PASSWORD ||
-        password !== env.ADMIN_PASSWORD
-      ) {
-        return json({
-          ok: false,
-          error: "رمز مدیریت اشتباه است"
-        }, 401);
-      }
-
+    if (url.pathname === "/api/admin/users" && request.method === "GET") {
       try {
-        const users =
-          await env.DB.prepare(`
+        await ensureTables();
+
+        if (!checkAdmin(request)) {
+          return json({
+            ok: false,
+            error: "دسترسی مدیریت لازم است."
+          }, 403);
+        }
+
+        const result = await env.DB
+          .prepare(`
             SELECT
               id,
               name,
+              email,
               balance,
+              status,
               created_at
             FROM users
-            ORDER BY created_at DESC
-            LIMIT 500
+            ORDER BY id DESC
           `)
-            .all();
+          .all();
 
         return json({
           ok: true,
-          users:
-            users.results || []
+          users: result.results || []
         });
+
       } catch (e) {
         return json({
           ok: false,
-          error:
-            "خطا در دریافت کاربران",
-          detail: e.message
-        }, 500);
-      }
-    }
-
-    // =========================
-    // ADMIN CREDIT
-    // =========================
-
-    if (
-      request.method === "POST" &&
-      url.pathname === "/api/admin/credit"
-    ) {
-      const password =
-        request.headers.get(
-          "X-Admin-Password"
-        );
-
-      if (
-        !env.ADMIN_PASSWORD ||
-        password !== env.ADMIN_PASSWORD
-      ) {
-        return json({
-          ok: false,
-          error: "رمز مدیریت اشتباه است"
-        }, 401);
-      }
-
-      let body;
-
-      try {
-        body = await request.json();
-      } catch {
-        return json({
-          ok: false,
-          error: "اطلاعات نامعتبر است"
-        }, 400);
-      }
-
-      const userId =
-        String(body.userId || "").trim();
-
-      const amount =
-        Number(body.amount);
-
-      if (
-        !userId ||
-        !Number.isFinite(amount) ||
-        amount === 0
-      ) {
-        return json({
-          ok: false,
-          error:
-            "اطلاعات ناقص است"
-        }, 400);
-      }
-
-      try {
-        const user =
-          await env.DB.prepare(`
-            SELECT id
-            FROM users
-            WHERE id = ?
-          `)
-            .bind(userId)
-            .first();
-
-        if (!user) {
-          return json({
-            ok: false,
-            error: "کاربر پیدا نشد"
-          }, 404);
-        }
-
-        await env.DB.prepare(`
-          UPDATE users
-          SET balance = balance + ?
-          WHERE id = ?
-        `)
-          .bind(amount, userId)
-          .run();
-
-        return json({
-          ok: true,
-          message:
-            "موجودی تغییر کرد"
-        });
-      } catch (e) {
-        return json({
-          ok: false,
-          error:
-            "خطا در تغییر موجودی",
-          detail: e.message
+          error: "خطا در دریافت کاربران",
+          detail: String(e.message || e)
         }, 500);
       }
     }
@@ -629,293 +597,507 @@ export default {
     // =========================
 
     if (
-      request.method === "GET" &&
-      url.pathname ===
-        "/api/admin/withdrawals"
+      url.pathname === "/api/admin/withdrawals" &&
+      request.method === "GET"
     ) {
-      const password =
-        request.headers.get(
-          "X-Admin-Password"
-        );
-
-      if (
-        !env.ADMIN_PASSWORD ||
-        password !== env.ADMIN_PASSWORD
-      ) {
-        return json({
-          ok: false,
-          error: "رمز مدیریت اشتباه است"
-        }, 401);
-      }
-
       try {
-        const withdrawals =
-          await env.DB.prepare(`
-            SELECT *
-            FROM withdrawals
-            ORDER BY id DESC
-            LIMIT 500
+        await ensureTables();
+
+        if (!checkAdmin(request)) {
+          return json({
+            ok: false,
+            error: "دسترسی مدیریت لازم است."
+          }, 403);
+        }
+
+        const result = await env.DB
+          .prepare(`
+            SELECT
+              w.id,
+              w.user_id,
+              u.name,
+              u.email,
+              w.amount,
+              w.method,
+              w.address,
+              w.status,
+              w.created_at
+            FROM withdrawals w
+            JOIN users u ON u.id = w.user_id
+            ORDER BY w.id DESC
+            LIMIT 200
           `)
-            .all();
+          .all();
 
         return json({
           ok: true,
-          withdrawals:
-            withdrawals.results || []
+          withdrawals: result.results || []
         });
+
       } catch (e) {
         return json({
           ok: false,
-          error:
-            "خطا در دریافت برداشت‌ها",
-          detail: e.message
+          error: "خطا در دریافت برداشت‌ها",
+          detail: String(e.message || e)
         }, 500);
       }
     }
 
+    // =========================
+    // ADMIN APPROVE / REJECT
+    // =========================
+
+    if (
+      url.pathname === "/api/admin/withdrawal-action" &&
+      request.method === "POST"
+    ) {
+      try {
+        await ensureTables();
+
+        if (!checkAdmin(request)) {
+          return json({
+            ok: false,
+            error: "دسترسی مدیریت لازم است."
+          }, 403);
+        }
+
+        const data = await body(request);
+
+        const id = Number(data.id);
+        const action = String(data.action || "");
+
+        if (!id || !["approve", "reject"].includes(action)) {
+          return json({
+            ok: false,
+            error: "اطلاعات نامعتبر است."
+          }, 400);
+        }
+
+        const withdrawal = await env.DB
+          .prepare(`
+            SELECT *
+            FROM withdrawals
+            WHERE id = ?
+            LIMIT 1
+          `)
+          .bind(id)
+          .first();
+
+        if (!withdrawal) {
+          return json({
+            ok: false,
+            error: "درخواست برداشت پیدا نشد."
+          }, 404);
+        }
+
+        if (withdrawal.status !== "در انتظار") {
+          return json({
+            ok: false,
+            error: "این درخواست قبلاً بررسی شده است."
+          }, 400);
+        }
+
+        if (action === "approve") {
+          await env.DB
+            .prepare(`
+              UPDATE withdrawals
+              SET status = 'تأیید شده'
+              WHERE id = ?
+            `)
+            .bind(id)
+            .run();
+
+          return json({
+            ok: true,
+            message: "برداشت تأیید شد."
+          });
+        }
+
+        // اگر رد شد، پول به موجودی برگردد
+        await env.DB
+          .prepare(`
+            UPDATE withdrawals
+            SET status = 'رد شده'
+            WHERE id = ?
+          `)
+          .bind(id)
+          .run();
+
+        await env.DB
+          .prepare(`
+            UPDATE users
+            SET balance = balance + ?
+            WHERE id = ?
+          `)
+          .bind(withdrawal.amount, withdrawal.user_id)
+          .run();
+
+        await env.DB
+          .prepare(`
+            INSERT INTO transactions
+            (user_id,type,amount,description)
+            VALUES (?,?,?,?)
+          `)
+          .bind(
+            withdrawal.user_id,
+            "بازگشت برداشت",
+            withdrawal.amount,
+            "بازگشت مبلغ درخواست برداشت ردشده"
+          )
+          .run();
+
+        return json({
+          ok: true,
+          message: "برداشت رد شد و مبلغ به موجودی برگشت."
+        });
+
+      } catch (e) {
+        return json({
+          ok: false,
+          error: "خطا در بررسی برداشت",
+          detail: String(e.message || e)
+        }, 500);
+      }
+    }
+
+    // =========================
+    // صفحه اصلی
+    // =========================
+
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      return new Response(HTML, {
+        headers: {
+          "content-type": "text/html; charset=UTF-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     return json({
       ok: false,
-      error: "مسیر پیدا نشد"
+      error: "مسیر پیدا نشد."
     }, 404);
   }
 };
 
 
-// ======================================================
-// FULL HTML
-// ======================================================
-
-const HTML = `<!DOCTYPE html>
+const HTML = `<!doctype html>
 <html lang="fa" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width,initial-scale=1"
->
-
-<title>ابزارک AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دستیار هوش مصنوعی</title>
 
 <style>
-
-*{
-box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
-margin:0;
-font-family:
-Tahoma,
-Arial,
-sans-serif;
-background:
-linear-gradient(
-135deg,
-#f5f7ff,
-#eef2ff
-);
-color:#182230;
+  margin:0;
+  font-family:Tahoma,Arial,sans-serif;
+  background:#f4f7fb;
+  color:#172033
+}
+
+header{
+  background:#111827;
+  color:white;
+  padding:18px;
+  text-align:center;
+  position:sticky;
+  top:0;
+  z-index:5
+}
+
+header h1{
+  margin:0;
+  font-size:21px
+}
+
+header p{
+  margin:7px 0 0;
+  color:#cbd5e1;
+  font-size:13px
 }
 
 .container{
-width:min(950px,94%);
-margin:20px auto;
+  max-width:900px;
+  margin:auto;
+  padding:15px
 }
 
 .card{
-background:#fff;
-border-radius:22px;
-padding:20px;
-margin-bottom:18px;
-box-shadow:
-0 8px 30px
-rgba(0,0,0,.08);
+  background:white;
+  border-radius:18px;
+  padding:16px;
+  margin:12px 0;
+  box-shadow:0 5px 20px rgba(0,0,0,.06)
 }
 
-.header{
-text-align:center;
-}
-
-.logo{
-font-size:42px;
-}
-
-h1{
-margin:5px 0;
-}
-
-h2{
-margin-top:0;
-}
-
-.balanceBox{
-text-align:center;
-margin-top:20px;
-padding:20px;
-border-radius:18px;
-background:#f5f7ff;
-}
-
-.balance{
-font-size:34px;
-font-weight:bold;
-margin-top:8px;
-}
-
-.chat{
-height:430px;
-overflow-y:auto;
-padding:8px;
-border-radius:15px;
-background:#fafafa;
-}
-
-.msg{
-padding:13px 15px;
-margin:10px 0;
-border-radius:16px;
-line-height:2;
-white-space:pre-wrap;
-word-break:break-word;
-}
-
-.user{
-background:#e8efff;
-margin-right:15%;
-}
-
-.ai{
-background:#eeeeF3;
-margin-left:15%;
-}
-
-.composer{
-display:flex;
-gap:8px;
-margin-top:12px;
+input,textarea,select{
+  width:100%;
+  padding:13px;
+  border:1px solid #d7deea;
+  border-radius:12px;
+  margin:6px 0 10px;
+  font-family:inherit;
+  font-size:15px;
+  outline:none
 }
 
 textarea{
-flex:1;
-resize:none;
-min-height:55px;
-border:1px solid #d9dce5;
-border-radius:14px;
-padding:13px;
-font-size:16px;
-font-family:inherit;
-}
-
-input{
-width:100%;
-border:1px solid #d9dce5;
-border-radius:14px;
-padding:14px;
-margin:7px 0;
-font-size:16px;
-font-family:inherit;
+  min-height:100px;
+  resize:vertical
 }
 
 button{
-border:0;
-border-radius:13px;
-padding:12px 18px;
-font-size:16px;
-font-family:inherit;
-cursor:pointer;
-background:#111827;
-color:#fff;
+  border:0;
+  border-radius:12px;
+  padding:12px 16px;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:14px;
+  margin:4px
 }
+
+.primary{background:#2563eb;color:white}
+.green{background:#16a34a;color:white}
+.red{background:#dc2626;color:white}
+.gray{background:#e5e7eb;color:#111827}
+.dark{background:#111827;color:white}
+.orange{background:#f59e0b;color:white}
 
 button:disabled{
-opacity:.5;
-cursor:not-allowed;
+  opacity:.5;
+  cursor:not-allowed
 }
 
-.green{
-background:#087443;
+.hidden{
+  display:none!important
 }
 
-.red{
-background:#b42318;
+.balance{
+  font-size:30px;
+  font-weight:bold;
+  margin:8px 0
 }
 
-.small{
-font-size:13px;
-color:#667085;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px
 }
 
-.status{
-margin:10px 0;
-min-height:22px;
-}
-
-@media(max-width:600px){
-
-.container{
-width:96%;
+.stat{
+  background:#f8fafc;
+  padding:14px;
+  border-radius:14px;
+  text-align:center
 }
 
 .chat{
-height:52vh;
+  min-height:300px;
+  max-height:500px;
+  overflow:auto;
+  padding:8px
+}
+
+.msg{
+  padding:12px;
+  border-radius:14px;
+  margin:8px 0;
+  line-height:1.8;
+  white-space:pre-wrap
 }
 
 .user{
-margin-right:4%;
+  background:#dbeafe;
+  margin-right:15%
 }
 
-.ai{
-margin-left:4%;
+.bot{
+  background:#f1f5f9;
+  margin-left:15%
 }
 
-.composer{
-flex-direction:column;
+.small{
+  font-size:12px;
+  color:#64748b
 }
 
-.composer button{
-width:100%;
+.item{
+  padding:12px;
+  border-bottom:1px solid #e5e7eb
 }
 
+.ok{
+  color:#15803d
 }
 
+.err{
+  color:#b91c1c
+}
+
+.adminItem{
+  background:#f8fafc;
+  padding:12px;
+  margin:8px 0;
+  border-radius:12px
+}
+
+@media(max-width:600px){
+  .grid{
+    grid-template-columns:1fr
+  }
+
+  .user{
+    margin-right:5%
+  }
+
+  .bot{
+    margin-left:5%
+  }
+}
 </style>
-
 </head>
 
 <body>
 
+<header>
+<h1>🤖 دستیار هوش مصنوعی</h1>
+<p>دستیار هوشمند + حساب کاربری + موجودی + برداشت</p>
+</header>
+
 <div class="container">
 
-<div class="card header">
+<!-- AUTH -->
 
-<div class="logo">🤖</div>
+<div id="authBox" class="card">
 
-<h1>
-ابزارک AI
-</h1>
+<h2>👤 حساب کاربری</h2>
 
-<div class="small">
-دستیار هوش مصنوعی فارسی + حساب کاربری
+<div id="loginForm">
+
+<input
+id="loginEmail"
+type="email"
+placeholder="ایمیل">
+
+<input
+id="loginPassword"
+type="password"
+placeholder="رمز عبور">
+
+<button
+class="primary"
+onclick="login()">
+ورود
+</button>
+
+<button
+class="gray"
+onclick="showRegister()">
+ثبت‌نام
+</button>
+
 </div>
 
-<div class="balanceBox">
+<div id="registerForm" class="hidden">
 
-💰 موجودی حساب
+<input
+id="regName"
+placeholder="نام">
+
+<input
+id="regEmail"
+type="email"
+placeholder="ایمیل">
+
+<input
+id="regPassword"
+type="password"
+placeholder="رمز عبور حداقل 6 کاراکتر">
+
+<button
+class="green"
+onclick="register()">
+ایجاد حساب
+</button>
+
+<button
+class="gray"
+onclick="showLogin()">
+بازگشت
+</button>
+
+</div>
+
+<div id="authMsg" class="small"></div>
+
+</div>
+
+
+<!-- APP -->
+
+<div id="appBox" class="hidden">
+
+<div class="card">
+
+<div class="small">کاربر</div>
+
+<h3 id="userName">-</h3>
+
+<div class="grid">
+
+<div class="stat">
+
+<div class="small">
+موجودی
+</div>
 
 <div
-class="balance"
 id="balance"
->
+class="balance">
 $0.00
 </div>
 
 </div>
 
+<div class="stat">
+
+<div class="small">
+وضعیت حساب
 </div>
 
+<div id="accountStatus">
+فعال
+</div>
+
+</div>
+
+</div>
+
+<button
+class="red"
+onclick="logout()">
+خروج
+</button>
+
+<button
+class="green"
+onclick="showWithdraw()">
+💵 برداشت
+</button>
+
+<button
+class="gray"
+onclick="loadTransactions()">
+📊 تراکنش‌ها
+</button>
+
+</div>
+
+
+<!-- CHAT -->
 
 <div class="card">
 
@@ -925,86 +1107,150 @@ $0.00
 
 <div
 id="chat"
-class="chat"
->
+class="chat">
 
-<div class="msg ai">
-سلام! 👋
-من آماده‌ام.
-چه کمکی از من می‌خواهی؟
+<div class="msg bot">
+سلام! 👋 سوالت را بنویس.
 </div>
 
 </div>
-
-<div
-id="status"
-class="status"
-></div>
-
-<div class="composer">
 
 <textarea
-id="message"
-placeholder="پیامت را بنویس..."
-></textarea>
+id="question"
+placeholder="سوال خود را بنویسید..."></textarea>
 
 <button
-id="send"
->
+id="sendBtn"
+class="primary"
+onclick="askAI()">
 ارسال
 </button>
 
-</div>
-
-<div style="margin-top:8px">
-
 <button
-class="red"
-id="clear"
->
+class="gray"
+onclick="clearChat()">
 🗑️ پاک کردن گفتگو
 </button>
 
 </div>
 
-</div>
 
+<!-- WITHDRAW -->
 
-<div class="card">
+<div
+id="withdrawBox"
+class="card hidden">
 
 <h2>
-💵 برداشت
+💵 درخواست برداشت
 </h2>
 
 <div class="small">
-حداقل برداشت: 10 دلار
+حداقل برداشت: $10
 </div>
 
 <input
-id="amount"
+id="withdrawAmount"
 type="number"
 min="10"
 step="0.01"
-placeholder="مبلغ برداشت به دلار"
->
+placeholder="مبلغ به دلار">
+
+<select id="withdrawMethod">
+<option value="USDT">
+USDT
+</option>
+</select>
 
 <input
-id="wallet"
-type="text"
-placeholder="آدرس کیف پول USDT"
->
+id="withdrawAddress"
+placeholder="آدرس کیف پول USDT">
 
 <button
 class="green"
-id="withdraw"
->
-درخواست برداشت
+onclick="withdraw()">
+ثبت درخواست برداشت
+</button>
+
+<button
+class="gray"
+onclick="hideWithdraw()">
+بستن
 </button>
 
 <div
-id="withdrawStatus"
-class="status"
-></div>
+id="withdrawMsg"
+class="small">
+</div>
+
+</div>
+
+
+<!-- TRANSACTIONS -->
+
+<div
+id="transactionsBox"
+class="card hidden">
+
+<h2>
+📊 تراکنش‌ها
+</h2>
+
+<div id="transactions">
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ADMIN -->
+
+<div
+id="adminBox"
+class="card">
+
+<h2>
+🛠️ پنل مدیریت
+</h2>
+
+<input
+id="adminPassword"
+type="password"
+placeholder="رمز مدیریت">
+
+<button
+class="dark"
+onclick="adminLogin()">
+ورود مدیریت
+</button>
+
+<div
+id="adminMsg"
+class="small">
+</div>
+
+<div
+id="adminPanel"
+class="hidden">
+
+<hr>
+
+<button
+class="gray"
+onclick="adminUsers()">
+👥 کاربران
+</button>
+
+<button
+class="gray"
+onclick="adminWithdrawals()">
+💵 برداشت‌ها
+</button>
+
+<div id="adminResult"></div>
+
+</div>
 
 </div>
 
@@ -1013,350 +1259,834 @@ class="status"
 
 <script>
 
-const userId =
-localStorage.getItem(
-"ai_user_id"
-) ||
-crypto.randomUUID();
+let token =
+localStorage.getItem("ai_token") || "";
 
-localStorage.setItem(
-"ai_user_id",
-userId
-);
-
-const $ =
-id =>
-document.getElementById(id);
+let adminToken =
+localStorage.getItem("admin_token") || "";
 
 
-async function api(
-path,
-options={}
-){
+async function api(path, options={}){
 
-const headers = {
-...(options.headers || {}),
-"X-User-ID":
-userId,
-"Content-Type":
-"application/json"
-};
+  const headers = {
+    "content-type":"application/json",
+    ...(options.headers || {})
+  };
 
-const response =
-await fetch(
-path,
-{
-...options,
-headers
-}
-);
+  if(token){
+    headers.authorization =
+      "Bearer " + token;
+  }
 
-const text =
-await response.text();
+  if(adminToken){
+    headers["x-admin-token"] =
+      adminToken;
+  }
 
-let data;
+  try{
 
-try{
+    const res =
+      await fetch(path,{
+        ...options,
+        headers
+      });
 
-data =
-JSON.parse(text);
+    let data;
 
-}catch{
+    try{
+      data = await res.json();
+    }catch{
+      data = {
+        ok:false,
+        error:"پاسخ نامعتبر از سرور"
+      };
+    }
 
-throw new Error(
-"سرور پاسخ JSON معتبر نداد. HTTP "
-+
-response.status
-+
-" - "
-+
-text.slice(0,300)
-);
+    if(!res.ok && !data.error){
+      data.error="خطای سرور";
+    }
 
-}
+    return data;
 
-if(!response.ok){
+  }catch(e){
 
-throw new Error(
-data.error ||
-"خطای سرور"
-);
+    return {
+      ok:false,
+      error:"ارتباط با سرور برقرار نشد."
+    };
 
-}
-
-return data;
-
+  }
 }
 
 
-async function loadAccount(){
+function showRegister(){
 
-try{
+  document
+    .getElementById("loginForm")
+    .classList.add("hidden");
 
-const data =
-await api(
-"/api/account"
-);
+  document
+    .getElementById("registerForm")
+    .classList.remove("hidden");
 
-if(data.ok){
-
-$("balance")
-.textContent =
-"$"
-+
-Number(
-data.user.balance || 0
-).toFixed(2);
-
-}
-
-}catch(e){
-
-console.log(e);
-
-}
-
+  document
+    .getElementById("authMsg")
+    .textContent="";
 }
 
 
-function addMessage(
-text,
-type
-){
+function showLogin(){
 
-const div =
-document.createElement(
-"div"
-);
+  document
+    .getElementById("registerForm")
+    .classList.add("hidden");
 
-div.className =
-"msg " +
-(
-type === "user"
-? "user"
-: "ai"
-);
+  document
+    .getElementById("loginForm")
+    .classList.remove("hidden");
 
-div.textContent =
-text;
-
-$("chat")
-.appendChild(div);
-
-$("chat").scrollTop =
-$("chat").scrollHeight;
-
+  document
+    .getElementById("authMsg")
+    .textContent="";
 }
 
 
-async function sendMessage(){
+function msg(text,ok=false){
 
-const text =
-$("message")
-.value
-.trim();
+  const el =
+    document.getElementById("authMsg");
 
-if(!text)
-return;
+  el.textContent=text;
 
-$("send").disabled =
-true;
-
-$("message").disabled =
-true;
-
-addMessage(
-text,
-"user"
-);
-
-$("message").value =
-"";
-
-$("status")
-.textContent =
-"⏳ در حال دریافت پاسخ...";
-
-try{
-
-const data =
-await api(
-"/api/chat",
-{
-method:"POST",
-body:
-JSON.stringify({
-message:text
-})
-}
-);
-
-if(!data.ok){
-
-throw new Error(
-data.error ||
-"خطا در دریافت پاسخ"
-);
-
-}
-
-addMessage(
-data.answer,
-"ai"
-);
-
-$("status")
-.textContent =
-"";
-
-}catch(e){
-
-addMessage(
-"❌ " +
-e.message,
-"ai"
-);
-
-$("status")
-.textContent =
-"";
-
-}
-
-$("send").disabled =
-false;
-
-$("message").disabled =
-false;
-
-$("message").focus();
-
+  el.className =
+    ok ? "small ok" : "small err";
 }
 
 
-$("send")
-.addEventListener(
-"click",
-sendMessage
-);
+async function register(){
 
+  const name =
+    document.getElementById("regName")
+    .value.trim();
 
-$("message")
-.addEventListener(
-"keydown",
-e => {
+  const email =
+    document.getElementById("regEmail")
+    .value.trim();
 
-if(
-e.key === "Enter" &&
-!e.shiftKey
-){
+  const password =
+    document.getElementById("regPassword")
+    .value;
 
-e.preventDefault();
+  if(!name || !email || password.length<6){
 
-sendMessage();
+    msg(
+      "نام، ایمیل و رمز حداقل ۶ کاراکتری لازم است."
+    );
 
+    return;
+  }
+
+  const r =
+    await api(
+      "/api/register",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          name,
+          email,
+          password
+        })
+      }
+    );
+
+  if(!r.ok){
+
+    msg(
+      r.error || "ثبت‌نام ناموفق بود"
+    );
+
+    return;
+  }
+
+  token=r.token;
+
+  localStorage.setItem(
+    "ai_token",
+    token
+  );
+
+  msg(
+    "ثبت‌نام موفق بود.",
+    true
+  );
+
+  await loadMe();
 }
 
-}
-);
 
+async function login(){
 
-$("clear")
-.addEventListener(
-"click",
-async () => {
+  const email =
+    document.getElementById("loginEmail")
+    .value.trim();
 
-try{
+  const password =
+    document.getElementById("loginPassword")
+    .value;
 
-await api(
-"/api/clear",
-{
-method:"POST"
-}
-);
+  const r =
+    await api(
+      "/api/login",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          email,
+          password
+        })
+      }
+    );
 
-$("chat").innerHTML =
-'<div class="msg ai">' +
-'گفتگو پاک شد. 👋' +
-'</div>';
+  if(!r.ok){
 
-}catch(e){
+    msg(
+      r.error || "ورود ناموفق بود"
+    );
 
-$("status")
-.textContent =
-"❌ " +
-e.message;
+    return;
+  }
 
-}
+  token=r.token;
 
-}
-);
+  localStorage.setItem(
+    "ai_token",
+    token
+  );
 
-
-$("withdraw")
-.addEventListener(
-"click",
-async () => {
-
-const amount =
-Number(
-$("amount").value
-);
-
-const wallet =
-$("wallet")
-.value
-.trim();
-
-$("withdrawStatus")
-.textContent =
-"⏳ در حال ثبت درخواست...";
-
-try{
-
-const data =
-await api(
-"/api/withdraw",
-{
-method:"POST",
-body:
-JSON.stringify({
-amount,
-wallet
-})
-}
-);
-
-$("withdrawStatus")
-.textContent =
-"✅ " +
-data.message;
-
-$("amount").value =
-"";
-
-$("wallet").value =
-"";
-
-await loadAccount();
-
-}catch(e){
-
-$("withdrawStatus")
-.textContent =
-"❌ " +
-e.message;
-
+  await loadMe();
 }
 
+
+async function loadMe(){
+
+  const r =
+    await api("/api/me");
+
+  if(!r.ok){
+
+    localStorage.removeItem(
+      "ai_token"
+    );
+
+    token="";
+
+    document
+      .getElementById("authBox")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("appBox")
+      .classList.add("hidden");
+
+    return;
+  }
+
+  document
+    .getElementById("authBox")
+    .classList.add("hidden");
+
+  document
+    .getElementById("appBox")
+    .classList.remove("hidden");
+
+  document
+    .getElementById("userName")
+    .textContent=r.user.name;
+
+  document
+    .getElementById("balance")
+    .textContent=
+      "$"+
+      Number(r.user.balance)
+      .toFixed(2);
+
+  document
+    .getElementById("accountStatus")
+    .textContent=
+      r.user.status || "فعال";
 }
-);
 
 
-loadAccount();
+function logout(){
+
+  localStorage.removeItem(
+    "ai_token"
+  );
+
+  token="";
+
+  location.reload();
+}
+
+
+function addMessage(text,type){
+
+  const chat =
+    document.getElementById("chat");
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    "msg " + type;
+
+  div.textContent=text;
+
+  chat.appendChild(div);
+
+  chat.scrollTop=
+    chat.scrollHeight;
+}
+
+
+async function askAI(){
+
+  const input =
+    document.getElementById("question");
+
+  const question =
+    input.value.trim();
+
+  if(!question)return;
+
+  addMessage(
+    question,
+    "user"
+  );
+
+  input.value="";
+
+  const btn =
+    document.getElementById("sendBtn");
+
+  btn.disabled=true;
+
+  btn.textContent=
+    "در حال پاسخ...";
+
+  const r =
+    await api(
+      "/api/ai",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          message:question
+        })
+      }
+    );
+
+  if(r.ok){
+
+    addMessage(
+      r.answer ||
+      "پاسخی دریافت نشد.",
+      "bot"
+    );
+
+    await loadMe();
+
+  }else{
+
+    addMessage(
+      "خطا: "+
+      (r.error ||
+       "خطا در دریافت پاسخ"),
+      "bot"
+    );
+  }
+
+  btn.disabled=false;
+
+  btn.textContent="ارسال";
+}
+
+
+function clearChat(){
+
+  document
+    .getElementById("chat")
+    .innerHTML=
+      '<div class="msg bot">گفتگو پاک شد. سوال جدیدت را بنویس.</div>';
+}
+
+
+function showWithdraw(){
+
+  document
+    .getElementById("withdrawBox")
+    .classList.remove("hidden");
+}
+
+
+function hideWithdraw(){
+
+  document
+    .getElementById("withdrawBox")
+    .classList.add("hidden");
+}
+
+
+async function withdraw(){
+
+  const amount =
+    Number(
+      document
+      .getElementById("withdrawAmount")
+      .value
+    );
+
+  const method =
+    document
+    .getElementById("withdrawMethod")
+    .value;
+
+  const address =
+    document
+    .getElementById("withdrawAddress")
+    .value
+    .trim();
+
+  const out =
+    document
+    .getElementById("withdrawMsg");
+
+
+  if(!Number.isFinite(amount) ||
+     amount<10){
+
+    out.textContent=
+      "حداقل مبلغ برداشت $10 است.";
+
+    out.className=
+      "small err";
+
+    return;
+  }
+
+
+  if(!address){
+
+    out.textContent=
+      "آدرس کیف پول USDT را وارد کنید.";
+
+    out.className=
+      "small err";
+
+    return;
+  }
+
+
+  out.textContent=
+    "در حال ثبت درخواست...";
+
+  out.className=
+    "small";
+
+
+  const r =
+    await api(
+      "/api/withdraw",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          amount,
+          method,
+          address
+        })
+      }
+    );
+
+
+  if(!r.ok){
+
+    out.textContent=
+      r.error ||
+      "ثبت برداشت ناموفق بود.";
+
+    out.className=
+      "small err";
+
+    return;
+  }
+
+
+  out.textContent=
+    r.message ||
+    "درخواست برداشت ثبت شد.";
+
+  out.className=
+    "small ok";
+
+
+  document
+    .getElementById("withdrawAmount")
+    .value="";
+
+  document
+    .getElementById("withdrawAddress")
+    .value="";
+
+
+  await loadMe();
+
+  await loadTransactions();
+}
+
+
+async function loadTransactions(){
+
+  const box =
+    document
+    .getElementById("transactionsBox");
+
+  box.classList.remove("hidden");
+
+
+  const el =
+    document
+    .getElementById("transactions");
+
+  el.innerHTML=
+    "در حال دریافت...";
+
+
+  const r =
+    await api(
+      "/api/transactions"
+    );
+
+
+  if(!r.ok){
+
+    el.innerHTML=
+      '<div class="err">'+
+      (r.error || "خطا")+
+      '</div>';
+
+    return;
+  }
+
+
+  if(!r.transactions ||
+     !r.transactions.length){
+
+    el.innerHTML=
+      '<div class="small">تراکنشی وجود ندارد.</div>';
+
+    return;
+  }
+
+
+  el.innerHTML=
+    r.transactions
+    .map(t => `
+
+      <div class="item">
+
+        <b>${escapeHtml(t.type)}</b>
+
+        <div>
+          مبلغ:
+          ${Number(t.amount).toFixed(2)}
+          $
+        </div>
+
+        <div class="small">
+          ${escapeHtml(t.description || "")}
+        </div>
+
+        <div class="small">
+          ${escapeHtml(t.created_at || "")}
+        </div>
+
+      </div>
+
+    `)
+    .join("");
+}
+
+
+async function adminLogin(){
+
+  const password =
+    document
+    .getElementById("adminPassword")
+    .value;
+
+  const out =
+    document
+    .getElementById("adminMsg");
+
+
+  const r =
+    await api(
+      "/api/admin/login",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          password
+        })
+      }
+    );
+
+
+  if(!r.ok){
+
+    out.textContent=
+      r.error ||
+      "ورود مدیریت ناموفق بود";
+
+    out.className=
+      "small err";
+
+    return;
+  }
+
+
+  adminToken=r.token;
+
+  localStorage.setItem(
+    "admin_token",
+    adminToken
+  );
+
+
+  out.textContent=
+    "ورود مدیریت موفق بود.";
+
+  out.className=
+    "small ok";
+
+
+  document
+    .getElementById("adminPanel")
+    .classList.remove("hidden");
+}
+
+
+async function adminUsers(){
+
+  const box =
+    document
+    .getElementById("adminResult");
+
+  box.innerHTML=
+    "در حال دریافت کاربران...";
+
+
+  const r =
+    await api(
+      "/api/admin/users"
+    );
+
+
+  if(!r.ok){
+
+    box.innerHTML=
+      '<div class="err">'+
+      (r.error || "خطا")+
+      '</div>';
+
+    return;
+  }
+
+
+  if(!r.users.length){
+
+    box.innerHTML=
+      '<div class="small">کاربری وجود ندارد.</div>';
+
+    return;
+  }
+
+
+  box.innerHTML=
+    r.users
+    .map(u => `
+
+      <div class="adminItem">
+
+        <b>${escapeHtml(u.name)}</b>
+
+        <div>
+          ${escapeHtml(u.email)}
+        </div>
+
+        <div>
+          موجودی:
+          $${Number(u.balance).toFixed(2)}
+        </div>
+
+        <div>
+          وضعیت:
+          ${escapeHtml(u.status)}
+        </div>
+
+      </div>
+
+    `)
+    .join("");
+}
+
+
+async function adminWithdrawals(){
+
+  const box =
+    document
+    .getElementById("adminResult");
+
+  box.innerHTML=
+    "در حال دریافت برداشت‌ها...";
+
+
+  const r =
+    await api(
+      "/api/admin/withdrawals"
+    );
+
+
+  if(!r.ok){
+
+    box.innerHTML=
+      '<div class="err">'+
+      (r.error || "خطا")+
+      '</div>';
+
+    return;
+  }
+
+
+  if(!r.withdrawals.length){
+
+    box.innerHTML=
+      '<div class="small">درخواست برداشتی وجود ندارد.</div>';
+
+    return;
+  }
+
+
+  box.innerHTML=
+    r.withdrawals
+    .map(w => `
+
+      <div class="adminItem">
+
+        <b>
+          ${escapeHtml(w.name)}
+        </b>
+
+        <div>
+          مبلغ:
+          $${Number(w.amount).toFixed(2)}
+        </div>
+
+        <div>
+          روش:
+          ${escapeHtml(w.method)}
+        </div>
+
+        <div>
+          آدرس:
+          ${escapeHtml(w.address)}
+        </div>
+
+        <div>
+          وضعیت:
+          ${escapeHtml(w.status)}
+        </div>
+
+        <div class="small">
+          ${escapeHtml(w.created_at)}
+        </div>
+
+        ${
+          w.status === "در انتظار"
+          ? `
+            <button
+              class="green"
+              onclick="withdrawalAction(${w.id},'approve')">
+              تأیید
+            </button>
+
+            <button
+              class="red"
+              onclick="withdrawalAction(${w.id},'reject')">
+              رد
+            </button>
+          `
+          : ""
+        }
+
+      </div>
+
+    `)
+    .join("");
+}
+
+
+async function withdrawalAction(id,action){
+
+  const r =
+    await api(
+      "/api/admin/withdrawal-action",
+      {
+        method:"POST",
+        body:JSON.stringify({
+          id,
+          action
+        })
+      }
+    );
+
+
+  if(!r.ok){
+
+    alert(
+      r.error ||
+      "عملیات ناموفق بود."
+    );
+
+    return;
+  }
+
+
+  alert(
+    r.message ||
+    "عملیات انجام شد."
+  );
+
+
+  await adminWithdrawals();
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+// =========================
+// شروع
+// =========================
+
+loadMe();
 
 </script>
 
 </body>
-
 </html>`;
