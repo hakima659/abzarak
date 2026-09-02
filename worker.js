@@ -1,4 +1,12 @@
 
+const PLANS = [
+  { id: "p400",  title: "پلن ۴۰۰ هزار تومان",  irr: 400000,  usd: 6 },
+  { id: "p700",  title: "پلن ۷۰۰ هزار تومان",  irr: 700000,  usd: 10 },
+  { id: "p1000", title: "پلن ۱ میلیون تومان",  irr: 1000000, usd: 15 },
+  { id: "p1500", title: "پلن ۱.۵ میلیون تومان", irr: 1500000, usd: 22 },
+  { id: "p2000", title: "پلن ۲ میلیون تومان",   irr: 2000000, usd: 30 }
+];
+
 const HTML = `<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -9,29 +17,35 @@ const HTML = `<!doctype html>
 *{box-sizing:border-box}
 body{
  margin:0;
- font-family:Tahoma,Arial,sans-serif;
+ font-family:Arial,Tahoma,sans-serif;
  background:#f4f7fb;
  color:#172033
 }
+header{
+ background:#111827;
+ color:white;
+ padding:18px;
+ text-align:center
+}
 .container{
- max-width:900px;
+ max-width:1000px;
  margin:auto;
- padding:20px
+ padding:18px
 }
 .card{
  background:white;
  border-radius:18px;
- padding:22px;
+ padding:20px;
  margin:15px 0;
- box-shadow:0 5px 25px #00000012
+ box-shadow:0 5px 20px #00000012
 }
-h1,h2{margin-top:0}
+h1,h2,h3{margin-top:0}
 input,select,button{
  width:100%;
  padding:13px;
  margin:7px 0;
  border-radius:10px;
- border:1px solid #d8dee8;
+ border:1px solid #d7dce5;
  font-size:15px
 }
 button{
@@ -41,224 +55,198 @@ button{
  cursor:pointer
 }
 button:hover{opacity:.9}
-.secondary{background:#64748b}
 .danger{background:#dc2626}
 .success{background:#16a34a}
-.hidden{display:none}
-.nav{
+.dark{background:#111827}
+.grid{
  display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:10px
-}
-.nav button{background:#0f172a}
-.msg{
- padding:12px;
- border-radius:10px;
- background:#eef2ff;
- margin-top:10px
-}
-.error{
- background:#fee2e2;
- color:#991b1b
-}
-.ok{
- background:#dcfce7;
- color:#166534
-}
-.balance{
- font-size:28px;
- font-weight:bold;
- text-align:center;
- padding:20px;
- background:#eff6ff;
- border-radius:15px
-}
-.small{
- color:#64748b;
- font-size:13px
+ grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+ gap:15px
 }
 .plan{
- border:1px solid #dbe3ef;
- border-radius:15px;
- padding:15px;
- margin:10px 0;
- background:#fafcff
+ border:2px solid #e5e7eb;
+ border-radius:16px;
+ padding:18px
 }
-.plan h3{
- margin:0 0 8px
+.plan strong{
+ font-size:22px;
+ display:block;
+ margin:8px 0
 }
-.plan button{
- margin-top:8px
+.hidden{display:none}
+.msg{
+ padding:10px;
+ border-radius:10px;
+ margin:8px 0;
+ background:#eef2ff
 }
 table{
  width:100%;
- border-collapse:collapse;
- margin-top:10px
+ border-collapse:collapse
 }
-td,th{
- border-bottom:1px solid #e5e7eb;
+th,td{
  padding:10px;
+ border-bottom:1px solid #eee;
  text-align:right
+}
+small{color:#64748b}
+.balance{
+ font-size:28px;
+ font-weight:bold
+}
+.nav{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-bottom:15px
+}
+.nav button{width:auto}
+.badge{
+ display:inline-block;
+ padding:5px 9px;
+ border-radius:20px;
+ background:#eef2ff
 }
 </style>
 </head>
 
 <body>
 
+<header>
+<h1>🤖 دستیار هوش مصنوعی</h1>
+<div>دستیار هوشمند • حساب کاربری • درآمد • پرداخت • برداشت</div>
+</header>
+
 <div class="container">
 
-<div class="card" id="auth">
+<div id="auth">
 
-<h1>🤖 دستیار هوش مصنوعی</h1>
-
-<p>
-دستیار هوشمند، حساب کاربری، درآمد، پرداخت و برداشت
-</p>
-
-<div class="nav">
-<button onclick="show('loginBox')">ورود</button>
-<button onclick="show('registerBox')">ثبت‌نام</button>
-<button onclick="show('forgotBox')">بازیابی رمز</button>
-<button onclick="show('adminBox')">🛠️ پنل مدیریت</button>
-</div>
-
-<div id="loginBox">
-
+<div class="card">
 <h2>ورود به حساب</h2>
 
-<input id="loginEmail" placeholder="ایمیل">
-
-<input
- id="loginPassword"
- type="password"
- placeholder="رمز عبور">
+<input id="loginEmail" type="email" placeholder="ایمیل">
+<input id="loginPassword" type="password" placeholder="رمز عبور">
 
 <button onclick="login()">ورود</button>
+<button class="dark" onclick="showRegister()">ثبت‌نام</button>
+<button onclick="showForgot()">بازیابی رمز</button>
 
+<div id="loginMsg"></div>
 </div>
 
-<div id="registerBox" class="hidden">
-
+<div id="registerBox" class="card hidden">
 <h2>ثبت‌نام</h2>
 
-<input
- id="regName"
- placeholder="نام و نام خانوادگی">
+<input id="regName" placeholder="نام">
+<input id="regEmail" type="email" placeholder="ایمیل">
+<input id="regPassword" type="password" placeholder="رمز عبور">
 
-<input
- id="regEmail"
- placeholder="ایمیل">
+<button onclick="register()">ایجاد حساب</button>
+<button class="dark" onclick="hideBoxes()">بازگشت</button>
 
-<input
- id="regPassword"
- type="password"
- placeholder="رمز عبور">
-
-<button onclick="register()">ثبت‌نام</button>
-
+<div id="regMsg"></div>
 </div>
 
-<div id="forgotBox" class="hidden">
-
+<div id="forgotBox" class="card hidden">
 <h2>بازیابی رمز</h2>
 
-<input
- id="forgotEmail"
- placeholder="ایمیل">
+<input id="forgotEmail" type="email" placeholder="ایمیل">
 
 <button onclick="forgot()">بازیابی</button>
+<button class="dark" onclick="hideBoxes()">بازگشت</button>
 
-<p class="small">
-برای امنیت، بازیابی واقعی رمز باید به ایمیل کاربر متصل شود.
-</p>
-
+<div id="forgotMsg"></div>
 </div>
 
-<div id="adminBox" class="hidden">
-
-<h2>🔐 ورود مدیر</h2>
-
-<input
- id="adminPassword"
- type="password"
- placeholder="رمز مدیریت">
-
+<div class="card">
+<h3>🛠️ پنل مدیریت</h3>
+<input id="adminPassword" type="password" placeholder="رمز مدیریت">
 <button onclick="adminLogin()">ورود مدیریت</button>
+<div id="adminLoginMsg"></div>
+</div>
 
 </div>
 
-<div id="message"></div>
 
+<div id="app" class="hidden">
+
+<div class="nav">
+<button onclick="showPanel('home')">🏠 حساب</button>
+<button onclick="showPanel('plans')">💰 پلن‌ها</button>
+<button onclick="showPanel('payments')">💳 پرداخت‌ها</button>
+<button onclick="showPanel('withdraw')">💸 برداشت</button>
+<button class="danger" onclick="logout()">خروج</button>
 </div>
 
-
-<!-- پنل کاربر -->
-
-<div id="userPanel" class="hidden">
+<div id="home" class="panel">
 
 <div class="card">
-
 <h2>👤 حساب کاربری</h2>
-
-<div id="userInfo"></div>
-
-<button class="secondary" onclick="logout()">
-خروج
-</button>
-
+<div id="profile">در حال بارگذاری...</div>
 </div>
-
 
 <div class="card">
-
-<h2>💰 موجودی حساب</h2>
-
-<div class="balance" id="balance">
-0 تومان
+<h2>💰 موجودی</h2>
+<div class="balance" id="balance">در حال بارگذاری...</div>
 </div>
-
-<p class="small">
-حداقل برداشت: ۱۰٬۰۰۰ تومان
-</p>
-
-</div>
-
 
 <div class="card">
-
-<h2>💳 پرداخت و اشتراک</h2>
-
-<div id="plans"></div>
+<h2>📊 تراکنش‌ها</h2>
+<div id="transactions">در حال بارگذاری...</div>
+</div>
 
 </div>
 
 
-<div class="card">
+<div id="plans" class="panel hidden">
 
+<div class="card">
+<h2>💰 پلن‌های اشتراک</h2>
+<p>برای کاربران ایران قیمت تومان و برای کاربران خارج از ایران قیمت دلار نمایش داده می‌شود.</p>
+
+<div class="grid" id="plansBox"></div>
+</div>
+
+</div>
+
+
+<div id="payments" class="panel hidden">
+
+<div class="card">
+<h2>💳 پرداخت</h2>
+
+<select id="currency">
+<option value="IRR">🇮🇷 تومان - ایران</option>
+<option value="USD">🌎 دلار - خارج از ایران</option>
+</select>
+
+<select id="paymentPlan"></select>
+
+<button onclick="createPayment()">ایجاد سفارش پرداخت</button>
+
+<div id="paymentMsg"></div>
+</div>
+
+</div>
+
+
+<div id="withdraw" class="panel hidden">
+
+<div class="card">
 <h2>💸 درخواست برداشت</h2>
 
-<input
- id="withdrawAmount"
- type="number"
- placeholder="مبلغ برداشت">
+<input id="withdrawAmount" type="number" placeholder="مبلغ برداشت">
 
-<input
- id="withdrawCard"
- placeholder="شماره کارت ۱۶ رقمی">
+<select id="withdrawMethod">
+<option value="USDT">USDT</option>
+<option value="BANK">حساب بانکی</option>
+</select>
 
-<button onclick="withdraw()">
-درخواست برداشت
-</button>
+<input id="withdrawAddress" placeholder="آدرس کیف پول یا اطلاعات حساب">
 
-</div>
+<button onclick="withdraw()">ثبت درخواست برداشت</button>
 
-
-<div class="card">
-
-<h2>📊 تراکنش‌ها</h2>
-
-<div id="transactions">
-در حال بارگذاری...
+<div id="withdrawMsg"></div>
 </div>
 
 </div>
@@ -266,54 +254,17 @@ td,th{
 </div>
 
 
-<!-- پنل مدیریت -->
+<div id="admin" class="hidden">
 
-<div id="adminPanel" class="hidden">
-
-<div class="card">
-
-<h2>🛠️ پنل مدیریت</h2>
-
-<p>
-مدیریت کاربران، پرداخت‌ها، برداشت‌ها، موجودی و پلن‌ها
-</p>
-
-<button class="danger" onclick="adminLogout()">
-خروج مدیر
-</button>
-
+<div class="nav">
+<button onclick="adminUsers()">👥 کاربران</button>
+<button onclick="adminWithdrawals()">💸 برداشت‌ها</button>
+<button onclick="adminPayments()">💳 پرداخت‌ها</button>
+<button onclick="adminPlans()">💰 پلن‌ها</button>
+<button class="danger" onclick="adminLogout()">خروج مدیریت</button>
 </div>
 
-
-<div class="card">
-
-<h2>💳 پلن‌های اشتراک</h2>
-
-<div id="adminPlans"></div>
-
-</div>
-
-
-<div class="card">
-
-<h2>👥 کاربران</h2>
-
-<div id="users">
-در حال بارگذاری...
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h2>💸 برداشت‌ها</h2>
-
-<div id="withdrawals">
-در حال بارگذاری...
-</div>
-
-</div>
+<div id="adminContent"></div>
 
 </div>
 
@@ -322,648 +273,435 @@ td,th{
 
 <script>
 
-const PLANS = [
- {amount:400000,title:'پلن پایه'},
- {amount:700000,title:'پلن استاندارد'},
- {amount:1000000,title:'پلن حرفه‌ای'},
- {amount:1500000,title:'پلن ویژه'},
- {amount:2000000,title:'پلن VIP'}
-];
+let token = localStorage.getItem("user_token") || "";
+let adminToken = localStorage.getItem("admin_token") || "";
 
-
-function show(id){
-
- document.querySelectorAll(
-  '#auth > div'
- ).forEach(x=>{
-
-  if([
-   'loginBox',
-   'registerBox',
-   'forgotBox',
-   'adminBox'
-  ].includes(x.id)){
-
-   x.classList.add('hidden');
-
-  }
-
- });
-
- document.getElementById(id).classList.remove('hidden');
-
+function $(id){
+ return document.getElementById(id);
 }
 
-
-function msg(text,type=''){
-
- const box=document.getElementById('message');
-
- box.innerHTML=
- '<div class="msg '+type+'">'+
- escapeHtml(text)+
- '</div>';
-
+function msg(id,text){
+ $(id).innerHTML='<div class="msg">'+text+'</div>';
 }
 
-
-function setLoading(id,text){
-
- const el=document.getElementById(id);
-
- if(el)
-  el.innerHTML=
-   '<div class="msg">'+
-   escapeHtml(text)+
-   '</div>';
-
+function hideBoxes(){
+ $("registerBox").classList.add("hidden");
+ $("forgotBox").classList.add("hidden");
 }
 
+function showRegister(){
+ $("registerBox").classList.remove("hidden");
+ $("forgotBox").classList.add("hidden");
+}
 
-async function api(url,data={}){
+function showForgot(){
+ $("forgotBox").classList.remove("hidden");
+ $("registerBox").classList.add("hidden");
+}
 
+function showPanel(id){
+ document.querySelectorAll(".panel").forEach(x=>x.classList.add("hidden"));
+ $(id).classList.remove("hidden");
+}
+
+async function api(url,options={}){
  try{
+  const headers=options.headers||{};
+  headers["Content-Type"]="application/json";
 
-  const r=await fetch(url,{
-   method:'POST',
-   headers:{
-    'Content-Type':'application/json'
-   },
-   body:JSON.stringify(data)
-  });
+  if(token) headers["Authorization"]="Bearer "+token;
+  if(adminToken) headers["X-Admin-Token"]=adminToken;
 
+  const r=await fetch(url,{...options,headers});
   const text=await r.text();
 
-  let j={};
-
+  let data;
   try{
-   j=JSON.parse(text);
-  }catch{
-   throw new Error(
-    'پاسخ نامعتبر از سرور دریافت شد.'
-   );
+   data=JSON.parse(text);
+  }catch(e){
+   throw new Error("پاسخ نامعتبر از سرور");
   }
 
-  if(!r.ok)
-   throw new Error(
-    j.error || 'خطای سرور'
-   );
+  if(!r.ok || data.ok===false){
+   throw new Error(data.error || "خطای سرور");
+  }
 
-  return j;
+  return data;
 
  }catch(e){
-
-  msg(e.message,'error');
-
   throw e;
-
  }
-
 }
-
-
-/* ثبت نام */
 
 async function register(){
 
- const j=await api('/api/register',{
-  name:document.getElementById('regName').value,
-  email:document.getElementById('regEmail').value,
-  password:document.getElementById('regPassword').value
- });
+ try{
 
- msg(
-  j.message || 'ثبت‌نام انجام شد.',
-  'ok'
- );
+  const data=await api("/api/register",{
+   method:"POST",
+   body:JSON.stringify({
+    name:$("regName").value.trim(),
+    email:$("regEmail").value.trim(),
+    password:$("regPassword").value
+   })
+  });
 
- show('loginBox');
+  msg("regMsg","✅ ثبت‌نام با موفقیت انجام شد. حالا وارد شوید.");
 
+  $("registerBox").classList.add("hidden");
+
+ }catch(e){
+  msg("regMsg","❌ "+e.message);
+ }
 }
-
-
-/* ورود */
 
 async function login(){
 
- const j=await api('/api/login',{
-  email:document.getElementById('loginEmail').value,
-  password:document.getElementById('loginPassword').value
- });
-
- localStorage.setItem(
-  'token',
-  j.token
- );
-
- document.getElementById(
-  'auth'
- ).classList.add('hidden');
-
- document.getElementById(
-  'userPanel'
- ).classList.remove('hidden');
-
- loadMe();
-
-}
-
-
-/* اطلاعات کاربر */
-
-async function loadMe(){
-
  try{
 
-  const r=await fetch('/api/me',{
-   headers:{
-    Authorization:
-    'Bearer '+
-    localStorage.getItem('token')
-   }
+  const data=await api("/api/login",{
+   method:"POST",
+   body:JSON.stringify({
+    email:$("loginEmail").value.trim(),
+    password:$("loginPassword").value
+   })
   });
 
-  const j=await r.json();
+  token=data.token;
+  localStorage.setItem("user_token",token);
 
-  if(!r.ok){
-   logout();
-   return;
-  }
+  $("auth").classList.add("hidden");
+  $("app").classList.remove("hidden");
 
-  document.getElementById(
-   'userInfo'
-  ).innerHTML=
-   'نام: '+
-   escapeHtml(j.user.name)+
-   '<br>ایمیل: '+
-   escapeHtml(j.user.email);
-
-  document.getElementById(
-   'balance'
-  ).innerText=
-   Number(j.user.balance)
-   .toLocaleString('fa-IR')+
-   ' تومان';
-
+  loadUser();
   loadPlans();
-  loadTransactions();
 
  }catch(e){
-
-  document.getElementById(
-   'transactions'
-  ).innerHTML=
-   '<div class="msg error">'+
-   'خطا در دریافت اطلاعات کاربر: '+
-   escapeHtml(e.message)+
-   '</div>';
-
+  msg("loginMsg","❌ "+e.message);
  }
-
 }
-
-
-/* نمایش پلن‌ها */
-
-function loadPlans(){
-
- const box=document.getElementById('plans');
-
- box.innerHTML=PLANS.map(p=>`
-
-  <div class="plan">
-
-   <h3>
-   💳 ${escapeHtml(p.title)}
-   </h3>
-
-   <div>
-   مبلغ:
-   <b>
-   ${Number(p.amount).toLocaleString('fa-IR')}
-   تومان
-   </b>
-   </div>
-
-   <button
-    onclick="pay(${p.amount})">
-    خرید ${Number(p.amount).toLocaleString('fa-IR')} تومان
-   </button>
-
-  </div>
-
- `).join('');
-
-}
-
-
-/* تراکنش‌ها */
-
-async function loadTransactions(){
-
- const box=
-  document.getElementById('transactions');
-
- setLoading(
-  'transactions',
-  'در حال دریافت تراکنش‌ها...'
- );
-
- try{
-
-  const r=await fetch(
-   '/api/transactions',
-   {
-    headers:{
-     Authorization:
-     'Bearer '+
-     localStorage.getItem('token')
-    }
-   }
-  );
-
-  const j=await r.json();
-
-  if(!r.ok)
-   throw new Error(
-    j.error || 'خطا در تراکنش‌ها'
-   );
-
-  if(!j.items || !j.items.length){
-
-   box.innerHTML=
-    '<div class="msg">تراکنشی وجود ندارد.</div>';
-
-   return;
-  }
-
-  box.innerHTML=
-   j.items.map(x=>
-
-    '<div class="msg">'+
-    escapeHtml(x.type)+
-    ' — '+
-    Number(x.amount)
-    .toLocaleString('fa-IR')+
-    ' تومان — '+
-    escapeHtml(x.status || '')+
-    '</div>'
-
-   ).join('');
-
- }catch(e){
-
-  box.innerHTML=
-   '<div class="msg error">'+
-   'خطا: '+
-   escapeHtml(e.message)+
-   '</div>';
-
- }
-
-}
-
-
-/* پرداخت */
-
-async function pay(amount){
-
- try{
-
-  const j=await api(
-   '/api/payment',
-   {
-    token:
-    localStorage.getItem('token'),
-    amount
-   }
-  );
-
-  msg(
-   j.message ||
-   'درخواست پرداخت ثبت شد.',
-   'ok'
-  );
-
-  loadTransactions();
-
- }catch(e){}
-
-}
-
-
-/* برداشت */
-
-async function withdraw(){
-
- const amount=
-  Number(
-   document.getElementById(
-    'withdrawAmount'
-   ).value
-  );
-
- const card=
-  document.getElementById(
-   'withdrawCard'
-  ).value;
-
- try{
-
-  const j=await api(
-   '/api/withdraw',
-   {
-    token:
-    localStorage.getItem('token'),
-    amount,
-    card
-   }
-  );
-
-  msg(
-   j.message ||
-   'درخواست برداشت ثبت شد.',
-   'ok'
-  );
-
-  loadMe();
-
- }catch(e){}
-
-}
-
-
-/* فراموشی رمز */
 
 async function forgot(){
 
  try{
 
-  const j=await api(
-   '/api/forgot',
-   {
-    email:
-    document.getElementById(
-     'forgotEmail'
-    ).value
-   }
-  );
+  const data=await api("/api/forgot",{
+   method:"POST",
+   body:JSON.stringify({
+    email:$("forgotEmail").value.trim()
+   })
+  });
 
-  msg(j.message || 'درخواست ثبت شد.');
+  msg("forgotMsg",data.message || "درخواست ثبت شد.");
 
- }catch(e){}
-
+ }catch(e){
+  msg("forgotMsg","❌ "+e.message);
+ }
 }
 
+async function loadUser(){
 
-/* ورود مدیر */
+ try{
+
+  const data=await api("/api/me");
+
+  const u=data.user;
+
+  $("profile").innerHTML=
+   "<b>"+(u.name||u.username||"کاربر")+"</b><br>"+
+   "📧 "+(u.email||"-")+"<br>"+
+   "📌 وضعیت: "+(u.status||"فعال")+"<br>"+
+   "📦 پلن: "+(u.plan||"free");
+
+  $("balance").textContent=
+   Number(u.balance||0).toLocaleString("fa-IR")+" تومان";
+
+  loadTransactions();
+
+ }catch(e){
+
+  $("profile").innerHTML="❌ خطا در دریافت اطلاعات: "+e.message;
+  $("balance").textContent="خطا";
+
+ }
+}
+
+async function loadTransactions(){
+
+ try{
+
+  const data=await api("/api/transactions");
+
+  if(!data.transactions || !data.transactions.length){
+   $("transactions").innerHTML="تراکنشی ثبت نشده است.";
+   return;
+  }
+
+  $("transactions").innerHTML=
+  "<table><tr><th>مبلغ</th><th>نوع</th><th>وضعیت</th><th>تاریخ</th></tr>"+
+  data.transactions.map(x=>
+   "<tr>"+
+   "<td>"+Number(x.amount||0).toLocaleString("fa-IR")+"</td>"+
+   "<td>"+(x.type||"-")+"</td>"+
+   "<td>"+(x.status||"-")+"</td>"+
+   "<td>"+(x.created_at||"-")+"</td>"+
+   "</tr>"
+  ).join("")+
+  "</table>";
+
+ }catch(e){
+
+  $("transactions").innerHTML="❌ خطا: "+e.message;
+
+ }
+}
+
+function loadPlans(){
+
+ const box=$("plansBox");
+ const select=$("paymentPlan");
+
+ box.innerHTML="";
+ select.innerHTML="";
+
+ PLANS.forEach(p=>{
+
+  box.innerHTML+=
+   '<div class="plan">'+
+   '<h3>'+p.title+'</h3>'+
+   '<strong>'+p.irr.toLocaleString("fa-IR")+' تومان</strong>'+
+   '<div>🌎 '+p.usd+' USD</div>'+
+   '<small>اشتراک دستیار هوش مصنوعی</small>'+
+   '</div>';
+
+  select.innerHTML+=
+   '<option value="'+p.id+'">'+
+   p.title+" | "+p.irr.toLocaleString("fa-IR")+
+   " تومان / "+p.usd+" USD</option>";
+
+ });
+}
+
+async function createPayment(){
+
+ try{
+
+  const planId=$("paymentPlan").value;
+  const currency=$("currency").value;
+
+  const data=await api("/api/payment",{
+   method:"POST",
+   body:JSON.stringify({
+    plan_id:planId,
+    currency:currency
+   })
+  });
+
+  msg(
+   "paymentMsg",
+   "✅ سفارش ثبت شد.<br>"+
+   "شماره سفارش: "+data.payment_id+"<br>"+
+   "مبلغ: "+data.amount+" "+currency+
+   "<br><small>درگاه واقعی پس از اتصال درگاه پرداخت فعال می‌شود.</small>"
+  );
+
+ }catch(e){
+  msg("paymentMsg","❌ "+e.message);
+ }
+}
+
+async function withdraw(){
+
+ try{
+
+  const data=await api("/api/withdraw",{
+   method:"POST",
+   body:JSON.stringify({
+    amount:Number($("withdrawAmount").value),
+    method:$("withdrawMethod").value,
+    address:$("withdrawAddress").value.trim()
+   })
+  });
+
+  msg("withdrawMsg","✅ درخواست برداشت ثبت شد.");
+
+  loadUser();
+
+ }catch(e){
+  msg("withdrawMsg","❌ "+e.message);
+ }
+}
+
+function logout(){
+
+ token="";
+ localStorage.removeItem("user_token");
+
+ $("app").classList.add("hidden");
+ $("auth").classList.remove("hidden");
+}
 
 async function adminLogin(){
 
  try{
 
-  const password=
-   document.getElementById(
-    'adminPassword'
-   ).value;
+  const data=await api("/api/admin/login",{
+   method:"POST",
+   body:JSON.stringify({
+    password:$("adminPassword").value
+   })
+  });
 
-  const j=await api(
-   '/api/admin/login',
-   {password}
-  );
+  adminToken=data.token;
+  localStorage.setItem("admin_token",adminToken);
 
-  localStorage.setItem(
-   'adminToken',
-   j.token
-  );
+  $("auth").classList.add("hidden");
+  $("admin").classList.remove("hidden");
 
-  document.getElementById(
-   'auth'
-  ).classList.add('hidden');
-
-  document.getElementById(
-   'adminPanel'
-  ).classList.remove('hidden');
-
-  loadAdmin();
-
- }catch(e){}
-
-}
-
-
-/* پنل مدیریت */
-
-async function loadAdmin(){
-
- loadAdminPlans();
-
- const token=
-  localStorage.getItem(
-   'adminToken'
-  );
-
- const usersBox=
-  document.getElementById('users');
-
- const withdrawalsBox=
-  document.getElementById(
-   'withdrawals'
-  );
-
- setLoading(
-  'users',
-  'در حال دریافت کاربران...'
- );
-
- setLoading(
-  'withdrawals',
-  'در حال دریافت برداشت‌ها...'
- );
-
- try{
-
-  const r=await fetch(
-   '/api/admin/users',
-   {
-    headers:{
-     Authorization:
-     'Bearer '+token
-    }
-   }
-  );
-
-  const j=await r.json();
-
-  if(!r.ok)
-   throw new Error(
-    j.error ||
-    'دسترسی غیرمجاز'
-   );
-
-  if(!j.users || !j.users.length){
-
-   usersBox.innerHTML=
-    '<div class="msg">کاربری وجود ندارد.</div>';
-
-  }else{
-
-   usersBox.innerHTML=
-    '<table>'+
-    '<tr>'+
-    '<th>نام</th>'+
-    '<th>ایمیل</th>'+
-    '<th>موجودی</th>'+
-    '</tr>'+
-    j.users.map(u=>
-     '<tr>'+
-     '<td>'+
-     escapeHtml(u.name)+
-     '</td>'+
-     '<td>'+
-     escapeHtml(u.email)+
-     '</td>'+
-     '<td>'+
-     Number(u.balance)
-     .toLocaleString('fa-IR')+
-     ' تومان</td>'+
-     '</tr>'
-    ).join('')+
-    '</table>';
-
-  }
+  adminUsers();
 
  }catch(e){
 
-  usersBox.innerHTML=
-   '<div class="msg error">'+
-   'خطا در کاربران: '+
-   escapeHtml(e.message)+
-   '</div>';
+  msg("adminLoginMsg","❌ "+e.message);
 
  }
+}
 
+async function adminUsers(){
+
+ $("adminContent").innerHTML='<div class="card">در حال بارگذاری کاربران...</div>';
 
  try{
 
-  const w=await fetch(
-   '/api/admin/withdrawals',
-   {
-    headers:{
-     Authorization:
-     'Bearer '+token
-    }
-   }
-  );
+  const data=await api("/api/admin/users");
 
-  const wj=await w.json();
-
-  if(!w.ok)
-   throw new Error(
-    wj.error ||
-    'خطا در برداشت‌ها'
-   );
-
-  if(!wj.items || !wj.items.length){
-
-   withdrawalsBox.innerHTML=
-    '<div class="msg">درخواستی وجود ندارد.</div>';
-
-  }else{
-
-   withdrawalsBox.innerHTML=
-    wj.items.map(x=>
-     '<div class="msg">'+
-     escapeHtml(x.email)+
-     ' — '+
-     Number(x.amount)
-     .toLocaleString('fa-IR')+
-     ' تومان — '+
-     escapeHtml(x.status)+
-     '</div>'
-    ).join('');
-
+  if(!data.users || !data.users.length){
+   $("adminContent").innerHTML='<div class="card">کاربری وجود ندارد.</div>';
+   return;
   }
+
+  $("adminContent").innerHTML=
+  '<div class="card">'+
+  '<h2>👥 کاربران</h2>'+
+  '<table>'+
+  '<tr><th>ID</th><th>نام</th><th>ایمیل</th><th>موجودی</th><th>پلن</th><th>وضعیت</th></tr>'+
+  data.users.map(u=>
+   '<tr>'+
+   '<td>'+u.id+'</td>'+
+   '<td>'+(u.name||u.username||"-")+'</td>'+
+   '<td>'+(u.email||"-")+'</td>'+
+   '<td>'+Number(u.balance||0).toLocaleString("fa-IR")+'</td>'+
+   '<td>'+(u.plan||"free")+'</td>'+
+   '<td>'+(u.status||"-")+'</td>'+
+   '</tr>'
+  ).join("")+
+  '</table>'+
+  '</div>';
 
  }catch(e){
 
-  withdrawalsBox.innerHTML=
-   '<div class="msg error">'+
-   'خطا در برداشت‌ها: '+
-   escapeHtml(e.message)+
-   '</div>';
+  $("adminContent").innerHTML=
+   '<div class="card">❌ خطا در بارگذاری کاربران:<br>'+e.message+'</div>';
 
  }
-
 }
 
+async function adminWithdrawals(){
 
-/* پلن‌های مدیر */
+ $("adminContent").innerHTML='<div class="card">در حال بارگذاری برداشت‌ها...</div>';
 
-function loadAdminPlans(){
+ try{
 
- const box=
-  document.getElementById(
-   'adminPlans'
-  );
+  const data=await api("/api/admin/withdrawals");
 
- box.innerHTML=
-  PLANS.map(p=>
+  if(!data.withdrawals || !data.withdrawals.length){
+   $("adminContent").innerHTML='<div class="card">درخواستی وجود ندارد.</div>';
+   return;
+  }
 
-   '<div class="plan">'+
-   '<h3>'+
-   escapeHtml(p.title)+
-   '</h3>'+
-   '<b>'+
-   Number(p.amount)
-   .toLocaleString('fa-IR')+
-   ' تومان</b>'+
-   '</div>'
+  $("adminContent").innerHTML=
+  '<div class="card">'+
+  '<h2>💸 برداشت‌ها</h2>'+
+  '<table>'+
+  '<tr><th>ID</th><th>کاربر</th><th>مبلغ</th><th>روش</th><th>آدرس</th><th>وضعیت</th></tr>'+
+  data.withdrawals.map(w=>
+   '<tr>'+
+   '<td>'+w.id+'</td>'+
+   '<td>'+w.username+'</td>'+
+   '<td>'+Number(w.amount||0).toLocaleString("fa-IR")+'</td>'+
+   '<td>'+w.method+'</td>'+
+   '<td>'+w.address+'</td>'+
+   '<td>'+w.status+'</td>'+
+   '</tr>'
+  ).join("")+
+  '</table>'+
+  '</div>';
 
-  ).join('');
+ }catch(e){
 
+  $("adminContent").innerHTML=
+   '<div class="card">❌ خطا در برداشت‌ها:<br>'+e.message+'</div>';
+
+ }
 }
 
+async function adminPayments(){
 
-/* خروج کاربر */
+ $("adminContent").innerHTML='<div class="card">در حال بارگذاری پرداخت‌ها...</div>';
 
-function logout(){
+ try{
 
- localStorage.removeItem(
-  'token'
- );
+  const data=await api("/api/admin/payments");
 
- location.reload();
+  $("adminContent").innerHTML=
+  '<div class="card">'+
+  '<h2>💳 پرداخت‌ها</h2>'+
+  '<pre>'+JSON.stringify(data.payments||[],null,2)+'</pre>'+
+  '</div>';
 
+ }catch(e){
+
+  $("adminContent").innerHTML=
+   '<div class="card">❌ خطا در پرداخت‌ها:<br>'+e.message+'</div>';
+
+ }
 }
 
+function adminPlans(){
 
-/* خروج مدیر */
+ $("adminContent").innerHTML=
+ '<div class="card">'+
+ '<h2>💰 پلن‌ها</h2>'+
+ '<div class="grid">'+
+ PLANS.map(p=>
+  '<div class="plan">'+
+  '<h3>'+p.title+'</h3>'+
+  '<strong>'+p.irr.toLocaleString("fa-IR")+' تومان</strong>'+
+  '<div>🌎 '+p.usd+' USD</div>'+
+  '</div>'
+ ).join("")+
+ '</div>'+
+ '</div>';
+
+}
 
 function adminLogout(){
 
- localStorage.removeItem(
-  'adminToken'
- );
+ adminToken="";
+ localStorage.removeItem("admin_token");
 
- location.reload();
+ $("admin").classList.add("hidden");
+ $("auth").classList.remove("hidden");
 
 }
 
+if(token){
 
-/* جلوگیری از HTML خطرناک */
+ $("auth").classList.add("hidden");
+ $("app").classList.remove("hidden");
 
-function escapeHtml(s){
-
- return String(s ?? '')
-  .replaceAll('&','&amp;')
-  .replaceAll('<','&lt;')
-  .replaceAll('>','&gt;')
-  .replaceAll('"','&quot;')
-  .replaceAll(
-   "'",
-   '&#039;'
-  );
+ loadUser();
+ loadPlans();
 
 }
 
@@ -973,913 +711,423 @@ function escapeHtml(s){
 </html>`;
 
 
-/* پاسخ JSON */
-
 function json(data,status=200){
-
- return new Response(
-  JSON.stringify(data),
-  {
-   status,
-   headers:{
-    'Content-Type':
-    'application/json;charset=UTF-8'
-   }
+ return new Response(JSON.stringify(data),{
+  status,
+  headers:{
+   "content-type":"application/json;charset=UTF-8",
+   "access-control-allow-origin":"*",
+   "access-control-allow-headers":"Content-Type, Authorization, X-Admin-Token",
+   "access-control-allow-methods":"GET,POST,OPTIONS"
   }
- );
-
+ });
 }
-
-
-/* ساخت توکن */
 
 function token(){
-
- return crypto.randomUUID();
-
+ return crypto.randomUUID()+"-"+crypto.randomUUID();
 }
-
-
-/* هش رمز عبور */
 
 async function hashPassword(password){
+ const data=new TextEncoder().encode(password);
+ const hash=await crypto.subtle.digest("SHA-256",data);
 
- const data=
-  new TextEncoder().encode(password);
-
- const hash=
-  await crypto.subtle.digest(
-   'SHA-256',
-   data
-  );
-
- return [
-  ...new Uint8Array(hash)
- ]
- .map(
-  x=>x.toString(16).padStart(2,'0')
- )
- .join('');
-
+ return [...new Uint8Array(hash)]
+  .map(b=>b.toString(16).padStart(2,"0"))
+  .join("");
 }
-
-
-/* پیدا کردن کاربر */
-
-async function getUserByToken(env,t){
-
- if(!t)
-  return null;
-
- const row=
-  await env.DB.prepare(
-   `SELECT u.*
-    FROM sessions s
-    JOIN users u
-    ON u.id=s.user_id
-    WHERE s.token=?
-    AND s.expires_at>?`
-  )
-  .bind(
-   t,
-   Date.now()
-  )
-  .first();
-
- return row;
-
-}
-
-
-/* دریافت Bearer */
 
 function getBearer(request){
-
- const h=
-  request.headers.get(
-   'Authorization'
-  ) || '';
-
- return h.startsWith('Bearer ')
-  ? h.slice(7)
-  : '';
-
+ const h=request.headers.get("Authorization")||"";
+ return h.startsWith("Bearer ") ? h.slice(7) : "";
 }
 
-
-/* بررسی مدیر */
-
-async function isAdmin(env,request){
+async function getUser(request,env){
 
  const t=getBearer(request);
 
- if(!t)
-  return false;
+ if(!t) return null;
 
- const a=
+ const row=await env.DB.prepare(
+  "SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? LIMIT 1"
+ ).bind(t).first();
+
+ return row||null;
+}
+
+async function requireAdmin(request,env){
+
+ const t=request.headers.get("X-Admin-Token")||"";
+
+ if(!t) return false;
+
+ const row=await env.DB.prepare(
+  "SELECT token FROM admin_sessions WHERE token=? LIMIT 1"
+ ).bind(t).first();
+
+ return !!row;
+}
+
+
+async function handle(request,env){
+
+ const url=new URL(request.url);
+ const path=url.pathname;
+
+ if(request.method==="OPTIONS"){
+  return new Response(null,{
+   headers:{
+    "access-control-allow-origin":"*",
+    "access-control-allow-headers":"Content-Type, Authorization, X-Admin-Token",
+    "access-control-allow-methods":"GET,POST,OPTIONS"
+   }
+  });
+ }
+
+ if(path==="/"){
+  return new Response(HTML,{
+   headers:{"content-type":"text/html;charset=UTF-8"}
+  });
+ }
+
+
+ if(path==="/api/register" && request.method==="POST"){
+
+  const body=await request.json();
+
+  const name=String(body.name||"").trim();
+  const email=String(body.email||"").trim().toLowerCase();
+  const password=String(body.password||"");
+
+  if(!email || !password){
+   return json({ok:false,error:"ایمیل و رمز عبور الزامی است"},400);
+  }
+
+  if(password.length<6){
+   return json({ok:false,error:"رمز عبور حداقل ۶ کاراکتر باشد"},400);
+  }
+
+  const exists=await env.DB.prepare(
+   "SELECT id FROM users WHERE email=? LIMIT 1"
+  ).bind(email).first();
+
+  if(exists){
+   return json({ok:false,error:"این ایمیل قبلاً ثبت شده است"},400);
+  }
+
+  const hash=await hashPassword(password);
+
+  const username=email.split("@")[0];
+
+  const result=await env.DB.prepare(
+   "INSERT INTO users(username,balance,plan,email,password_hash,status,name) VALUES(?,?,?,?,?,?,?)"
+  ).bind(
+   username,
+   0,
+   "free",
+   email,
+   hash,
+   "فعال",
+   name
+  ).run();
+
+  return json({
+   ok:true,
+   id:result.meta?.last_row_id||null
+  });
+ }
+
+
+ if(path==="/api/login" && request.method==="POST"){
+
+  const body=await request.json();
+
+  const email=String(body.email||"").trim().toLowerCase();
+  const password=String(body.password||"");
+
+  const hash=await hashPassword(password);
+
+  const user=await env.DB.prepare(
+   "SELECT * FROM users WHERE email=? AND password_hash=? LIMIT 1"
+  ).bind(email,hash).first();
+
+  if(!user){
+   return json({ok:false,error:"ایمیل یا رمز عبور اشتباه است"},401);
+  }
+
+  const t=token();
+
   await env.DB.prepare(
-   `SELECT token
-    FROM admin_sessions
-    WHERE token=?
-    AND expires_at>?`
-  )
-  .bind(
-   t,
-   Date.now()
-  )
-  .first();
+   "INSERT INTO sessions(user_id,token) VALUES(?,?)"
+  ).bind(user.id,t).run();
 
- return !!a;
+  return json({
+   ok:true,
+   token:t,
+   user:user
+  });
+ }
 
+
+ if(path==="/api/me" && request.method==="GET"){
+
+  const user=await getUser(request,env);
+
+  if(!user){
+   return json({ok:false,error:"نشست کاربر معتبر نیست"},401);
+  }
+
+  return json({ok:true,user});
+ }
+
+
+ if(path==="/api/transactions" && request.method==="GET"){
+
+  const user=await getUser(request,env);
+
+  if(!user){
+   return json({ok:false,error:"وارد حساب شوید"},401);
+  }
+
+  const result=await env.DB.prepare(
+   "SELECT * FROM transactions WHERE username=? ORDER BY id DESC LIMIT 100"
+  ).bind(user.username).all();
+
+  return json({
+   ok:true,
+   transactions:result.results||[]
+  });
+ }
+
+
+ if(path==="/api/forgot" && request.method==="POST"){
+
+  const body=await request.json();
+
+  const email=String(body.email||"").trim().toLowerCase();
+
+  const user=await env.DB.prepare(
+   "SELECT id FROM users WHERE email=? LIMIT 1"
+  ).bind(email).first();
+
+  if(!user){
+   return json({
+    ok:true,
+    message:"اگر این ایمیل وجود داشته باشد، درخواست بازیابی ثبت شد."
+   });
+  }
+
+  const code=String(Math.floor(100000+Math.random()*900000));
+
+  await env.DB.prepare(
+   "INSERT INTO reset_codes(user_id,code,created_at) VALUES(?,?,CURRENT_TIMESTAMP)"
+  ).bind(user.id,code).run();
+
+  return json({
+   ok:true,
+   message:"کد بازیابی ایجاد شد. اتصال ارسال ایمیل باید تنظیم شود."
+  });
+ }
+
+
+ if(path==="/api/payment" && request.method==="POST"){
+
+  const user=await getUser(request,env);
+
+  if(!user){
+   return json({ok:false,error:"ابتدا وارد حساب شوید"},401);
+  }
+
+  const body=await request.json();
+
+  const plan=PLANS.find(x=>x.id===body.plan_id);
+
+  if(!plan){
+   return json({ok:false,error:"پلن نامعتبر است"},400);
+  }
+
+  const currency=body.currency==="USD" ? "USD" : "IRR";
+
+  const amount=currency==="USD" ? plan.usd : plan.irr;
+
+  const paymentId=crypto.randomUUID();
+
+  /*
+    اینجا سفارش ثبت می‌شود.
+    برای پرداخت واقعی باید درگاه ایران یا درگاه ارزی
+    به این بخش متصل شود.
+  */
+
+  try{
+
+   await env.DB.prepare(
+    "INSERT INTO payments(username,amount,status,created_at) VALUES(?,?,?,CURRENT_TIMESTAMP)"
+   ).bind(
+    user.username,
+    amount,
+    "pending"
+   ).run();
+
+  }catch(e){
+
+   return json({
+    ok:false,
+    error:"ثبت سفارش پرداخت انجام نشد: "+e.message
+   },500);
+
+  }
+
+  return json({
+   ok:true,
+   payment_id:paymentId,
+   amount:amount,
+   currency:currency,
+   plan:plan.title,
+   status:"pending"
+  });
+ }
+
+
+ if(path==="/api/withdraw" && request.method==="POST"){
+
+  const user=await getUser(request,env);
+
+  if(!user){
+   return json({ok:false,error:"ابتدا وارد حساب شوید"},401);
+  }
+
+  const body=await request.json();
+
+  const amount=Number(body.amount||0);
+  const method=String(body.method||"USDT");
+  const address=String(body.address||"").trim();
+
+  if(!Number.isFinite(amount) || amount<=0){
+   return json({ok:false,error:"مبلغ برداشت نامعتبر است"},400);
+  }
+
+  if(amount>Number(user.balance||0)){
+   return json({ok:false,error:"موجودی کافی نیست"},400);
+  }
+
+  if(!address){
+   return json({ok:false,error:"آدرس برداشت را وارد کنید"},400);
+  }
+
+  await env.DB.prepare(
+   "INSERT INTO withdrawals(username,amount,status,method,address) VALUES(?,?,?, ?,?)"
+  ).bind(
+   user.username,
+   amount,
+   "pending",
+   method,
+   address
+  ).run();
+
+  return json({
+   ok:true,
+   message:"درخواست برداشت ثبت شد."
+  });
+ }
+
+
+ if(path==="/api/admin/login" && request.method==="POST"){
+
+  const body=await request.json();
+
+  const password=String(body.password||"");
+
+  const adminPassword=env.ADMIN_PASSWORD || "Admin@123456";
+
+  if(password!==adminPassword){
+   return json({
+    ok:false,
+    error:"رمز مدیریت اشتباه است"
+   },401);
+  }
+
+  const t=token();
+
+  await env.DB.prepare(
+   "INSERT INTO admin_sessions(token) VALUES(?)"
+  ).bind(t).run();
+
+  return json({
+   ok:true,
+   token:t
+  });
+ }
+
+
+ if(path==="/api/admin/users" && request.method==="GET"){
+
+  if(!(await requireAdmin(request,env))){
+   return json({ok:false,error:"دسترسی مدیریت لازم است"},401);
+  }
+
+  const result=await env.DB.prepare(
+   "SELECT id,username,balance,plan,created_at,email,status,name FROM users ORDER BY id DESC"
+  ).all();
+
+  return json({
+   ok:true,
+   users:result.results||[]
+  });
+ }
+
+
+ if(path==="/api/admin/withdrawals" && request.method==="GET"){
+
+  if(!(await requireAdmin(request,env))){
+   return json({ok:false,error:"دسترسی مدیریت لازم است"},401);
+  }
+
+  const result=await env.DB.prepare(
+   "SELECT * FROM withdrawals ORDER BY id DESC LIMIT 500"
+  ).all();
+
+  return json({
+   ok:true,
+   withdrawals:result.results||[]
+  });
+ }
+
+
+ if(path==="/api/admin/payments" && request.method==="GET"){
+
+  if(!(await requireAdmin(request,env))){
+   return json({ok:false,error:"دسترسی مدیریت لازم است"},401);
+  }
+
+  const result=await env.DB.prepare(
+   "SELECT * FROM payments ORDER BY id DESC LIMIT 500"
+  ).all();
+
+  return json({
+   ok:true,
+   payments:result.results||[]
+  });
+ }
+
+
+ return json({
+  ok:false,
+  error:"مسیر پیدا نشد"
+ },404);
 }
 
 
 export default {
-
  async fetch(request,env){
-
   try{
-
-   /* بررسی D1 */
-
-   if(!env.DB){
-
-    return json(
-     {
-      ok:false,
-      error:
-      'اتصال D1 با نام DB وجود ندارد.'
-     },
-     500
-    );
-
-   }
-
-
-   const url=
-    new URL(request.url);
-
-
-   /* صفحه اصلی */
-
-   if(
-    request.method==='GET' &&
-    url.pathname==='/'
-   ){
-
-    return new Response(
-     HTML,
-     {
-      headers:{
-       'Content-Type':
-       'text/html;charset=UTF-8'
-      }
-     }
-    );
-
-   }
-
-
-   /* API فقط POST */
-
-   if(request.method!=='POST'){
-
-    if(
-     url.pathname.startsWith('/api/')
-    ){
-
-     return json(
-      {
-       ok:false,
-       error:
-       'Method Not Allowed'
-      },
-      405
-     );
-
-    }
-
-    return new Response(
-     'Not Found',
-     {status:404}
-    );
-
-   }
-
-
-   const body=
-    await request.json()
-    .catch(()=>({}));
-
-
-   /* =========================
-      ثبت نام
-   ========================= */
-
-   if(
-    url.pathname==='/api/register'
-   ){
-
-    const name=
-     String(body.name||'').trim();
-
-    const email=
-     String(body.email||'')
-     .trim()
-     .toLowerCase();
-
-    const password=
-     String(body.password||'');
-
-
-    if(
-     !name ||
-     !email ||
-     !password
-    ){
-
-     return json(
-      {
-       error:
-       'همه فیلدها را کامل کنید.'
-      },
-      400
-     );
-
-    }
-
-
-    if(password.length<6){
-
-     return json(
-      {
-       error:
-       'رمز عبور باید حداقل ۶ کاراکتر باشد.'
-      },
-      400
-     );
-
-    }
-
-
-    const old=
-     await env.DB.prepare(
-      `SELECT id
-       FROM users
-       WHERE email=?`
-     )
-     .bind(email)
-     .first();
-
-
-    if(old){
-
-     return json(
-      {
-       error:
-       'این ایمیل قبلاً ثبت شده است.'
-      },
-      409
-     );
-
-    }
-
-
-    const id=
-     crypto.randomUUID();
-
-    const hash=
-     await hashPassword(password);
-
-
-    await env.DB.prepare(
-     `INSERT INTO users
-      (id,name,email,password,balance,created_at)
-      VALUES(?,?,?,?,?,?)`
-    )
-    .bind(
-     id,
-     name,
-     email,
-     hash,
-     0,
-     Date.now()
-    )
-    .run();
-
-
-    return json(
-     {
-      ok:true,
-      message:
-      'ثبت‌نام با موفقیت انجام شد.'
-     }
-    );
-
-   }
-
-
-   /* =========================
-      ورود
-   ========================= */
-
-   if(
-    url.pathname==='/api/login'
-   ){
-
-    const email=
-     String(body.email||'')
-     .trim()
-     .toLowerCase();
-
-    const password=
-     String(body.password||'');
-
-
-    const user=
-     await env.DB.prepare(
-      `SELECT *
-       FROM users
-       WHERE email=?`
-     )
-     .bind(email)
-     .first();
-
-
-    if(!user){
-
-     return json(
-      {
-       error:
-       'ایمیل یا رمز عبور اشتباه است.'
-      },
-      401
-     );
-
-    }
-
-
-    const hash=
-     await hashPassword(password);
-
-
-    if(hash!==user.password){
-
-     return json(
-      {
-       error:
-       'ایمیل یا رمز عبور اشتباه است.'
-      },
-      401
-     );
-
-    }
-
-
-    const t=token();
-
-
-    await env.DB.prepare(
-     `INSERT INTO sessions
-      (token,user_id,expires_at)
-      VALUES(?,?,?)`
-    )
-    .bind(
-     t,
-     user.id,
-     Date.now()+2592000000
-    )
-    .run();
-
-
-    return json(
-     {
-      ok:true,
-      token:t
-     }
-    );
-
-   }
-
-
-   /* =========================
-      اطلاعات کاربر
-   ========================= */
-
-   if(
-    url.pathname==='/api/me'
-   ){
-
-    const u=
-     await getUserByToken(
-      env,
-      getBearer(request)
-     );
-
-
-    if(!u){
-
-     return json(
-      {
-       error:
-       'نشست شما منقضی شده است.'
-      },
-      401
-     );
-
-    }
-
-
-    return json(
-     {
-      ok:true,
-      user:{
-       id:u.id,
-       name:u.name,
-       email:u.email,
-       balance:
-       Number(u.balance||0)
-      }
-     }
-    );
-
-   }
-
-
-   /* =========================
-      تراکنش‌ها
-   ========================= */
-
-   if(
-    url.pathname==='/api/transactions'
-   ){
-
-    const u=
-     await getUserByToken(
-      env,
-      getBearer(request)
-     );
-
-
-    if(!u){
-
-     return json(
-      {
-       error:
-       'دسترسی غیرمجاز'
-      },
-      401
-     );
-
-    }
-
-
-    const rows=
-     await env.DB.prepare(
-      `SELECT *
-       FROM transactions
-       WHERE user_id=?
-       ORDER BY created_at DESC`
-     )
-     .bind(u.id)
-     .all();
-
-
-    return json(
-     {
-      ok:true,
-      items:
-      rows.results || []
-     }
-    );
-
-   }
-
-
-   /* =========================
-      پرداخت
-   ========================= */
-
-   if(
-    url.pathname==='/api/payment'
-   ){
-
-    const u=
-     await getUserByToken(
-      env,
-      String(body.token||'')
-     );
-
-
-    if(!u){
-
-     return json(
-      {
-       error:
-       'لطفاً دوباره وارد شوید.'
-      },
-      401
-     );
-
-    }
-
-
-    const amount=
-     Number(body.amount);
-
-
-    const validPlans=[
-     400000,
-     700000,
-     1000000,
-     1500000,
-     2000000
-    ];
-
-
-    if(
-     !validPlans.includes(amount)
-    ){
-
-     return json(
-      {
-       error:
-       'پلن نامعتبر است.'
-      },
-      400
-     );
-
-    }
-
-
-    await env.DB.prepare(
-     `INSERT INTO transactions
-      (id,user_id,type,amount,status,created_at)
-      VALUES(?,?,?,?,?,?)`
-    )
-    .bind(
-     crypto.randomUUID(),
-     u.id,
-     'payment',
-     amount,
-     'pending',
-     Date.now()
-    )
-    .run();
-
-
-    return json(
-     {
-      ok:true,
-      message:
-      'درخواست پرداخت ثبت شد. اتصال درگاه واقعی در مرحله بعد انجام می‌شود.'
-     }
-    );
-
-   }
-
-
-   /* =========================
-      برداشت
-   ========================= */
-
-   if(
-    url.pathname==='/api/withdraw'
-   ){
-
-    const u=
-     await getUserByToken(
-      env,
-      String(body.token||'')
-     );
-
-
-    if(!u){
-
-     return json(
-      {
-       error:
-       'لطفاً دوباره وارد شوید.'
-      },
-      401
-     );
-
-    }
-
-
-    const amount=
-     Number(body.amount);
-
-    const card=
-     String(body.card||'')
-     .trim()
-     .replace(/\s/g,'');
-
-
-    if(
-     !Number.isFinite(amount) ||
-     amount<10000
-    ){
-
-     return json(
-      {
-       error:
-       'حداقل مبلغ برداشت ۱۰٬۰۰۰ تومان است.'
-      },
-      400
-     );
-
-    }
-
-
-    if(
-     amount>Number(u.balance||0)
-    ){
-
-     return json(
-      {
-       error:
-       'موجودی کافی نیست.'
-      },
-      400
-     );
-
-    }
-
-
-    if(
-     !/^[0-9]{16}$/.test(card)
-    ){
-
-     return json(
-      {
-       error:
-       'شماره کارت باید ۱۶ رقم باشد.'
-      },
-      400
-     );
-
-    }
-
-
-    const requestId=
-     crypto.randomUUID();
-
-
-    await env.DB.prepare(
-     `INSERT INTO withdrawals
-      (id,user_id,amount,card,status,created_at)
-      VALUES(?,?,?,?,?,?)`
-    )
-    .bind(
-     requestId,
-     u.id,
-     amount,
-     card,
-     'pending',
-     Date.now()
-    )
-    .run();
-
-
-    await env.DB.prepare(
-     `UPDATE users
-      SET balance=balance-?
-      WHERE id=?`
-    )
-    .bind(
-     amount,
-     u.id
-    )
-    .run();
-
-
-    return json(
-     {
-      ok:true,
-      message:
-      'درخواست برداشت ثبت شد و در انتظار بررسی مدیر است.'
-     }
-    );
-
-   }
-
-
-   /* =========================
-      بازیابی رمز
-   ========================= */
-
-   if(
-    url.pathname==='/api/forgot'
-   ){
-
-    const email=
-     String(body.email||'')
-     .trim()
-     .toLowerCase();
-
-
-    const u=
-     await env.DB.prepare(
-      `SELECT id
-       FROM users
-       WHERE email=?`
-     )
-     .bind(email)
-     .first();
-
-
-    return json(
-     {
-      ok:true,
-      message:
-       u
-       ? 'درخواست بازیابی ثبت شد.'
-       : 'اگر این ایمیل وجود داشته باشد، درخواست بازیابی ثبت می‌شود.'
-     }
-    );
-
-   }
-
-
-   /* =========================
-      ورود مدیر
-   ========================= */
-
-   if(
-    url.pathname==='/api/admin/login'
-   ){
-
-    const password=
-     String(body.password||'');
-
-
-    const ADMIN_PASSWORD=
-     env.ADMIN_PASSWORD ||
-     'Admin@123456';
-
-
-    if(
-     password!==ADMIN_PASSWORD
-    ){
-
-     return json(
-      {
-       error:
-       'رمز مدیریت اشتباه است.'
-      },
-      401
-     );
-
-    }
-
-
-    const t=
-     'ADMIN-'+
-     crypto.randomUUID();
-
-
-    await env.DB.prepare(
-     `INSERT INTO admin_sessions
-      (token,expires_at)
-      VALUES(?,?)`
-    )
-    .bind(
-     t,
-     Date.now()+86400000
-    )
-    .run();
-
-
-    return json(
-     {
-      ok:true,
-      token:t
-     }
-    );
-
-   }
-
-
-   /* =========================
-      کاربران مدیر
-   ========================= */
-
-   if(
-    url.pathname==='/api/admin/users'
-   ){
-
-    if(
-     !(await isAdmin(env,request))
-    ){
-
-     return json(
-      {
-       error:
-       'دسترسی مدیر لازم است.'
-      },
-      401
-     );
-
-    }
-
-
-    const rows=
-     await env.DB.prepare(
-      `SELECT
-       id,
-       name,
-       email,
-       balance,
-       created_at
-       FROM users
-       ORDER BY created_at DESC`
-     )
-     .all();
-
-
-    return json(
-     {
-      ok:true,
-      users:
-      rows.results || []
-     }
-    );
-
-   }
-
-
-   /* =========================
-      برداشت‌های مدیر
-   ========================= */
-
-   if(
-    url.pathname==='/api/admin/withdrawals'
-   ){
-
-    if(
-     !(await isAdmin(env,request))
-    ){
-
-     return json(
-      {
-       error:
-       'دسترسی مدیر لازم است.'
-      },
-      401
-     );
-
-    }
-
-
-    const rows=
-     await env.DB.prepare(
-      `SELECT
-       w.*,
-       u.email
-       FROM withdrawals w
-       JOIN users u
-       ON u.id=w.user_id
-       ORDER BY w.created_at DESC`
-    )
-    .all();
-
-
-    return json(
-     {
-      ok:true,
-      items:
-      rows.results || []
-     }
-    );
-
-   }
-
-
-   return json(
-    {
-     error:
-     'مسیر پیدا نشد.'
-    },
-    404
-   );
-
-
+   return await handle(request,env);
   }catch(e){
 
-   return json(
-    {
-     ok:false,
-     error:
-     'خطای داخلی سرور',
-     detail:
-     e.message
-    },
-    500
-   );
+   return json({
+    ok:false,
+    error:"خطای داخلی سرور",
+    detail:e.message
+   },500);
 
   }
-
  }
-
 };
