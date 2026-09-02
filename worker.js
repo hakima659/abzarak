@@ -1137,19 +1137,74 @@ window.adminLogin=async function(){
   }catch(error){ msg("adminLoginMsg",error.message,false); }
 };
 
+function renderAdminTable(rows, columns){
+  if(!rows || !rows.length){
+    return '<p class="small">داده‌ای موجود نیست.</p>';
+  }
+
+  var html = '<div style="overflow-x:auto"><table><thead><tr>';
+  columns.forEach(function(col){
+    html += "<th>"+col.label+"</th>";
+  });
+  html += "</tr></thead><tbody>";
+
+  rows.forEach(function(row){
+    html += "<tr>";
+    columns.forEach(function(col){
+      var val = row[col.key];
+      if(col.key === "balance" || col.key === "amount"){
+        val = Number(val || 0).toLocaleString("fa-IR");
+      }
+      html += "<td>"+(val === null || val === undefined || val === "" ? "—" : val)+"</td>";
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table></div>";
+  return html;
+}
+
 window.adminUsers=async function(){
-  try{ var data=await api("/api/admin/users"); $("adminResult").textContent=JSON.stringify(data.users || data,null,2); }
-  catch(error){ $("adminResult").textContent=error.message; }
+  try{
+    var data=await api("/api/admin/users");
+    var rows=data.users || [];
+    $("adminResult").innerHTML = "<h3>👥 کاربران</h3>" + renderAdminTable(rows, [
+      { key:"name", label:"نام" },
+      { key:"email", label:"ایمیل" },
+      { key:"balance", label:"موجودی (تومان)" },
+      { key:"created_at", label:"تاریخ ثبت‌نام" }
+    ]);
+  }catch(error){ $("adminResult").innerHTML = "<p>❌ "+error.message+"</p>"; }
 };
 
 window.adminWithdrawals=async function(){
-  try{ var data=await api("/api/admin/withdrawals"); $("adminResult").textContent=JSON.stringify(data.withdrawals || data,null,2); }
-  catch(error){ $("adminResult").textContent=error.message; }
+  try{
+    var data=await api("/api/admin/withdrawals");
+    var rows=data.withdrawals || [];
+    $("adminResult").innerHTML = "<h3>💸 برداشت‌ها</h3>" + renderAdminTable(rows, [
+      { key:"email", label:"ایمیل" },
+      { key:"amount", label:"مبلغ (تومان)" },
+      { key:"method", label:"روش" },
+      { key:"address", label:"مقصد" },
+      { key:"status", label:"وضعیت" },
+      { key:"created_at", label:"تاریخ" }
+    ]);
+  }catch(error){ $("adminResult").innerHTML = "<p>❌ "+error.message+"</p>"; }
 };
 
 window.adminPayments=async function(){
-  try{ var data=await api("/api/admin/payments"); $("adminResult").textContent=JSON.stringify(data.payments || data,null,2); }
-  catch(error){ $("adminResult").textContent=error.message; }
+  try{
+    var data=await api("/api/admin/payments");
+    var rows=data.payments || [];
+    $("adminResult").innerHTML = "<h3>💳 پرداخت‌ها</h3>" + renderAdminTable(rows, [
+      { key:"email", label:"ایمیل" },
+      { key:"plan_id", label:"پلن" },
+      { key:"currency", label:"ارز" },
+      { key:"amount", label:"مبلغ" },
+      { key:"status", label:"وضعیت" },
+      { key:"created_at", label:"تاریخ" }
+    ]);
+  }catch(error){ $("adminResult").innerHTML = "<p>❌ "+error.message+"</p>"; }
 };
 
 window.adminLogout=function(){ localStorage.removeItem("admin_token"); showPage("adminLogin"); };
@@ -1161,4 +1216,5 @@ showPage(localStorage.getItem("user_token") ? "home" : "login");
 </script>
 </body>
 </html>`;
+
 
