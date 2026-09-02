@@ -1,6 +1,5 @@
-
 const PLANS = [
-  { id: "p400",  title: "پلن ۴۰۰ هزار تومان",  irr: 400000,  usd: 6  },
+  { id: "p400",  title: "پلن ۴۰۰ هزار تومان",  irr: 400000,  usd: 6 },
   { id: "p700",  title: "پلن ۷۰۰ هزار تومان",  irr: 700000,  usd: 10 },
   { id: "p1000", title: "پلن ۱ میلیون تومان",   irr: 1000000, usd: 15 },
   { id: "p1500", title: "پلن ۱.۵ میلیون تومان", irr: 1500000, usd: 22 },
@@ -16,12 +15,16 @@ const HTML = `<!doctype html>
 <title>دستیار هوش مصنوعی</title>
 
 <style>
-*{
-  box-sizing:border-box;
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  min-height:100%;
 }
 
 body{
-  margin:0;
   font-family:Tahoma,Arial,sans-serif;
   background:#f4f7fb;
   color:#172033;
@@ -46,28 +49,39 @@ header p{
 
 nav{
   position:relative;
-  z-index:100;
+  z-index:1000;
   display:flex;
   flex-wrap:wrap;
   gap:8px;
   justify-content:center;
   padding:12px;
-  background:white;
+  background:#fff;
   box-shadow:0 2px 10px #0001;
 }
 
 button{
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-block;
   border:0;
   border-radius:10px;
-  padding:11px 15px;
+  padding:12px 16px;
+  margin:3px;
   background:#2563eb;
-  color:white;
+  color:#fff;
   cursor:pointer;
-  pointer-events:auto !important;
+  pointer-events:auto;
   position:relative;
-  z-index:20;
+  z-index:1001;
   touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
   font-family:inherit;
+  font-size:15px;
+}
+
+button:active{
+  transform:scale(.97);
 }
 
 button:hover{
@@ -101,7 +115,7 @@ section.active{
 }
 
 .card{
-  background:white;
+  background:#fff;
   border-radius:16px;
   padding:20px;
   margin-bottom:16px;
@@ -112,9 +126,7 @@ h2{
   margin-top:0;
 }
 
-input,
-select,
-textarea{
+input,select,textarea{
   width:100%;
   padding:12px;
   margin:7px 0 12px;
@@ -140,10 +152,6 @@ textarea{
   border-radius:14px;
   padding:18px;
   background:#fff;
-}
-
-.plan h3{
-  margin-top:0;
 }
 
 .price{
@@ -186,10 +194,6 @@ th,td{
   font-size:13px;
 }
 
-.hidden{
-  display:none !important;
-}
-
 @media(max-width:600px){
   nav button{
     flex:1 1 45%;
@@ -205,202 +209,94 @@ th,td{
 <body>
 
 <header>
-  <h1>🤖 دستیار هوش مصنوعی</h1>
-  <p>دستیار هوشمند • حساب کاربری • درآمد • پرداخت • برداشت</p>
+<h1>🤖 دستیار هوش مصنوعی</h1>
+<p>دستیار هوشمند • حساب کاربری • درآمد • پرداخت • برداشت</p>
 </header>
 
 <nav>
 
-<button type="button" data-action="page" data-page="home">
-🏠 حساب
-</button>
-
-<button type="button" data-action="page" data-page="ai">
-🤖 هوش مصنوعی
-</button>
-
-<button type="button" data-action="page" data-page="plans">
-💰 پلن‌ها
-</button>
-
-<button type="button" data-action="page" data-page="payment">
-💳 پرداخت
-</button>
-
-<button type="button" data-action="page" data-page="withdraw">
-💸 برداشت
-</button>
-
-<button type="button" data-action="page" data-page="adminLogin">
-🛠️ مدیریت
-</button>
-
-<button type="button" data-action="logout">
-خروج
-</button>
+<button type="button" data-action="page" data-page="login">🏠 حساب</button>
+<button type="button" data-action="page" data-page="ai">🤖 هوش مصنوعی</button>
+<button type="button" data-action="page" data-page="plans">💰 پلن‌ها</button>
+<button type="button" data-action="page" data-page="payment">💳 پرداخت</button>
+<button type="button" data-action="page" data-page="withdraw">💸 برداشت</button>
+<button type="button" data-action="page" data-page="adminLogin">🛠️ مدیریت</button>
+<button type="button" data-action="logout">خروج</button>
 
 </nav>
 
 <div class="container">
 
-<!-- LOGIN -->
-
 <section id="login" class="active">
-
 <div class="card">
 
 <h2>🔐 ورود به حساب</h2>
 
-<input
-id="loginEmail"
-type="email"
-placeholder="ایمیل"
-autocomplete="email"
->
+<input id="loginEmail" type="email" placeholder="ایمیل">
+<input id="loginPassword" type="password" placeholder="رمز عبور">
 
-<input
-id="loginPassword"
-type="password"
-placeholder="رمز عبور"
-autocomplete="current-password"
->
-
-<button type="button" data-action="login">
-ورود
-</button>
-
-<button type="button" class="secondary" data-action="page" data-page="register">
-ثبت‌نام
-</button>
-
-<button type="button" class="secondary" data-action="page" data-page="forgot">
-بازیابی رمز
-</button>
+<button type="button" data-action="login">ورود</button>
+<button type="button" class="secondary" data-action="page" data-page="register">ثبت‌نام</button>
+<button type="button" class="secondary" data-action="page" data-page="forgot">بازیابی رمز</button>
 
 <div id="loginMsg"></div>
 
 </div>
-
 </section>
 
-
-<!-- REGISTER -->
-
 <section id="register">
-
 <div class="card">
 
 <h2>📝 ثبت‌نام</h2>
 
-<input
-id="registerName"
-type="text"
-placeholder="نام"
->
+<input id="registerName" type="text" placeholder="نام">
+<input id="registerEmail" type="email" placeholder="ایمیل">
+<input id="registerPassword" type="password" placeholder="رمز عبور">
 
-<input
-id="registerEmail"
-type="email"
-placeholder="ایمیل"
-autocomplete="email"
->
-
-<input
-id="registerPassword"
-type="password"
-placeholder="رمز عبور"
-autocomplete="new-password"
->
-
-<button type="button" data-action="register">
-ثبت‌نام
-</button>
-
-<button type="button" class="secondary" data-action="page" data-page="login">
-بازگشت به ورود
-</button>
+<button type="button" data-action="register">ثبت‌نام</button>
+<button type="button" class="secondary" data-action="page" data-page="login">بازگشت به ورود</button>
 
 <div id="registerMsg"></div>
 
 </div>
-
 </section>
 
-
-<!-- FORGOT -->
-
 <section id="forgot">
-
 <div class="card">
 
 <h2>🔑 بازیابی رمز</h2>
 
-<input
-id="forgotEmail"
-type="email"
-placeholder="ایمیل"
->
+<input id="forgotEmail" type="email" placeholder="ایمیل">
 
-<button type="button" data-action="forgot">
-بازیابی
-</button>
-
-<button type="button" class="secondary" data-action="page" data-page="login">
-بازگشت
-</button>
+<button type="button" data-action="forgot">بازیابی</button>
+<button type="button" class="secondary" data-action="page" data-page="login">بازگشت</button>
 
 <div id="forgotMsg"></div>
 
 </div>
-
 </section>
-
-
-<!-- HOME -->
 
 <section id="home">
 
 <div class="card">
-
 <h2>👤 حساب کاربری</h2>
-
-<div id="profile">
-در حال بارگذاری...
-</div>
-
+<div id="profile">برای ورود به حساب، وارد شوید.</div>
 </div>
 
 <div class="card">
-
 <h2>💰 موجودی حساب</h2>
-
-<div id="balance" class="balance">
-0 تومان
-</div>
-
-<p class="small">
-حداقل برداشت: ۱۰,۰۰۰ تومان
-</p>
-
+<div id="balance" class="balance">0 تومان</div>
+<p class="small">حداقل برداشت: ۱۰,۰۰۰ تومان</p>
 </div>
 
 <div class="card">
-
 <h2>📊 تراکنش‌ها</h2>
-
-<div id="transactions">
-در حال بارگذاری...
-</div>
-
+<div id="transactions">هنوز تراکنشی ثبت نشده است.</div>
 </div>
 
 </section>
 
-
-<!-- AI -->
-
 <section id="ai">
-
 <div class="card">
 
 <h2>🤖 هوش مصنوعی</h2>
@@ -409,25 +305,18 @@ placeholder="ایمیل"
 سؤال یا درخواست خود را بنویسید.
 </div>
 
-<textarea
-id="aiPrompt"
-placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه اینترنتی بنویس..."
-></textarea>
+<textarea id="aiPrompt"
+placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه اینترنتی بنویس..."></textarea>
 
 <button type="button" data-action="askAI">
 ارسال به هوش مصنوعی
 </button>
 
 <div id="aiMsg"></div>
-
 <div id="aiResult" class="result"></div>
 
 </div>
-
 </section>
-
-
-<!-- PLANS -->
 
 <section id="plans">
 
@@ -435,20 +324,12 @@ placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه ا
 
 <h2>💰 پلن‌های اشتراک</h2>
 
-<div class="notice">
-پلن مناسب خود را انتخاب کنید.
-</div>
+<div class="notice">پلن مناسب خود را انتخاب کنید.</div>
 
-<div id="plansList" class="grid">
-در حال بارگذاری...
-</div>
+<div id="plansList"></div>
 
 </div>
-
 </section>
-
-
-<!-- PAYMENT -->
 
 <section id="payment">
 
@@ -456,28 +337,13 @@ placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه ا
 
 <h2>💳 پرداخت</h2>
 
-<label>
-انتخاب پلن
-</label>
-
 <select id="paymentPlan">
 <option value="">انتخاب پلن</option>
 </select>
 
-<label>
-روش پرداخت
-</label>
-
 <select id="paymentCurrency">
-
-<option value="IRR">
-🇮🇷 تومان / ریال — پرداخت ایران
-</option>
-
-<option value="USD">
-🌎 USD — پرداخت بین‌المللی
-</option>
-
+<option value="IRR">🇮🇷 تومان / ریال — پرداخت ایران</option>
+<option value="USD">🌎 USD — پرداخت بین‌المللی</option>
 </select>
 
 <button type="button" data-action="createPayment">
@@ -487,11 +353,7 @@ placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه ا
 <div id="paymentMsg"></div>
 
 </div>
-
 </section>
-
-
-<!-- WITHDRAW -->
 
 <section id="withdraw">
 
@@ -499,29 +361,18 @@ placeholder="مثلاً: یک متن تبلیغاتی برای فروشگاه ا
 
 <h2>💸 درخواست برداشت</h2>
 
-<input
-id="withdrawAmount"
+<input id="withdrawAmount"
 type="number"
 min="10000"
-placeholder="مبلغ برداشت به تومان"
->
+placeholder="مبلغ برداشت به تومان">
 
 <select id="withdrawMethod">
-
-<option value="BANK">
-🇮🇷 حساب بانکی ایران
-</option>
-
-<option value="USDT">
-🌎 USDT
-</option>
-
+<option value="BANK">🇮🇷 حساب بانکی ایران</option>
+<option value="USDT">🌎 USDT</option>
 </select>
 
-<input
-id="withdrawAddress"
-placeholder="شماره شبا / شماره حساب / آدرس کیف پول"
->
+<input id="withdrawAddress"
+placeholder="شماره شبا / شماره حساب / آدرس کیف پول">
 
 <button type="button" data-action="withdraw">
 ثبت درخواست برداشت
@@ -530,11 +381,7 @@ placeholder="شماره شبا / شماره حساب / آدرس کیف پول"
 <div id="withdrawMsg"></div>
 
 </div>
-
 </section>
-
-
-<!-- ADMIN LOGIN -->
 
 <section id="adminLogin">
 
@@ -542,11 +389,9 @@ placeholder="شماره شبا / شماره حساب / آدرس کیف پول"
 
 <h2>🛠️ ورود مدیریت</h2>
 
-<input
-id="adminPassword"
+<input id="adminPassword"
 type="password"
-placeholder="رمز مدیریت"
->
+placeholder="رمز مدیریت">
 
 <button type="button" data-action="adminLogin">
 ورود مدیریت
@@ -555,11 +400,7 @@ placeholder="رمز مدیریت"
 <div id="adminLoginMsg"></div>
 
 </div>
-
 </section>
-
-
-<!-- ADMIN -->
 
 <section id="admin">
 
@@ -567,21 +408,10 @@ placeholder="رمز مدیریت"
 
 <h2>🛠️ پنل مدیریت</h2>
 
-<button type="button" data-action="adminUsers">
-👥 کاربران
-</button>
-
-<button type="button" data-action="adminWithdrawals">
-💸 برداشت‌ها
-</button>
-
-<button type="button" data-action="adminPayments">
-💳 پرداخت‌ها
-</button>
-
-<button type="button" class="danger" data-action="adminLogout">
-خروج مدیریت
-</button>
+<button type="button" data-action="adminUsers">👥 کاربران</button>
+<button type="button" data-action="adminWithdrawals">💸 برداشت‌ها</button>
+<button type="button" data-action="adminPayments">💳 پرداخت‌ها</button>
+<button type="button" class="danger" data-action="adminLogout">خروج مدیریت</button>
 
 </div>
 
@@ -603,22 +433,19 @@ function $(id){
 }
 
 function msg(id,text,ok){
+
   var el=$(id);
+
   if(!el) return;
 
   el.innerHTML =
     '<div class="notice" style="margin-top:12px">' +
-    (ok ? '✅ ' : '❌ ') +
-    String(text || '') +
-    '</div>';
+    (ok ? "✅ " : "❌ ") +
+    String(text || "") +
+    "</div>";
 }
 
-
-/*
-  کنترل تمام دکمه‌ها
-  به‌جای onclick از data-action استفاده شده
-  تا روی موبایل هم مطمئن‌تر کار کند.
-*/
+/* کنترل واحد تمام دکمه‌ها */
 
 document.addEventListener("click",function(event){
 
@@ -631,81 +458,84 @@ document.addEventListener("click",function(event){
 
   var action=btn.getAttribute("data-action");
 
-  try{
-
-    if(action==="page"){
-      showPage(btn.getAttribute("data-page"));
-    }
-
-    else if(action==="login"){
-      login();
-    }
-
-    else if(action==="register"){
-      register();
-    }
-
-    else if(action==="forgot"){
-      forgot();
-    }
-
-    else if(action==="askAI"){
-      askAI();
-    }
-
-    else if(action==="createPayment"){
-      createPayment();
-    }
-
-    else if(action==="withdraw"){
-      withdraw();
-    }
-
-    else if(action==="adminLogin"){
-      adminLogin();
-    }
-
-    else if(action==="adminUsers"){
-      adminUsers();
-    }
-
-    else if(action==="adminWithdrawals"){
-      adminWithdrawals();
-    }
-
-    else if(action==="adminPayments"){
-      adminPayments();
-    }
-
-    else if(action==="adminLogout"){
-      adminLogout();
-    }
-
-    else if(action==="logout"){
-      logout();
-    }
-
-  }catch(error){
-
-    console.error(error);
-
-    alert(
-      "خطا در اجرای عملیات: " +
-      (error.message || error)
-    );
-
+  if(action==="page"){
+    showPage(btn.getAttribute("data-page"));
+    return;
   }
 
-},{passive:false});
+  if(action==="login"){
+    login();
+    return;
+  }
 
+  if(action==="register"){
+    register();
+    return;
+  }
+
+  if(action==="forgot"){
+    forgot();
+    return;
+  }
+
+  if(action==="askAI"){
+    askAI();
+    return;
+  }
+
+  if(action==="selectPlan"){
+    selectPlan(btn.getAttribute("data-plan"));
+    return;
+  }
+
+  if(action==="createPayment"){
+    createPayment();
+    return;
+  }
+
+  if(action==="withdraw"){
+    withdraw();
+    return;
+  }
+
+  if(action==="adminLogin"){
+    adminLogin();
+    return;
+  }
+
+  if(action==="adminUsers"){
+    adminUsers();
+    return;
+  }
+
+  if(action==="adminWithdrawals"){
+    adminWithdrawals();
+    return;
+  }
+
+  if(action==="adminPayments"){
+    adminPayments();
+    return;
+  }
+
+  if(action==="adminLogout"){
+    adminLogout();
+    return;
+  }
+
+  if(action==="logout"){
+    logout();
+    return;
+  }
+
+},false);
 
 window.showPage=function(page){
 
-  var sections=document.querySelectorAll(".container > section");
-
-  sections.forEach(function(section){
-    section.classList.remove("active");
-  });
+  document.querySelectorAll(".container > section")
+    .forEach(function(section){
+      section.classList.remove("active");
+    });
 
   var target=$(page);
 
@@ -725,20 +555,16 @@ window.showPage=function(page){
   if(page==="payment"){
     loadPlansSelect();
   }
-
 };
-
 
 window.api=async function(url,options){
 
   options=options || {};
-
   options.headers=options.headers || {};
 
   options.headers["Content-Type"]="application/json";
 
   var token=localStorage.getItem("user_token");
-
   var adminToken=localStorage.getItem("admin_token");
 
   if(token){
@@ -750,7 +576,6 @@ window.api=async function(url,options){
   }
 
   var response=await fetch(url,options);
-
   var text=await response.text();
 
   var data;
@@ -765,78 +590,76 @@ window.api=async function(url,options){
   }
 
   if(!response.ok){
-    throw new Error(
-      data.error ||
-      "خطای سرور"
-    );
+    throw new Error(data.error || "خطای سرور");
   }
 
   return data;
 };
 
+window.loadPlans=function(){
 
-window.register=async function(){
+  var html="";
 
-  var name=$("registerName").value.trim();
+  plans.forEach(function(plan){
 
-  var email=$("registerEmail").value.trim();
+    html +=
+      '<div class="plan">'+
+      '<h3>'+plan.title+'</h3>'+
+      '<div class="price">'+
+      Number(plan.irr).toLocaleString("fa-IR")+
+      " تومان</div>"+
+      "<p>قیمت بین‌المللی: $"+plan.usd+"</p>"+
+      '<button type="button" data-action="selectPlan" data-plan="'+
+      plan.id+
+      '">انتخاب پلن</button>'+
+      "</div>";
 
-  var password=$("registerPassword").value;
+  });
 
-  if(!email || !password){
-    msg("registerMsg","ایمیل و رمز عبور را وارد کنید.",false);
-    return;
-  }
-
-  try{
-
-    var data=await api("/api/register",{
-      method:"POST",
-      body:JSON.stringify({
-        name:name,
-        email:email,
-        password:password
-      })
-    });
-
-    if(data.token){
-
-      localStorage.setItem(
-        "user_token",
-        data.token
-      );
-
-      showPage("home");
-
-    }else{
-
-      msg(
-        "registerMsg",
-        data.message || "ثبت‌نام انجام شد.",
-        true
-      );
-
-      showPage("login");
-
-    }
-
-  }catch(error){
-
-    msg(
-      "registerMsg",
-      error.message,
-      false
-    );
-
-  }
-
+  $("plansList").innerHTML=html;
 };
 
+window.selectPlan=function(planId){
+
+  var select=$("paymentPlan");
+
+  if(select){
+    loadPlansSelect();
+    select.value=planId;
+  }
+
+  showPage("payment");
+};
+
+window.loadPlansSelect=function(){
+
+  var select=$("paymentPlan");
+
+  if(!select) return;
+
+  select.innerHTML='<option value="">انتخاب پلن</option>';
+
+  plans.forEach(function(plan){
+
+    var option=document.createElement("option");
+
+    option.value=plan.id;
+
+    option.textContent=
+      plan.title+
+      " — "+
+      Number(plan.irr).toLocaleString("fa-IR")+
+      " تومان / $"+
+      plan.usd;
+
+    select.appendChild(option);
+
+  });
+};
 
 window.login=async function(){
 
   var email=$("loginEmail").value.trim();
-
   var password=$("loginPassword").value;
 
   if(!email || !password){
@@ -861,37 +684,114 @@ window.login=async function(){
     });
 
     if(!data.token){
-      throw new Error(
-        data.error || "ورود ناموفق بود."
-      );
+      throw new Error(data.error || "ورود ناموفق بود.");
     }
 
-    localStorage.setItem(
-      "user_token",
-      data.token
-    );
+    localStorage.setItem("user_token",data.token);
 
     showPage("home");
 
   }catch(error){
 
+    msg("loginMsg",error.message,false);
+
+  }
+};
+
+window.register=async function(){
+
+  var name=$("registerName").value.trim();
+  var email=$("registerEmail").value.trim();
+  var password=$("registerPassword").value;
+
+  if(!email || !password){
+
     msg(
-      "loginMsg",
-      error.message,
+      "registerMsg",
+      "ایمیل و رمز عبور را وارد کنید.",
       false
     );
 
+    return;
   }
 
+  try{
+
+    var data=await api("/api/register",{
+      method:"POST",
+      body:JSON.stringify({
+        name:name,
+        email:email,
+        password:password
+      })
+    });
+
+    if(data.token){
+
+      localStorage.setItem("user_token",data.token);
+      showPage("home");
+
+    }else{
+
+      msg(
+        "registerMsg",
+        data.message || "ثبت‌نام انجام شد.",
+        true
+      );
+
+      showPage("login");
+
+    }
+
+  }catch(error){
+
+    msg("registerMsg",error.message,false);
+
+  }
 };
 
+window.forgot=async function(){
+
+  var email=$("forgotEmail").value.trim();
+
+  if(!email){
+
+    msg(
+      "forgotMsg",
+      "ایمیل را وارد کنید.",
+      false
+    );
+
+    return;
+  }
+
+  try{
+
+    var data=await api("/api/forgot",{
+      method:"POST",
+      body:JSON.stringify({
+        email:email
+      })
+    });
+
+    msg(
+      "forgotMsg",
+      data.message || "درخواست بازیابی ثبت شد.",
+      true
+    );
+
+  }catch(error){
+
+    msg("forgotMsg",error.message,false);
+
+  }
+};
 
 window.loadUser=async function(){
 
   try{
 
     var data=await api("/api/me");
-
     var user=data.user || data;
 
     $("profile").innerHTML=
@@ -902,31 +802,23 @@ window.loadUser=async function(){
       (user.email || "—")+
       "</p>";
 
-    var balance=
-      Number(user.balance || 0);
-
     $("balance").textContent=
-      balance.toLocaleString("fa-IR")+
+      Number(user.balance || 0).toLocaleString("fa-IR")+
       " تومان";
 
   }catch(error){
 
     $("profile").textContent=
-      "خطا در دریافت اطلاعات حساب.";
+      "لطفاً وارد حساب شوید.";
 
   }
-
 };
-
 
 window.loadTransactions=async function(){
 
   try{
 
-    var data=await api(
-      "/api/transactions"
-    );
-
+    var data=await api("/api/transactions");
     var rows=data.transactions || [];
 
     if(!rows.length){
@@ -937,24 +829,22 @@ window.loadTransactions=async function(){
       return;
     }
 
-    var html="<table><thead>"+
-      "<tr>"+
+    var html=
+      "<table><thead><tr>"+
       "<th>نوع</th>"+
       "<th>مبلغ</th>"+
       "<th>وضعیت</th>"+
-      "</tr>"+
-      "</thead><tbody>";
+      "</tr></thead><tbody>";
 
     rows.forEach(function(row){
 
-      html+="<tr>"+
+      html+=
+        "<tr>"+
         "<td>"+(row.type || "—")+"</td>"+
         "<td>"+
-        Number(row.amount || 0)
-          .toLocaleString("fa-IR")+
+        Number(row.amount || 0).toLocaleString("fa-IR")+
         " تومان</td>"+
-        "<td>"+(row.status || "—")+
-        "</td>"+
+        "<td>"+(row.status || "—")+"</td>"+
         "</tr>";
 
     });
@@ -966,12 +856,10 @@ window.loadTransactions=async function(){
   }catch(error){
 
     $("transactions").textContent=
-      "خطا در دریافت تراکنش‌ها.";
+      "هنوز تراکنشی ثبت نشده است.";
 
   }
-
 };
-
 
 window.askAI=async function(){
 
@@ -989,9 +877,7 @@ window.askAI=async function(){
   }
 
   $("aiResult").textContent=
-    "⏳ در حال دریافت پاسخ هوش مصنوعی...";
-
-  $("aiMsg").innerHTML="";
+    "⏳ در حال دریافت پاسخ...";
 
   try{
 
@@ -1011,117 +897,15 @@ window.askAI=async function(){
   }catch(error){
 
     $("aiResult").textContent="";
-
-    msg(
-      "aiMsg",
-      error.message,
-      false
-    );
+    msg("aiMsg",error.message,false);
 
   }
-
 };
-
-
-window.loadPlans=function(){
-
-  var html="";
-
-  plans.forEach(function(plan){
-
-    html+=
-      '<div class="plan">'+
-      '<h3>'+plan.title+'</h3>'+
-      '<div class="price">'+
-      Number(plan.irr).toLocaleString("fa-IR")+
-      " تومان</div>"+
-      '<p>قیمت بین‌المللی: '+
-      "$"+plan.usd+
-      "</p>"+
-      '<button type="button" '+
-      'data-action="selectPlan" '+
-      'data-plan="'+plan.id+'">'+
-      "انتخاب پلن"+
-      "</button>"+
-      "</div>";
-
-  });
-
-  $("plansList").innerHTML=html;
-
-  /*
-    برای انتخاب پلن‌های ساخته‌شده داخل HTML
-  */
-  document.querySelectorAll(
-    'button[data-action="selectPlan"]'
-  ).forEach(function(btn){
-
-    btn.addEventListener("click",function(e){
-
-      e.preventDefault();
-
-      selectPlan(
-        btn.getAttribute("data-plan")
-      );
-
-    });
-
-  });
-
-};
-
-
-window.selectPlan=function(planId){
-
-  var select=$("paymentPlan");
-
-  if(select){
-
-    select.value=planId;
-
-  }
-
-  showPage("payment");
-
-};
-
-
-window.loadPlansSelect=function(){
-
-  var select=$("paymentPlan");
-
-  if(!select) return;
-
-  select.innerHTML=
-    '<option value="">انتخاب پلن</option>';
-
-  plans.forEach(function(plan){
-
-    var option=
-      document.createElement("option");
-
-    option.value=plan.id;
-
-    option.textContent=
-      plan.title+
-      " — "+
-      Number(plan.irr).toLocaleString("fa-IR")+
-      " تومان / $"+
-      plan.usd;
-
-    select.appendChild(option);
-
-  });
-
-};
-
 
 window.createPayment=async function(){
 
   var planId=$("paymentPlan").value;
-
-  var currency=
-    $("paymentCurrency").value;
+  var currency=$("paymentCurrency").value;
 
   if(!planId){
 
@@ -1148,23 +932,19 @@ window.createPayment=async function(){
 
       msg(
         "paymentMsg",
-        "سفارش ساخته شد. در حال انتقال به درگاه...",
+        "در حال انتقال به درگاه...",
         true
       );
 
       setTimeout(function(){
-
-        window.location.href=
-          data.payment_url;
-
+        location.href=data.payment_url;
       },700);
 
     }else{
 
       msg(
         "paymentMsg",
-        data.message ||
-        "سفارش پرداخت ایجاد شد.",
+        data.message || "سفارش ایجاد شد.",
         true
       );
 
@@ -1172,27 +952,16 @@ window.createPayment=async function(){
 
   }catch(error){
 
-    msg(
-      "paymentMsg",
-      error.message,
-      false
-    );
+    msg("paymentMsg",error.message,false);
 
   }
-
 };
-
 
 window.withdraw=async function(){
 
-  var amount=
-    Number($("withdrawAmount").value);
-
-  var method=
-    $("withdrawMethod").value;
-
-  var address=
-    $("withdrawAddress").value.trim();
+  var amount=Number($("withdrawAmount").value);
+  var method=$("withdrawMethod").value;
+  var address=$("withdrawAddress").value.trim();
 
   if(!amount || amount<10000){
 
@@ -1229,89 +998,20 @@ window.withdraw=async function(){
 
     msg(
       "withdrawMsg",
-      data.message ||
-      "درخواست برداشت ثبت شد.",
-      true
-    );
-
-    $("withdrawAmount").value="";
-    $("withdrawAddress").value="";
-
-    loadUser();
-
-  }catch(error){
-
-    msg(
-      "withdrawMsg",
-      error.message,
-      false
-    );
-
-  }
-
-};
-
-
-window.forgot=async function(){
-
-  var email=
-    $("forgotEmail").value.trim();
-
-  if(!email){
-
-    msg(
-      "forgotMsg",
-      "ایمیل را وارد کنید.",
-      false
-    );
-
-    return;
-  }
-
-  try{
-
-    var data=await api("/api/forgot",{
-      method:"POST",
-      body:JSON.stringify({
-        email:email
-      })
-    });
-
-    msg(
-      "forgotMsg",
-      data.message ||
-      "درخواست بازیابی ثبت شد.",
+      data.message || "درخواست برداشت ثبت شد.",
       true
     );
 
   }catch(error){
 
-    msg(
-      "forgotMsg",
-      error.message,
-      false
-    );
+    msg("withdrawMsg",error.message,false);
 
   }
-
 };
-
-
-window.logout=function(){
-
-  localStorage.removeItem(
-    "user_token"
-  );
-
-  showPage("login");
-
-};
-
 
 window.adminLogin=async function(){
 
-  var password=
-    $("adminPassword").value;
+  var password=$("adminPassword").value;
 
   if(!password){
 
@@ -1326,168 +1026,99 @@ window.adminLogin=async function(){
 
   try{
 
-    var data=await api(
-      "/api/admin/login",
-      {
-        method:"POST",
-        body:JSON.stringify({
-          password:password
-        })
-      }
-    );
+    var data=await api("/api/admin/login",{
+      method:"POST",
+      body:JSON.stringify({
+        password:password
+      })
+    });
 
     if(!data.token){
 
       throw new Error(
-        data.error ||
-        "ورود مدیریت ناموفق بود."
+        data.error || "ورود مدیریت ناموفق بود."
       );
 
     }
 
-    localStorage.setItem(
-      "admin_token",
-      data.token
-    );
+    localStorage.setItem("admin_token",data.token);
 
     showPage("admin");
 
   }catch(error){
 
-    msg(
-      "adminLoginMsg",
-      error.message,
-      false
-    );
+    msg("adminLoginMsg",error.message,false);
 
   }
-
 };
-
 
 window.adminUsers=async function(){
 
   try{
 
-    var data=await api(
-      "/api/admin/users"
-    );
+    var data=await api("/api/admin/users");
 
-    $("adminResult").innerHTML=
-      "<h3>👥 کاربران</h3>"+
-      "<pre>"+
-      escapeHtml(
-        JSON.stringify(
-          data.users || data,
-          null,
-          2
-        )
-      )+
-      "</pre>";
+    $("adminResult").textContent=
+      JSON.stringify(data.users || data,null,2);
 
   }catch(error){
 
-    $("adminResult").textContent=
-      error.message;
+    $("adminResult").textContent=error.message;
 
   }
-
 };
-
 
 window.adminWithdrawals=async function(){
 
   try{
 
-    var data=await api(
-      "/api/admin/withdrawals"
-    );
+    var data=await api("/api/admin/withdrawals");
 
-    $("adminResult").innerHTML=
-      "<h3>💸 برداشت‌ها</h3>"+
-      "<pre>"+
-      escapeHtml(
-        JSON.stringify(
-          data.withdrawals || data,
-          null,
-          2
-        )
-      )+
-      "</pre>";
+    $("adminResult").textContent=
+      JSON.stringify(data.withdrawals || data,null,2);
 
   }catch(error){
 
-    $("adminResult").textContent=
-      error.message;
+    $("adminResult").textContent=error.message;
 
   }
-
 };
-
 
 window.adminPayments=async function(){
 
   try{
 
-    var data=await api(
-      "/api/admin/payments"
-    );
+    var data=await api("/api/admin/payments");
 
-    $("adminResult").innerHTML=
-      "<h3>💳 پرداخت‌ها</h3>"+
-      "<pre>"+
-      escapeHtml(
-        JSON.stringify(
-          data.payments || data,
-          null,
-          2
-        )
-      )+
-      "</pre>";
+    $("adminResult").textContent=
+      JSON.stringify(data.payments || data,null,2);
 
   }catch(error){
 
-    $("adminResult").textContent=
-      error.message;
+    $("adminResult").textContent=error.message;
 
   }
-
 };
-
 
 window.adminLogout=function(){
 
-  localStorage.removeItem(
-    "admin_token"
-  );
-
+  localStorage.removeItem("admin_token");
   showPage("adminLogin");
 
 };
 
+window.logout=function(){
 
-function escapeHtml(value){
+  localStorage.removeItem("user_token");
+  showPage("login");
 
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+};
 
-}
-
-
-/*
-  شروع برنامه
-*/
-
-var firstPage=
+showPage(
   localStorage.getItem("user_token")
   ? "home"
-  : "login";
-
-showPage(firstPage);
+  : "login"
+);
 
 })();
 </script>
@@ -1496,49 +1127,33 @@ showPage(firstPage);
 </html>`;
 
 export default {
+
   async fetch(request, env) {
 
     const url = new URL(request.url);
 
-    try {
-
-      if (request.method === "GET" && url.pathname === "/") {
-        return new Response(HTML, {
-          headers: {
-            "content-type": "text/html; charset=UTF-8"
-          }
-        });
-      }
-
-      return new Response(
-        JSON.stringify({
-          ok:false,
-          error:"مسیر پیدا نشد"
-        }),
-        {
-          status:404,
-          headers:{
-            "content-type":"application/json; charset=UTF-8"
-          }
+    if(request.method === "GET" && url.pathname === "/"){
+      return new Response(HTML,{
+        headers:{
+          "content-type":"text/html; charset=UTF-8",
+          "cache-control":"no-store"
         }
-      );
-
-    } catch(error) {
-
-      return new Response(
-        JSON.stringify({
-          ok:false,
-          error:error.message
-        }),
-        {
-          status:500,
-          headers:{
-            "content-type":"application/json; charset=UTF-8"
-          }
-        }
-      );
-
+      });
     }
 
+    return new Response(
+      JSON.stringify({
+        ok:false,
+        error:"مسیر پیدا نشد"
+      }),
+      {
+        status:404,
+        headers:{
+          "content-type":"application/json; charset=UTF-8"
+        }
+      }
+    );
+
   }
+
 };
