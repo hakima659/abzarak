@@ -1,370 +1,732 @@
 
-        const HTML = `<!doctype html>
+const HTML = `<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
 <title>دستیار هوش مصنوعی</title>
+
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Tahoma,Arial,sans-serif;
-  background:#f3f6fb;
-  color:#172033
-}
-.container{
-  width:min(1100px,94%);
-  margin:25px auto
-}
-.card{
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  margin:15px 0;
-  box-shadow:0 5px 25px rgba(0,0,0,.07)
-}
-h1,h2,h3{margin-top:0}
-input,select,textarea,button{
-  width:100%;
-  padding:12px;
-  margin:7px 0;
-  border-radius:10px;
-  border:1px solid #d9dfeb;
-  font-family:inherit;
-  font-size:15px
-}
-textarea{min-height:120px;resize:vertical}
-button{
-  cursor:pointer;
-  border:0;
-  background:#2563eb;
-  color:white;
-  font-weight:bold
-}
-button:hover{opacity:.9}
-button.danger{background:#dc2626}
-button.success{background:#16a34a}
-button.dark{background:#111827}
+html,body{margin:0;padding:0;font-family:Tahoma,Arial,sans-serif;background:#f1f5f9;color:#172033}
+body{min-height:100vh}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
 .hidden{display:none!important}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+
+.top{
+  background:linear-gradient(135deg,#0f172a,#1e293b,#312e81);
+  color:#fff;
+  padding:24px 16px 55px;
+}
+.top-inner{max-width:1100px;margin:auto}
+.brand{
+  display:flex;align-items:center;justify-content:space-between;
   gap:15px
 }
-.stat{
-  background:#f8fafc;
-  padding:18px;
-  border-radius:14px
+.brand h1{margin:0;font-size:25px}
+.brand p{margin:7px 0 0;color:#cbd5e1;font-size:13px}
+.robot{
+  width:55px;height:55px;border-radius:18px;
+  background:rgba(255,255,255,.13);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px
 }
-.stat strong{
-  display:block;
-  font-size:24px;
-  margin-top:8px
+
+.container{
+  max-width:1100px;
+  margin:-30px auto 30px;
+  padding:0 14px;
+  position:relative
 }
+
+.card{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 10px 35px rgba(15,23,42,.08);
+  border:1px solid #e2e8f0
+}
+
+.auth{
+  max-width:470px;
+  margin:auto
+}
+.auth h2{text-align:center;margin-top:0}
+.subtitle{text-align:center;color:#64748b;font-size:13px}
+
+.input{
+  width:100%;
+  padding:14px;
+  border:1px solid #cbd5e1;
+  border-radius:13px;
+  outline:none;
+  margin:7px 0 12px;
+  font-size:14px;
+  background:#fff
+}
+.input:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 3px rgba(99,102,241,.12)
+}
+
+.btn{
+  width:100%;
+  border:0;
+  border-radius:13px;
+  padding:14px;
+  font-weight:bold;
+  font-size:14px;
+  margin-top:7px
+}
+.btn-primary{
+  color:#fff;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed)
+}
+.btn-success{
+  color:#fff;
+  background:linear-gradient(135deg,#059669,#10b981)
+}
+.btn-danger{
+  color:#fff;
+  background:linear-gradient(135deg,#dc2626,#ef4444)
+}
+.btn-dark{
+  color:#fff;
+  background:#0f172a
+}
+.btn-light{
+  background:#eef2ff;
+  color:#4338ca
+}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.message{
+  padding:12px 14px;
+  border-radius:12px;
+  margin:10px 0;
+  font-size:13px;
+  display:none
+}
+.message.ok{display:block;background:#dcfce7;color:#166534}
+.message.err{display:block;background:#fee2e2;color:#991b1b}
+
+.tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:16px
+}
+.tab{
+  border:0;
+  padding:12px 6px;
+  border-radius:12px;
+  background:#e2e8f0;
+  color:#334155;
+  font-weight:bold
+}
+.tab.active{
+  background:#4f46e5;
+  color:#fff
+}
+
 .nav{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+  margin-bottom:16px
+}
+.nav button{
+  border:0;
+  padding:13px 6px;
+  border-radius:13px;
+  background:#fff;
+  border:1px solid #e2e8f0;
+  font-weight:bold;
+  color:#334155
+}
+.nav button.active{
+  background:#eef2ff;
+  border-color:#818cf8;
+  color:#4338ca
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px
+}
+@media(max-width:650px){
+  .grid{grid-template-columns:1fr}
+  .nav{grid-template-columns:repeat(2,1fr)}
+}
+
+.balance{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  color:#fff;
+  border-radius:20px;
+  padding:24px;
+  margin-bottom:16px
+}
+.balance .label{color:#ddd6fe;font-size:13px}
+.balance .amount{font-size:32px;font-weight:bold;margin:9px 0}
+.balance small{color:#ddd6fe}
+
+.stat{
+  padding:18px;
+  border-radius:16px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0
+}
+.stat .num{font-size:25px;font-weight:bold;margin-top:8px}
+
+.plan{
+  border:1px solid #e2e8f0;
+  border-radius:18px;
+  padding:18px;
+  background:#fff;
+  position:relative
+}
+.plan.popular{border:2px solid #6366f1}
+.badge{
+  position:absolute;
+  top:12px;
+  left:12px;
+  background:#4f46e5;
+  color:#fff;
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:10px
+}
+.plan h3{margin:0 0 10px}
+.price{font-size:25px;font-weight:bold;color:#4338ca}
+.plan ul{padding-right:18px;color:#64748b;font-size:13px;line-height:2}
+
+.tx{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 0;
+  border-bottom:1px solid #e2e8f0;
+  font-size:13px
+}
+.tx:last-child{border-bottom:0}
+.plus{color:#059669;font-weight:bold}
+.minus{color:#dc2626;font-weight:bold}
+
+.ai-box{
+  background:#0f172a;
+  color:#fff;
+  border-radius:20px;
+  padding:18px
+}
+.ai-messages{
+  min-height:230px;
+  max-height:450px;
+  overflow:auto;
+  margin-bottom:12px
+}
+.ai-msg{
+  padding:12px;
+  border-radius:14px;
+  margin:8px 0;
+  line-height:1.8;
+  font-size:13px
+}
+.ai-user{background:#3730a3;margin-right:30px}
+.ai-bot{background:#1e293b;margin-left:30px}
+.ai-input{
+  display:flex;
+  gap:8px
+}
+.ai-input textarea{
+  flex:1;
+  min-height:52px;
+  resize:none;
+  border:1px solid #475569;
+  border-radius:13px;
+  padding:12px;
+  background:#1e293b;
+  color:#fff;
+  outline:none
+}
+.ai-input button{
+  width:80px;
+  border:0;
+  border-radius:13px;
+  background:#6366f1;
+  color:#fff;
+  font-weight:bold
+}
+
+.admin-head{
+  background:linear-gradient(135deg,#111827,#312e81);
+  color:#fff;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:15px
+}
+.admin-nav{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
-  margin-bottom:15px
+  margin:12px 0
 }
-.nav button{
-  width:auto;
-  padding:10px 15px
+.admin-nav button{
+  border:0;
+  padding:10px 13px;
+  border-radius:10px;
+  background:#e2e8f0
 }
-.badge{
-  display:inline-block;
-  padding:5px 10px;
-  border-radius:20px;
-  background:#e0ecff;
-  color:#1755b8;
-  font-size:12px
-}
+.admin-section{margin-top:15px}
+
+.table-wrap{overflow:auto}
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:10px
+  min-width:650px
 }
 th,td{
-  border-bottom:1px solid #eee;
-  padding:10px;
+  padding:11px;
+  border-bottom:1px solid #e2e8f0;
   text-align:right;
-  font-size:13px
-}
-.ai-answer{
-  white-space:pre-wrap;
-  line-height:2;
-  background:#f8fafc;
-  padding:15px;
-  border-radius:12px;
-  margin-top:10px
-}
-header{
-  background:#111827;
-  color:#fff;
-  padding:25px;
-  border-radius:20px
-}
-.small{
-  color:#64748b;
   font-size:12px
 }
-.row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px
+th{background:#f8fafc}
+
+.status{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:20px;
+  background:#f1f5f9;
+  font-size:11px
 }
-@media(max-width:650px){
-  .row{grid-template-columns:1fr}
-  table{font-size:11px}
-  th,td{padding:7px}
+
+.footer{
+  text-align:center;
+  color:#94a3b8;
+  font-size:11px;
+  padding:20px
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+  z-index:100
+}
+.modal-box{
+  background:#fff;
+  width:100%;
+  max-width:450px;
+  border-radius:20px;
+  padding:20px
+}
+
+.loading{
+  text-align:center;
+  padding:20px;
+  color:#64748b
 }
 </style>
 </head>
 
 <body>
-<div class="container">
 
-<header>
-<h1>🤖 دستیار هوش مصنوعی</h1>
-<p>دستیار هوشمند + حساب کاربری + موجودی + برداشت</p>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div>
+        <h1>🤖 دستیار هوش مصنوعی</h1>
+        <p>دستیار هوشمند، حساب کاربری، درآمد و مدیریت</p>
+      </div>
+      <div class="robot">🤖</div>
+    </div>
+  </div>
 </header>
 
-<div id="message" class="card hidden"></div>
+<main class="container">
 
 <!-- AUTH -->
-<div id="authBox" class="card">
-<div class="nav">
-<button onclick="showAuth('login')">ورود</button>
-<button onclick="showAuth('register')">ثبت‌نام</button>
-<button onclick="showAuth('forgot')">فراموشی رمز</button>
-</div>
+<section id="authSection" class="card auth">
 
-<div id="loginBox">
-<h2>🔐 ورود</h2>
-<input id="loginEmail" type="email" placeholder="ایمیل">
-<input id="loginPassword" type="password" placeholder="رمز عبور">
-<button onclick="login()">ورود به حساب</button>
-</div>
+  <div class="tabs">
+    <button id="loginTab" class="tab active" onclick="showAuth('login')">ورود</button>
+    <button id="registerTab" class="tab" onclick="showAuth('register')">ثبت‌نام</button>
+    <button id="forgotTab" class="tab" onclick="showAuth('forgot')">بازیابی</button>
+  </div>
 
-<div id="registerBox" class="hidden">
-<h2>📝 ثبت‌نام</h2>
-<input id="regName" placeholder="نام کامل">
-<input id="regEmail" type="email" placeholder="ایمیل">
-<input id="regPassword" type="password" placeholder="رمز عبور">
-<input id="regPassword2" type="password" placeholder="تکرار رمز عبور">
-<button class="success" onclick="register()">ایجاد حساب</button>
-</div>
+  <div id="loginBox">
+    <h2>🔐 ورود به حساب</h2>
+    <div class="subtitle">برای ورود اطلاعات خود را وارد کنید</div>
 
-<div id="forgotBox" class="hidden">
-<h2>🔑 بازیابی رمز</h2>
-<input id="forgotEmail" type="email" placeholder="ایمیل حساب">
-<button onclick="forgotPassword()">دریافت کد بازیابی</button>
-<div id="resetArea" class="hidden">
-<input id="resetCode" placeholder="کد بازیابی">
-<input id="newPassword" type="password" placeholder="رمز عبور جدید">
-<button onclick="resetPassword()">تغییر رمز</button>
-</div>
-</div>
-</div>
+    <input id="loginEmail" class="input" type="email" placeholder="ایمیل">
+    <input id="loginPassword" class="input" type="password" placeholder="رمز عبور">
+
+    <div id="loginMsg" class="message"></div>
+
+    <button class="btn btn-primary" onclick="login()">ورود به حساب</button>
+    <button class="btn btn-light" onclick="showAuth('register')">ساخت حساب جدید</button>
+  </div>
+
+  <div id="registerBox" class="hidden">
+    <h2>📝 ثبت‌نام</h2>
+    <div class="subtitle">حساب کاربری خود را بسازید</div>
+
+    <input id="regName" class="input" placeholder="نام و نام خانوادگی">
+    <input id="regEmail" class="input" type="email" placeholder="ایمیل">
+    <input id="regPassword" class="input" type="password" placeholder="رمز عبور">
+    <input id="regPassword2" class="input" type="password" placeholder="تکرار رمز عبور">
+
+    <div id="registerMsg" class="message"></div>
+
+    <button class="btn btn-primary" onclick="register()">ثبت‌نام</button>
+  </div>
+
+  <div id="forgotBox" class="hidden">
+    <h2>🔑 بازیابی رمز</h2>
+    <div class="subtitle">ایمیل حساب خود را وارد کنید</div>
+
+    <input id="forgotEmail" class="input" type="email" placeholder="ایمیل">
+
+    <div id="forgotMsg" class="message"></div>
+
+    <button class="btn btn-primary" onclick="forgotPassword()">دریافت کد بازیابی</button>
+
+    <div id="resetBox" class="hidden">
+      <input id="resetCode" class="input" placeholder="کد بازیابی">
+      <input id="newPassword" class="input" type="password" placeholder="رمز عبور جدید">
+      <button class="btn btn-success" onclick="resetPassword()">تغییر رمز</button>
+    </div>
+  </div>
+
+  <hr style="border:0;border-top:1px solid #e2e8f0;margin:22px 0">
+
+  <button class="btn btn-dark" onclick="showAdminLogin()">🛠️ ورود مدیریت</button>
+
+</section>
+
 
 <!-- USER -->
-<div id="userPanel" class="hidden">
+<section id="userSection" class="hidden">
 
-<div class="card">
-<div class="nav">
-<button onclick="showTab('home')">🏠 خانه</button>
-<button onclick="showTab('profile')">👤 حساب کاربری</button>
-<button onclick="showTab('plans')">💳 اشتراک</button>
-<button onclick="showTab('deposit')">💰 افزایش موجودی</button>
-<button onclick="showTab('withdraw')">💸 برداشت</button>
-<button onclick="showTab('transactions')">📊 تراکنش‌ها</button>
-<button onclick="logout()" class="danger">خروج</button>
-</div>
+  <div class="balance">
+    <div class="label">💰 موجودی حساب</div>
+    <div class="amount" id="balance">۰ تومان</div>
+    <small>حداقل برداشت: ۱۰,۰۰۰ تومان</small>
+  </div>
+
+  <div class="nav">
+    <button id="navHome" onclick="showPage('home')">🏠 خانه</button>
+    <button id="navProfile" onclick="showPage('profile')">👤 حساب کاربری</button>
+    <button id="navPlans" onclick="showPage('plans')">⭐ پلن‌ها</button>
+    <button id="navDeposit" onclick="showPage('deposit')">💳 افزایش موجودی</button>
+    <button id="navWithdraw" onclick="showPage('withdraw')">💸 برداشت</button>
+    <button id="navTransactions" onclick="showPage('transactions')">📊 تراکنش‌ها</button>
+    <button onclick="logout()">🚪 خروج</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="pageHome" class="page">
+
+    <div class="card">
+      <h2>👋 خوش آمدید <span id="welcomeName"></span></h2>
+      <p style="color:#64748b;font-size:13px">
+        به پنل دستیار هوش مصنوعی خوش آمدید.
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="stat">
+        <div>💰 موجودی</div>
+        <div class="num" id="homeBalance">۰</div>
+      </div>
+      <div class="stat">
+        <div>⭐ پلن</div>
+        <div class="num" id="userPlan">رایگان</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🤖 گفت‌وگو با هوش مصنوعی</h3>
+
+      <div class="ai-box">
+        <div id="aiMessages" class="ai-messages">
+          <div class="ai-msg ai-bot">
+            سلام 👋 من دستیار هوش مصنوعی هستم. چطور می‌توانم کمکتان کنم؟
+          </div>
+        </div>
+
+        <div class="ai-input">
+          <textarea id="aiInput" placeholder="پیام خود را بنویسید..."></textarea>
+          <button onclick="sendAI()">ارسال</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- PROFILE -->
+  <div id="pageProfile" class="page hidden">
+
+    <div class="card">
+      <h2>👤 حساب کاربری</h2>
+
+      <label>نام</label>
+      <input id="profileName" class="input">
+
+      <label>ایمیل</label>
+      <input id="profileEmail" class="input" type="email">
+
+      <div id="profileMsg" class="message"></div>
+
+      <button class="btn btn-primary" onclick="saveProfile()">ذخیره اطلاعات</button>
+    </div>
+
+  </div>
+
+
+  <!-- PLANS -->
+  <div id="pagePlans" class="page hidden">
+
+    <div class="card">
+      <h2>⭐ پلن‌های اشتراک</h2>
+      <p style="color:#64748b;font-size:13px">
+        برای استفاده بیشتر می‌توانید یکی از پلن‌ها را انتخاب کنید.
+      </p>
+
+      <div class="grid">
+
+        <div class="plan">
+          <h3>🆓 رایگان</h3>
+          <div class="price">۰ تومان</div>
+          <ul>
+            <li>دسترسی پایه</li>
+            <li>امکانات عمومی</li>
+            <li>بدون هزینه</li>
+          </ul>
+          <button class="btn btn-light" disabled>پلن فعلی</button>
+        </div>
+
+        <div class="plan popular">
+          <span class="badge">محبوب</span>
+          <h3>🚀 حرفه‌ای</h3>
+          <div class="price">۴۹۹,۰۰۰ تومان</div>
+          <ul>
+            <li>استفاده بیشتر از هوش مصنوعی</li>
+            <li>امکانات حرفه‌ای</li>
+            <li>پشتیبانی بهتر</li>
+          </ul>
+          <button class="btn btn-primary" onclick="startPayment('حرفه‌ای',499000)">
+            انتخاب پلن
+          </button>
+        </div>
+
+        <div class="plan">
+          <h3>👑 ویژه</h3>
+          <div class="price">۹۹۹,۰۰۰ تومان</div>
+          <ul>
+            <li>امکانات کامل</li>
+            <li>سقف استفاده بالاتر</li>
+            <li>اولویت خدمات</li>
+          </ul>
+          <button class="btn btn-success" onclick="startPayment('ویژه',999000)">
+            انتخاب پلن
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- DEPOSIT -->
+  <div id="pageDeposit" class="page hidden">
+
+    <div class="card">
+      <h2>💳 افزایش موجودی</h2>
+
+      <label>مبلغ</label>
+      <select id="depositAmount" class="input">
+        <option value="100000">۱۰۰,۰۰۰ تومان</option>
+        <option value="300000">۳۰۰,۰۰۰ تومان</option>
+        <option value="500000">۵۰۰,۰۰۰ تومان</option>
+        <option value="1000000">۱,۰۰۰,۰۰۰ تومان</option>
+        <option value="3000000">۳,۰۰۰,۰۰۰ تومان</option>
+        <option value="5000000">۵,۰۰۰,۰۰۰ تومان</option>
+        <option value="10000000">۱۰,۰۰۰,۰۰۰ تومان</option>
+      </select>
+
+      <div id="depositMsg" class="message"></div>
+
+      <button class="btn btn-primary" onclick="deposit()">
+        💳 ادامه پرداخت
+      </button>
+
+      <p style="font-size:11px;color:#94a3b8">
+        اتصال مستقیم درگاه پرداخت پس از قرار دادن اطلاعات درگاه فعال می‌شود.
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- WITHDRAW -->
+  <div id="pageWithdraw" class="page hidden">
+
+    <div class="card">
+      <h2>💸 درخواست برداشت</h2>
+
+      <label>مبلغ برداشت</label>
+      <input id="withdrawAmount" class="input" type="number" placeholder="مثلاً ۱۰۰۰۰۰">
+
+      <label>روش برداشت</label>
+      <select id="withdrawMethod" class="input">
+        <option value="بانکی">حساب بانکی</option>
+        <option value="USDT">USDT</option>
+      </select>
+
+      <label>شبکه</label>
+      <select id="withdrawNetwork" class="input">
+        <option value="TRC20">TRC20</option>
+        <option value="BEP20">BEP20</option>
+        <option value="ERC20">ERC20</option>
+      </select>
+
+      <label>شماره کارت / شبا / آدرس کیف پول</label>
+      <input id="withdrawAddress" class="input" placeholder="اطلاعات دریافت">
+
+      <div id="withdrawMsg" class="message"></div>
+
+      <button class="btn btn-success" onclick="withdrawMoney()">
+        ثبت درخواست برداشت
+      </button>
+    </div>
+
+  </div>
+
+
+  <!-- TRANSACTIONS -->
+  <div id="pageTransactions" class="page hidden">
+
+    <div class="card">
+      <h2>📊 تراکنش‌ها</h2>
+      <div id="transactions">
+        <div class="loading">در حال دریافت...</div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ADMIN LOGIN -->
+<div id="adminLoginModal" class="modal hidden">
+
+  <div class="modal-box">
+
+    <h2>🛠️ ورود مدیریت</h2>
+    <p class="subtitle">ورود به پنل مدیریت سایت</p>
+
+    <input id="adminPassword" class="input" type="password" placeholder="رمز مدیریت">
+
+    <div id="adminLoginMsg" class="message"></div>
+
+    <button class="btn btn-primary" onclick="adminLogin()">
+      🔐 ورود مدیر
+    </button>
+
+    <button class="btn btn-light" onclick="closeAdminLogin()">
+      بستن
+    </button>
+
+  </div>
 </div>
 
-<div id="homeTab">
-<div class="grid">
-<div class="stat">
-موجودی
-<strong id="balance">0 تومان</strong>
-</div>
-<div class="stat">
-پلن
-<strong id="plan">رایگان</strong>
-</div>
-<div class="stat">
-ایمیل
-<strong id="emailShow">-</strong>
-</div>
-</div>
-
-<div class="card">
-<h2>🤖 دستیار هوش مصنوعی</h2>
-<textarea id="aiPrompt" placeholder="سؤال خود را بنویسید..."></textarea>
-<button onclick="sendAI()">ارسال به هوش مصنوعی</button>
-<div id="aiResult" class="ai-answer hidden"></div>
-</div>
-</div>
-
-<div id="profileTab" class="hidden">
-<div class="card">
-<h2>👤 حساب کاربری</h2>
-<input id="profileName" placeholder="نام کامل">
-<input id="profileEmail" type="email" placeholder="ایمیل">
-<button onclick="saveProfile()">ذخیره اطلاعات</button>
-</div>
-</div>
-
-<div id="plansTab" class="hidden">
-<div class="card">
-<h2>💳 انتخاب اشتراک</h2>
-<div class="grid">
-
-<div class="stat">
-<h3>رایگان</h3>
-<p>0 تومان</p>
-<button onclick="pay('free',0)">انتخاب</button>
-</div>
-
-<div class="stat">
-<h3>⭐ حرفه‌ای</h3>
-<p>400,000 تومان</p>
-<button onclick="pay('professional',400000)">خرید</button>
-</div>
-
-<div class="stat">
-<h3>🔥 ویژه</h3>
-<p>700,000 تومان</p>
-<button onclick="pay('special',700000)">خرید</button>
-</div>
-
-<div class="stat">
-<h3>💎 طلایی</h3>
-<p>1,000,000 تومان</p>
-<button onclick="pay('gold',1000000)">خرید</button>
-</div>
-
-<div class="stat">
-<h3>👑 VIP</h3>
-<p>2,000,000 تومان</p>
-<button onclick="pay('vip',2000000)">خرید</button>
-</div>
-
-</div>
-</div>
-</div>
-
-<div id="depositTab" class="hidden">
-<div class="card">
-<h2>💰 افزایش موجودی</h2>
-<p>مبلغ موردنظر را وارد کنید.</p>
-<input id="depositAmount" type="number" min="10000" placeholder="مثلاً 400000">
-<button onclick="startDeposit()">ادامه پرداخت</button>
-<p class="small">اتصال درگاه واقعی زرین‌پال پس از قرار دادن Merchant ID انجام می‌شود.</p>
-</div>
-</div>
-
-<div id="withdrawTab" class="hidden">
-<div class="card">
-<h2>💸 درخواست برداشت</h2>
-<p>حداقل برداشت: 10,000 تومان</p>
-<input id="withdrawAmount" type="number" min="10000" placeholder="مبلغ برداشت">
-<select id="withdrawMethod">
-<option value="USDT">USDT</option>
-<option value="BANK">حساب بانکی</option>
-</select>
-<input id="withdrawAddress" placeholder="آدرس کیف پول یا شماره حساب">
-<button onclick="withdraw()">ثبت درخواست برداشت</button>
-</div>
-</div>
-
-<div id="transactionsTab" class="hidden">
-<div class="card">
-<h2>📊 تراکنش‌ها</h2>
-<button onclick="loadTransactions()">بروزرسانی</button>
-<div id="transactionsList"></div>
-</div>
-</div>
-
-</div>
 
 <!-- ADMIN -->
-<div class="card">
-<h2>🛠️ مدیریت</h2>
+<section id="adminSection" class="hidden">
 
-<div id="adminLogin">
-<input id="adminPassword" type="password" placeholder="رمز مدیریت">
-<button id="adminLoginButton" onclick="adminLogin()">ورود مدیریت</button>
-</div>
+  <div class="admin-head">
+    <h2 style="margin:0">🛠️ پنل مدیریت</h2>
+    <p style="color:#cbd5e1;font-size:13px">
+      مدیریت کاربران، پرداخت‌ها، برداشت‌ها و موجودی
+    </p>
 
-<div id="adminPanel" class="hidden">
+    <div class="admin-nav">
+      <button onclick="adminPage('stats')">📊 آمار</button>
+      <button onclick="adminPage('users')">👥 کاربران</button>
+      <button onclick="adminPage('payments')">💳 پرداخت‌ها</button>
+      <button onclick="adminPage('withdrawals')">💸 برداشت‌ها</button>
+      <button onclick="adminLogout()">🚪 خروج مدیر</button>
+    </div>
+  </div>
 
-<div class="nav">
-<button onclick="adminTab('stats')">📊 آمار</button>
-<button onclick="adminTab('users')">👥 کاربران</button>
-<button onclick="adminTab('payments')">💰 پرداخت‌ها</button>
-<button onclick="adminTab('withdrawals')">💸 برداشت‌ها</button>
-<button class="danger" onclick="adminLogout()">خروج مدیریت</button>
-</div>
+  <div id="adminContent" class="card">
+    <div class="loading">در حال دریافت اطلاعات...</div>
+  </div>
 
-<div id="adminStats">
-<div class="grid">
-<div class="stat">کاربران<strong id="statUsers">0</strong></div>
-<div class="stat">موجودی<strong id="statBalance">0</strong></div>
-<div class="stat">برداشت‌های در انتظار<strong id="statWithdrawals">0</strong></div>
-<div class="stat">پرداخت‌های در انتظار<strong id="statPayments">0</strong></div>
-</div>
-</div>
+</section>
 
-<div id="adminUsers" class="hidden">
-<h3>👥 کاربران</h3>
-<button onclick="loadUsers()">بروزرسانی</button>
-<div id="usersTable"></div>
+
+<div class="footer">
+  🤖 دستیار هوش مصنوعی • نسخه حرفه‌ای
 </div>
 
-<div id="adminPayments" class="hidden">
-<h3>💰 پرداخت‌ها</h3>
-<button onclick="loadPayments()">بروزرسانی</button>
-<div id="paymentsTable"></div>
-</div>
-
-<div id="adminWithdrawals" class="hidden">
-<h3>💸 برداشت‌ها</h3>
-<button onclick="loadWithdrawals()">بروزرسانی</button>
-<div id="withdrawalsTable"></div>
-</div>
-
-</div>
-</div>
-
-</div>
 
 <script>
-let token=localStorage.getItem("user_token")||"";
-let adminToken=localStorage.getItem("admin_token")||"";
+const $ = id => document.getElementById(id);
 
-function $(id){
-  return document.getElementById(id);
+let token = localStorage.getItem("token") || "";
+let adminToken = localStorage.getItem("admin_token") || "";
+
+function msg(id,text,ok=false){
+  const el=$(id);
+  if(!el)return;
+  el.textContent=text;
+  el.className="message " + (ok ? "ok":"err");
 }
 
-function showMessage(text,error=false){
-  const el=$("message");
-  el.textContent=text;
-  el.className="card";
-  el.style.background=error?"#fee2e2":"#dcfce7";
-  setTimeout(()=>{
-    el.classList.add("hidden");
-  },5000);
+function clearMsg(id){
+  const el=$(id);
+  if(el){
+    el.textContent="";
+    el.className="message";
+  }
 }
 
 function showAuth(type){
-  $("loginBox").classList.toggle("hidden",type!=="login");
-  $("registerBox").classList.toggle("hidden",type!=="register");
-  $("forgotBox").classList.toggle("hidden",type!=="forgot");
+
+  ["loginBox","registerBox","forgotBox"].forEach(x=>$(x).classList.add("hidden"));
+
+  ["loginTab","registerTab","forgotTab"].forEach(x=>$(x).classList.remove("active"));
+
+  if(type==="login"){
+    $("loginBox").classList.remove("hidden");
+    $("loginTab").classList.add("active");
+  }
+
+  if(type==="register"){
+    $("registerBox").classList.remove("hidden");
+    $("registerTab").classList.add("active");
+  }
+
+  if(type==="forgot"){
+    $("forgotBox").classList.remove("hidden");
+    $("forgotTab").classList.add("active");
+  }
 }
 
-async function api(url,options={}){
+async function request(url,options={}){
   options.headers=options.headers||{};
   options.headers["Content-Type"]="application/json";
 
@@ -379,148 +741,168 @@ async function api(url,options={}){
   try{
     data=JSON.parse(text);
   }catch(e){
-    throw new Error("پاسخ نامعتبر از سرور");
+    throw new Error("پاسخ نامعتبر از سرور: "+text.slice(0,150));
   }
 
-  if(!r.ok){
-    throw new Error(data.error||"خطای سرور");
+  if(!r.ok || data.ok===false){
+    throw new Error(data.error || data.message || "خطای سرور");
   }
 
   return data;
 }
 
 async function register(){
+
+  clearMsg("registerMsg");
+
   const name=$("regName").value.trim();
   const email=$("regEmail").value.trim();
   const password=$("regPassword").value;
   const password2=$("regPassword2").value;
 
-  if(!name||!email||!password){
-    showMessage("همه فیلدها را کامل کنید",true);
+  if(!name || !email || !password){
+    msg("registerMsg","لطفاً همه اطلاعات را وارد کنید.");
+    return;
+  }
+
+  if(password.length<6){
+    msg("registerMsg","رمز عبور باید حداقل ۶ کاراکتر باشد.");
     return;
   }
 
   if(password!==password2){
-    showMessage("تکرار رمز عبور صحیح نیست",true);
+    msg("registerMsg","تکرار رمز عبور صحیح نیست.");
     return;
   }
 
   try{
-    const data=await api("/api/register",{
+
+    const data=await request("/api/register",{
       method:"POST",
       body:JSON.stringify({name,email,password})
     });
 
-    if(data.token){
-      token=data.token;
-      localStorage.setItem("user_token",token);
-    }
+    token=data.token||"";
+    if(token)localStorage.setItem("token",token);
 
-    showMessage("ثبت‌نام با موفقیت انجام شد");
-    await loadMe();
+    msg("registerMsg","ثبت‌نام با موفقیت انجام شد.",true);
+
+    setTimeout(loadMe,500);
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("registerMsg",e.message);
   }
 }
 
 async function login(){
+
+  clearMsg("loginMsg");
+
   const email=$("loginEmail").value.trim();
   const password=$("loginPassword").value;
 
-  if(!email||!password){
-    showMessage("ایمیل و رمز عبور را وارد کنید",true);
+  if(!email || !password){
+    msg("loginMsg","ایمیل و رمز عبور را وارد کنید.");
     return;
   }
 
   try{
-    const data=await api("/api/login",{
+
+    const data=await request("/api/login",{
       method:"POST",
       body:JSON.stringify({email,password})
     });
 
-    token=data.token;
-    localStorage.setItem("user_token",token);
+    token=data.token||"";
 
-    showMessage("ورود موفق بود");
-    await loadMe();
+    localStorage.setItem("token",token);
+
+    loadMe();
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("loginMsg",e.message);
   }
 }
 
 async function loadMe(){
+
+  if(!token){
+    $("authSection").classList.remove("hidden");
+    $("userSection").classList.add("hidden");
+    return;
+  }
+
   try{
-    const data=await api("/api/me");
 
-    if(!data.ok){
-      throw new Error("جلسه کاربری معتبر نیست");
-    }
+    const data=await request("/api/me");
 
-    const u=data.user;
+    $("authSection").classList.add("hidden");
+    $("userSection").classList.remove("hidden");
 
-    $("authBox").classList.add("hidden");
-    $("userPanel").classList.remove("hidden");
+    fillUser(data.user || data);
 
-    $("balance").textContent=formatMoney(u.balance);
-    $("plan").textContent=planName(u.plan);
-    $("emailShow").textContent=u.email||"-";
-    $("profileName").value=u.name||"";
-    $("profileEmail").value=u.email||"";
+    showPage("home");
 
   }catch(e){
+
+    localStorage.removeItem("token");
     token="";
-    localStorage.removeItem("user_token");
-    $("authBox").classList.remove("hidden");
-    $("userPanel").classList.add("hidden");
+
+    $("authSection").classList.remove("hidden");
+    $("userSection").classList.add("hidden");
   }
+}
+
+function fillUser(u){
+
+  $("welcomeName").textContent=u.name ? "، "+u.name : "";
+
+  const balance=Number(u.balance||0);
+
+  $("balance").textContent=formatMoney(balance)+" تومان";
+  $("homeBalance").textContent=formatMoney(balance)+" تومان";
+
+  $("profileName").value=u.name||"";
+  $("profileEmail").value=u.email||"";
+
+  $("userPlan").textContent=u.plan||"رایگان";
 }
 
 function formatMoney(n){
-  return Number(n||0).toLocaleString("fa-IR")+" تومان";
+  return Number(n||0).toLocaleString("fa-IR");
 }
 
-function planName(p){
-  const x={
-    free:"رایگان",
-    professional:"حرفه‌ای",
-    special:"ویژه",
-    gold:"طلایی",
-    vip:"VIP"
+function showPage(page){
+
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+
+  const target=$("page"+page.charAt(0).toUpperCase()+page.slice(1));
+
+  if(target)target.classList.remove("hidden");
+
+  document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+
+  const map={
+    home:"navHome",
+    profile:"navProfile",
+    plans:"navPlans",
+    deposit:"navDeposit",
+    withdraw:"navWithdraw",
+    transactions:"navTransactions"
   };
-  return x[p]||p||"رایگان";
-}
 
-function logout(){
-  token="";
-  localStorage.removeItem("user_token");
-  $("userPanel").classList.add("hidden");
-  $("authBox").classList.remove("hidden");
-  showAuth("login");
-}
+  if(map[page] && $(map[page]))$(map[page]).classList.add("active");
 
-function showTab(name){
-  const tabs=[
-    "home",
-    "profile",
-    "plans",
-    "deposit",
-    "withdraw",
-    "transactions"
-  ];
-
-  tabs.forEach(x=>{
-    const el=$(x+"Tab");
-    if(el)el.classList.toggle("hidden",x!==name);
-  });
-
-  if(name==="transactions"){
-    loadTransactions();
-  }
+  if(page==="transactions")loadTransactions();
 }
 
 async function saveProfile(){
+
+  clearMsg("profileMsg");
+
   try{
-    const data=await api("/api/profile",{
+
+    const data=await request("/api/profile",{
       method:"POST",
       body:JSON.stringify({
         name:$("profileName").value.trim(),
@@ -528,270 +910,329 @@ async function saveProfile(){
       })
     });
 
-    showMessage(data.message||"اطلاعات ذخیره شد");
-    await loadMe();
+    msg("profileMsg","اطلاعات با موفقیت ذخیره شد.",true);
+
+    if(data.user)fillUser(data.user);
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("profileMsg",e.message);
   }
 }
 
-async function sendAI(){
-  const prompt=$("aiPrompt").value.trim();
+async function deposit(){
 
-  if(!prompt){
-    showMessage("سؤال را وارد کنید",true);
-    return;
-  }
+  clearMsg("depositMsg");
 
-  const result=$("aiResult");
-  result.classList.remove("hidden");
-  result.textContent="⏳ در حال دریافت پاسخ...";
+  const amount=Number($("depositAmount").value);
 
   try{
-    const data=await api("/api/ai",{
+
+    const data=await request("/api/payment/start",{
       method:"POST",
-      body:JSON.stringify({prompt})
+      body:JSON.stringify({
+        amount,
+        plan:"افزایش موجودی"
+      })
     });
 
-    result.textContent=data.answer||data.response||"پاسخی دریافت نشد";
+    msg("depositMsg",data.message||"درخواست پرداخت ثبت شد.",true);
 
-    await loadMe();
+    if(data.payment_url){
+      setTimeout(()=>location.href=data.payment_url,700);
+    }
+
   }catch(e){
-    result.textContent="خطا: "+e.message;
+    msg("depositMsg",e.message);
   }
 }
 
-async function pay(plan,amount){
-  if(plan==="free"){
-    showMessage("پلن رایگان انتخاب شد");
-    return;
-  }
+async function startPayment(plan,amount){
 
   try{
-    const data=await api("/api/payment/start",{
+
+    const data=await request("/api/payment/start",{
       method:"POST",
       body:JSON.stringify({plan,amount})
     });
 
-    if(data.url){
-      location.href=data.url;
-    }else{
-      showMessage(data.message||"درخواست پرداخت ثبت شد");
+    if(data.payment_url){
+      location.href=data.payment_url;
+      return;
     }
+
+    alert(data.message||"درخواست ثبت شد.");
+
   }catch(e){
-    showMessage(e.message,true);
+    alert(e.message);
   }
 }
 
-async function startDeposit(){
-  const amount=Number($("depositAmount").value);
+async function withdrawMoney(){
 
-  if(!amount||amount<10000){
-    showMessage("حداقل مبلغ افزایش موجودی 10,000 تومان است",true);
-    return;
-  }
+  clearMsg("withdrawMsg");
 
-  try{
-    const data=await api("/api/payment/start",{
-      method:"POST",
-      body:JSON.stringify({
-        plan:"deposit",
-        amount
-      })
-    });
-
-    if(data.url){
-      location.href=data.url;
-    }else{
-      showMessage(data.message||"درخواست ثبت شد");
-    }
-  }catch(e){
-    showMessage(e.message,true);
-  }
-}
-
-async function withdraw(){
   const amount=Number($("withdrawAmount").value);
   const method=$("withdrawMethod").value;
+  const network=$("withdrawNetwork").value;
   const address=$("withdrawAddress").value.trim();
 
-  if(!amount||amount<10000){
-    showMessage("حداقل برداشت 10,000 تومان است",true);
+  if(!amount || amount<10000){
+    msg("withdrawMsg","حداقل مبلغ برداشت ۱۰,۰۰۰ تومان است.");
     return;
   }
 
   if(!address){
-    showMessage("آدرس کیف پول یا اطلاعات حساب را وارد کنید",true);
+    msg("withdrawMsg","اطلاعات دریافت را وارد کنید.");
     return;
   }
 
   try{
-    const data=await api("/api/withdraw",{
+
+    const data=await request("/api/withdraw",{
       method:"POST",
-      body:JSON.stringify({
-        amount,
-        method,
-        address
-      })
+      body:JSON.stringify({amount,method,network,address})
     });
 
-    showMessage(data.message||"درخواست برداشت ثبت شد");
+    msg("withdrawMsg",data.message||"درخواست برداشت ثبت شد.",true);
+
     $("withdrawAmount").value="";
     $("withdrawAddress").value="";
+
     await loadMe();
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("withdrawMsg",e.message);
   }
 }
 
 async function loadTransactions(){
-  try{
-    const data=await api("/api/transactions");
-    const list=data.transactions||[];
 
-    if(!list.length){
-      $("transactionsList").innerHTML="<p>تراکنشی وجود ندارد.</p>";
+  $("transactions").innerHTML='<div class="loading">در حال دریافت...</div>';
+
+  try{
+
+    const data=await request("/api/transactions");
+
+    const rows=data.transactions||[];
+
+    if(!rows.length){
+      $("transactions").innerHTML='<div class="loading">هنوز تراکنشی ثبت نشده است.</div>';
       return;
     }
 
-    $("transactionsList").innerHTML=
-      "<table><tr><th>نوع</th><th>مبلغ</th><th>توضیح</th><th>تاریخ</th></tr>"+
-      list.map(t=>
-        "<tr>"+
-        "<td>"+escapeHtml(t.type)+"</td>"+
-        "<td>"+formatMoney(t.amount)+"</td>"+
-        "<td>"+escapeHtml(t.description||"")+"</td>"+
-        "<td>"+escapeHtml(t.created_at||"")+"</td>"+
-        "</tr>"
-      ).join("")+
-      "</table>";
+    $("transactions").innerHTML=rows.map(t=>{
+
+      const amount=Number(t.amount||0);
+      const positive=amount>=0;
+
+      return \`
+        <div class="tx">
+          <div>
+            <b>\${escapeHtml(t.description||t.type||"تراکنش")}</b>
+            <div style="color:#94a3b8;margin-top:5px">
+              \${escapeHtml(t.created_at||"")}
+            </div>
+          </div>
+          <div class="\${positive?'plus':'minus'}">
+            \${positive?"+":""}\${formatMoney(amount)} تومان
+          </div>
+        </div>
+      \`;
+
+    }).join("");
+
   }catch(e){
-    showMessage(e.message,true);
+
+    $("transactions").innerHTML=
+      '<div class="message err" style="display:block">'+escapeHtml(e.message)+'</div>';
   }
 }
 
+async function sendAI(){
+
+  const input=$("aiInput");
+  const text=input.value.trim();
+
+  if(!text)return;
+
+  const box=$("aiMessages");
+
+  box.innerHTML+=\`
+    <div class="ai-msg ai-user">\${escapeHtml(text)}</div>
+  \`;
+
+  input.value="";
+
+  box.innerHTML+=\`
+    <div id="aiLoading" class="ai-msg ai-bot">⏳ در حال فکر کردن...</div>
+  \`;
+
+  box.scrollTop=box.scrollHeight;
+
+  try{
+
+    const data=await request("/api/ai",{
+      method:"POST",
+      body:JSON.stringify({message:text})
+    });
+
+    const loading=$("aiLoading");
+    if(loading)loading.remove();
+
+    box.innerHTML+=\`
+      <div class="ai-msg ai-bot">\${escapeHtml(data.answer||"پاسخی دریافت نشد.")}</div>
+    \`;
+
+  }catch(e){
+
+    const loading=$("aiLoading");
+    if(loading)loading.remove();
+
+    box.innerHTML+=\`
+      <div class="ai-msg ai-bot">❌ \${escapeHtml(e.message)}</div>
+    \`;
+  }
+
+  box.scrollTop=box.scrollHeight;
+}
+
+$("aiInput").addEventListener("keydown",function(e){
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    sendAI();
+  }
+});
+
 async function forgotPassword(){
+
+  clearMsg("forgotMsg");
+
   const email=$("forgotEmail").value.trim();
 
   if(!email){
-    showMessage("ایمیل را وارد کنید",true);
+    msg("forgotMsg","ایمیل را وارد کنید.");
     return;
   }
 
   try{
-    const data=await api("/api/forgot-password",{
+
+    const data=await request("/api/forgot-password",{
       method:"POST",
       body:JSON.stringify({email})
     });
 
-    $("resetArea").classList.remove("hidden");
+    msg("forgotMsg",data.message||"کد ارسال شد.",true);
 
     if(data.development_code){
-      showMessage("کد بازیابی: "+data.development_code);
-    }else{
-      showMessage(data.message||"کد بازیابی ارسال شد");
+      msg("forgotMsg","کد بازیابی: "+data.development_code,true);
     }
+
+    $("resetBox").classList.remove("hidden");
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("forgotMsg",e.message);
   }
 }
 
 async function resetPassword(){
+
   const email=$("forgotEmail").value.trim();
   const code=$("resetCode").value.trim();
   const password=$("newPassword").value;
 
-  if(!email||!code||!password){
-    showMessage("اطلاعات را کامل کنید",true);
-    return;
-  }
-
   try{
-    const data=await api("/api/reset-password",{
+
+    const data=await request("/api/reset-password",{
       method:"POST",
-      body:JSON.stringify({
-        email,
-        code,
-        password
-      })
+      body:JSON.stringify({email,code,password})
     });
 
-    showMessage(data.message||"رمز تغییر کرد");
-    showAuth("login");
+    msg("forgotMsg",data.message||"رمز تغییر کرد.",true);
+
   }catch(e){
-    showMessage(e.message,true);
+    msg("forgotMsg",e.message);
   }
 }
 
-/* ADMIN */
+function logout(){
+
+  fetch("/api/logout",{
+    method:"POST",
+    headers:{Authorization:"Bearer "+token}
+  }).catch(()=>{});
+
+  localStorage.removeItem("token");
+  token="";
+
+  $("userSection").classList.add("hidden");
+  $("adminSection").classList.add("hidden");
+  $("authSection").classList.remove("hidden");
+
+  showAuth("login");
+}
+
+function showAdminLogin(){
+  $("adminLoginModal").classList.remove("hidden");
+  $("adminPassword").focus();
+}
+
+function closeAdminLogin(){
+  $("adminLoginModal").classList.add("hidden");
+}
 
 async function adminLogin(){
-  const input=$("adminPassword");
-  const button=$("adminLoginButton");
-  const password=input.value.trim();
+
+  clearMsg("adminLoginMsg");
+
+  const password=$("adminPassword").value;
 
   if(!password){
-    showMessage("رمز مدیریت را وارد کنید",true);
-    input.focus();
+    msg("adminLoginMsg","رمز مدیریت را وارد کنید.");
     return;
   }
 
-  button.disabled=true;
-  button.textContent="در حال ورود...";
-
   try{
-    const response=await fetch("/api/admin/login",{
+
+    const r=await fetch("/api/admin/login",{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({password})
     });
 
-    const text=await response.text();
+    const text=await r.text();
 
     let data;
 
     try{
       data=JSON.parse(text);
     }catch(e){
-      throw new Error(
-        "پاسخ سرور JSON نیست. کد پاسخ: "+response.status
-      );
+      throw new Error("پاسخ سرور نامعتبر است.");
     }
 
-    if(!response.ok||!data.ok){
-      throw new Error(data.error||"رمز مدیریت صحیح نیست");
-    }
-
-    if(!data.token){
-      throw new Error("توکن مدیریت از سرور دریافت نشد");
+    if(!r.ok || data.ok===false){
+      throw new Error(data.error||"ورود مدیر انجام نشد.");
     }
 
     adminToken=data.token;
 
-    localStorage.setItem(
-      "admin_token",
-      adminToken
-    );
+    localStorage.setItem("admin_token",adminToken);
 
-    $("adminLogin").classList.add("hidden");
-    $("adminPanel").classList.remove("hidden");
+    closeAdminLogin();
 
-    showMessage("ورود مدیریت با موفقیت انجام شد");
+    $("authSection").classList.add("hidden");
+    $("userSection").classList.add("hidden");
+    $("adminSection").classList.remove("hidden");
 
-    await loadStats();
+    await adminPage("stats");
 
   }catch(e){
-    console.error("ADMIN LOGIN ERROR:",e);
-    showMessage("خطا در ورود مدیریت: "+e.message,true);
-  }finally{
-    button.disabled=false;
-    button.textContent="ورود مدیریت";
+
+    msg("adminLoginMsg",e.message);
   }
 }
 
-async function adminFetch(url,options={}){
+async function adminRequest(url,options={}){
+
   options.headers=options.headers||{};
   options.headers["Content-Type"]="application/json";
   options.headers["Authorization"]="Admin "+adminToken;
@@ -804,389 +1245,418 @@ async function adminFetch(url,options={}){
   try{
     data=JSON.parse(text);
   }catch(e){
-    throw new Error("پاسخ نامعتبر پنل مدیریت");
+    throw new Error("پاسخ نامعتبر مدیر");
   }
 
-  if(!r.ok){
-    if(r.status===401){
-      adminLogout();
-    }
-    throw new Error(data.error||"خطای مدیریت");
+  if(!r.ok || data.ok===false){
+    throw new Error(data.error||"دسترسی رد شد");
   }
 
   return data;
 }
 
-function adminTab(name){
-  const tabs=[
-    "stats",
-    "users",
-    "payments",
-    "withdrawals"
-  ];
+async function adminPage(page){
 
-  tabs.forEach(x=>{
-    const el=$("admin"+x.charAt(0).toUpperCase()+x.slice(1));
-    if(el){
-      el.classList.toggle("hidden",x!==name);
-    }
+  if(!adminToken)return;
+
+  $("adminContent").innerHTML='<div class="loading">⏳ در حال دریافت اطلاعات...</div>';
+
+  try{
+
+    if(page==="stats")await adminStats();
+    if(page==="users")await adminUsers();
+    if(page==="payments")await adminPayments();
+    if(page==="withdrawals")await adminWithdrawals();
+
+  }catch(e){
+
+    $("adminContent").innerHTML=
+      '<div class="message err" style="display:block">'+escapeHtml(e.message)+'</div>';
+  }
+}
+
+async function adminStats(){
+
+  const data=await adminRequest("/api/admin/stats");
+  const s=data.stats||data;
+
+  $("adminContent").innerHTML=\`
+    <h2>📊 آمار سایت</h2>
+
+    <div class="grid">
+
+      <div class="stat">
+        <div>👥 تعداد کاربران</div>
+        <div class="num">\${formatMoney(s.users||0)}</div>
+      </div>
+
+      <div class="stat">
+        <div>💰 مجموع موجودی</div>
+        <div class="num">\${formatMoney(s.balance||0)}</div>
+      </div>
+
+      <div class="stat">
+        <div>💸 برداشت‌های در انتظار</div>
+        <div class="num">\${formatMoney(s.pending_withdrawals||0)}</div>
+      </div>
+
+      <div class="stat">
+        <div>💳 پرداخت‌های در انتظار</div>
+        <div class="num">\${formatMoney(s.pending_deposits||0)}</div>
+      </div>
+
+    </div>
+  \`;
+}
+
+async function adminUsers(){
+
+  const data=await adminRequest("/api/admin/users");
+  const users=data.users||[];
+
+  let html=\`
+    <h2>👥 کاربران</h2>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>نام</th>
+          <th>ایمیل</th>
+          <th>موجودی</th>
+          <th>پلن</th>
+          <th>وضعیت</th>
+          <th>مدیریت</th>
+        </tr>
+      </thead>
+      <tbody>
+  \`;
+
+  users.forEach(u=>{
+
+    html+=\`
+      <tr>
+        <td>\${u.id}</td>
+        <td>\${escapeHtml(u.name||"")}</td>
+        <td>\${escapeHtml(u.email||"")}</td>
+        <td>\${formatMoney(u.balance||0)}</td>
+        <td>\${escapeHtml(u.plan||"رایگان")}</td>
+        <td><span class="status">\${escapeHtml(u.status||"")}</span></td>
+        <td>
+          <button class="btn btn-light" style="width:auto;padding:8px" onclick="toggleUser(\${u.id},'\${u.status}')">
+            تغییر وضعیت
+          </button>
+          <button class="btn btn-success" style="width:auto;padding:8px" onclick="changeBalance(\${u.id})">
+            موجودی
+          </button>
+        </td>
+      </tr>
+    \`;
   });
 
-  if(name==="stats")loadStats();
-  if(name==="users")loadUsers();
-  if(name==="payments")loadPayments();
-  if(name==="withdrawals")loadWithdrawals();
+  html+=\`
+      </tbody>
+    </table>
+    </div>
+  \`;
+
+  $("adminContent").innerHTML=html;
 }
 
-async function loadStats(){
+async function toggleUser(id,status){
+
+  const newStatus=(status==="مسدود" || status==="blocked") ? "فعال" : "مسدود";
+
+  if(!confirm("وضعیت کاربر تغییر کند؟"))return;
+
   try{
-    const data=await adminFetch("/api/admin/stats");
 
-    $("statUsers").textContent=
-      Number(data.users||0).toLocaleString("fa-IR");
+    await adminRequest("/api/admin/user-status",{
+      method:"POST",
+      body:JSON.stringify({id,status:newStatus})
+    });
 
-    $("statBalance").textContent=
-      formatMoney(data.balance||0);
-
-    $("statWithdrawals").textContent=
-      Number(data.pendingWithdrawals||0).toLocaleString("fa-IR");
-
-    $("statPayments").textContent=
-      Number(data.pendingPayments||0).toLocaleString("fa-IR");
+    adminUsers();
 
   }catch(e){
-    showMessage(e.message,true);
+    alert(e.message);
   }
 }
 
-async function loadUsers(){
-  try{
-    const data=await adminFetch("/api/admin/users");
-    const users=data.users||[];
+async function changeBalance(id){
 
-    $("usersTable").innerHTML=
-      "<table>"+
-      "<tr><th>ID</th><th>نام</th><th>ایمیل</th><th>موجودی</th><th>پلن</th><th>وضعیت</th><th>عملیات</th></tr>"+
-      users.map(u=>
-        "<tr>"+
-        "<td>"+u.id+"</td>"+
-        "<td>"+escapeHtml(u.name||"")+"</td>"+
-        "<td>"+escapeHtml(u.email||"")+"</td>"+
-        "<td>"+formatMoney(u.balance)+"</td>"+
-        "<td>"+escapeHtml(planName(u.plan))+"</td>"+
-        "<td>"+escapeHtml(u.status||"فعال")+"</td>"+
-        "<td>"+
-        "<button onclick='changeStatus("+u.id+",\"فعال\")'>فعال</button>"+
-        "<button class='danger' onclick='changeStatus("+u.id+",\"مسدود\")'>مسدود</button>"+
-        "</td>"+
-        "</tr>"
-      ).join("")+
-      "</table>";
+  const amount=prompt("مبلغ تغییر موجودی را وارد کنید. برای کسر عدد منفی بنویسید:");
+
+  if(amount===null)return;
+
+  const n=Number(amount);
+
+  if(!Number.isFinite(n)){
+    alert("مبلغ نامعتبر است.");
+    return;
+  }
+
+  try{
+
+    await adminRequest("/api/admin/balance",{
+      method:"POST",
+      body:JSON.stringify({id,amount:n})
+    });
+
+    alert("موجودی تغییر کرد.");
+    adminUsers();
 
   }catch(e){
-    showMessage(e.message,true);
+    alert(e.message);
   }
 }
 
-async function changeStatus(id,status){
+async function adminPayments(){
+
+  const data=await adminRequest("/api/admin/payments");
+  const rows=data.payments||[];
+
+  let html=\`
+    <h2>💳 پرداخت‌ها</h2>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>کاربر</th>
+          <th>پلن</th>
+          <th>مبلغ</th>
+          <th>روش</th>
+          <th>وضعیت</th>
+          <th>تاریخ</th>
+        </tr>
+      </thead>
+      <tbody>
+  \`;
+
+  rows.forEach(x=>{
+
+    const amount=x.amount_toman ?? x.amount ?? 0;
+
+    html+=\`
+      <tr>
+        <td>\${x.id}</td>
+        <td>\${escapeHtml(x.username||x.email||String(x.user_id||""))}</td>
+        <td>\${escapeHtml(x.plan_name||x.plan||"")}</td>
+        <td>\${formatMoney(amount)} تومان</td>
+        <td>\${escapeHtml(x.method||"")}</td>
+        <td><span class="status">\${escapeHtml(x.status||"")}</span></td>
+        <td>\${escapeHtml(x.created_at||"")}</td>
+      </tr>
+    \`;
+  });
+
+  html+=\`</tbody></table></div>\`;
+
+  $("adminContent").innerHTML=html;
+}
+
+async function adminWithdrawals(){
+
+  const data=await adminRequest("/api/admin/withdrawals");
+  const rows=data.withdrawals||[];
+
+  let html=\`
+    <h2>💸 درخواست‌های برداشت</h2>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>کاربر</th>
+          <th>مبلغ</th>
+          <th>روش</th>
+          <th>شبکه</th>
+          <th>آدرس</th>
+          <th>وضعیت</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+  \`;
+
+  rows.forEach(x=>{
+
+    html+=\`
+      <tr>
+        <td>\${x.id}</td>
+        <td>\${escapeHtml(x.username||String(x.user_id||""))}</td>
+        <td>\${formatMoney(x.amount||0)} تومان</td>
+        <td>\${escapeHtml(x.method||"")}</td>
+        <td>\${escapeHtml(x.network||"")}</td>
+        <td style="direction:ltr">\${escapeHtml(x.address||"")}</td>
+        <td><span class="status">\${escapeHtml(x.status||"")}</span></td>
+        <td>
+          <button class="btn btn-success" style="width:auto;padding:7px" onclick="withdrawStatus(\${x.id},'approved')">
+            تأیید
+          </button>
+          <button class="btn btn-danger" style="width:auto;padding:7px" onclick="withdrawStatus(\${x.id},'rejected')">
+            رد
+          </button>
+        </td>
+      </tr>
+    \`;
+  });
+
+  html+=\`</tbody></table></div>\`;
+
+  $("adminContent").innerHTML=html;
+}
+
+async function withdrawStatus(id,status){
+
+  if(!confirm(status==="approved" ? "برداشت تأیید شود؟" : "برداشت رد شود؟"))return;
+
   try{
-    const data=await adminFetch("/api/admin/user-status",{
+
+    await adminRequest("/api/admin/withdrawal-status",{
       method:"POST",
       body:JSON.stringify({id,status})
     });
 
-    showMessage(data.message||"وضعیت تغییر کرد");
-    loadUsers();
-  }catch(e){
-    showMessage(e.message,true);
-  }
-}
-
-async function loadPayments(){
-  try{
-    const data=await adminFetch("/api/admin/payments");
-    const rows=data.payments||[];
-
-    $("paymentsTable").innerHTML=
-      "<table>"+
-      "<tr><th>ID</th><th>کاربر</th><th>مبلغ</th><th>وضعیت</th><th>تاریخ</th></tr>"+
-      rows.map(x=>
-        "<tr>"+
-        "<td>"+x.id+"</td>"+
-        "<td>"+escapeHtml(x.username||"")+"</td>"+
-        "<td>"+formatMoney(x.amount)+"</td>"+
-        "<td>"+escapeHtml(x.status||"")+"</td>"+
-        "<td>"+escapeHtml(x.created_at||"")+"</td>"+
-        "</tr>"
-      ).join("")+
-      "</table>";
+    adminWithdrawals();
 
   }catch(e){
-    showMessage(e.message,true);
-  }
-}
-
-async function loadWithdrawals(){
-  try{
-    const data=await adminFetch("/api/admin/withdrawals");
-    const rows=data.withdrawals||[];
-
-    $("withdrawalsTable").innerHTML=
-      "<table>"+
-      "<tr><th>ID</th><th>کاربر</th><th>مبلغ</th><th>روش</th><th>آدرس</th><th>وضعیت</th><th>عملیات</th></tr>"+
-      rows.map(x=>
-        "<tr>"+
-        "<td>"+x.id+"</td>"+
-        "<td>"+escapeHtml(x.username||"")+"</td>"+
-        "<td>"+formatMoney(x.amount)+"</td>"+
-        "<td>"+escapeHtml(x.method||"")+"</td>"+
-        "<td>"+escapeHtml(x.address||"")+"</td>"+
-        "<td>"+escapeHtml(x.status||"")+"</td>"+
-        "<td>"+
-        "<button class='success' onclick='withdrawalStatus("+x.id+",\"approved\")'>تأیید</button>"+
-        "<button class='danger' onclick='withdrawalStatus("+x.id+",\"rejected\")'>رد</button>"+
-        "</td>"+
-        "</tr>"
-      ).join("")+
-      "</table>";
-
-  }catch(e){
-    showMessage(e.message,true);
-  }
-}
-
-async function withdrawalStatus(id,status){
-  try{
-    const data=await adminFetch("/api/admin/withdrawal-status",{
-      method:"POST",
-      body:JSON.stringify({id,status})
-    });
-
-    showMessage(data.message||"وضعیت برداشت تغییر کرد");
-    loadWithdrawals();
-    loadStats();
-  }catch(e){
-    showMessage(e.message,true);
+    alert(e.message);
   }
 }
 
 function adminLogout(){
-  adminToken="";
+
   localStorage.removeItem("admin_token");
-  $("adminPanel").classList.add("hidden");
-  $("adminLogin").classList.remove("hidden");
-  $("adminPassword").value="";
+  adminToken="";
+
+  $("adminSection").classList.add("hidden");
+  $("authSection").classList.remove("hidden");
+
+  showAuth("login");
 }
 
-function escapeHtml(value){
-  return String(value??"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function escapeHtml(v){
+
+  return String(v??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
 window.addEventListener("load",async()=>{
+
   await loadMe();
 
   if(adminToken){
+
     try{
-      await loadStats();
-      $("adminLogin").classList.add("hidden");
-      $("adminPanel").classList.remove("hidden");
+
+      $("authSection").classList.add("hidden");
+      $("userSection").classList.add("hidden");
+      $("adminSection").classList.remove("hidden");
+
+      await adminPage("stats");
+
     }catch(e){
-      adminLogout();
+
+      localStorage.removeItem("admin_token");
+      adminToken="";
+      $("adminSection").classList.add("hidden");
+
+      if(!token){
+        $("authSection").classList.remove("hidden");
+      }
     }
   }
 });
+
+window.addEventListener("error",function(e){
+  console.error(e.error||e.message);
+});
+
 </script>
+</main>
 </body>
 </html>`;
 
-export default {
-  async fetch(request, env) {
-    try {
-      if (!env.DB) {
-        return json({
-          ok:false,
-          error:"D1 binding با نام DB متصل نیست."
-        },500);
-      }
 
-      await initDB(env.DB);
+/* =========================
+   HELPERS
+========================= */
 
-      const url = new URL(request.url);
-      const path = url.pathname;
-      const method = request.method;
-
-      if (
-        path === "/" ||
-        path === "/index.html"
-      ) {
-        return new Response(HTML,{
-          headers:{
-            "Content-Type":"text/html;charset=UTF-8"
-          }
-        });
-      }
-
-      if(path === "/api/register" && method==="POST"){
-        return register(request,env);
-      }
-
-      if(path === "/api/login" && method==="POST"){
-        return login(request,env);
-      }
-
-      if(path === "/api/logout" && method==="POST"){
-        return logout(request,env);
-      }
-
-      if(path === "/api/me" && method==="GET"){
-        return me(request,env);
-      }
-
-      if(path === "/api/profile" && method==="POST"){
-        return profile(request,env);
-      }
-
-      if(path === "/api/transactions" && method==="GET"){
-        return transactions(request,env);
-      }
-
-      if(path === "/api/withdraw" && method==="POST"){
-        return withdrawAPI(request,env);
-      }
-
-      if(path === "/api/forgot-password" && method==="POST"){
-        return forgotPasswordAPI(request,env);
-      }
-
-      if(path === "/api/reset-password" && method==="POST"){
-        return resetPasswordAPI(request,env);
-      }
-
-      if(path === "/api/ai" && method==="POST"){
-        return ai(request,env);
-      }
-
-      if(path === "/api/payment/start" && method==="POST"){
-        return paymentStart(request,env);
-      }
-
-      if(path === "/api/admin/login" && method==="POST"){
-        return adminLoginAPI(request,env);
-      }
-
-      if(path === "/api/admin/users" && method==="GET"){
-        return adminUsers(request,env);
-      }
-
-      if(path === "/api/admin/user-status" && method==="POST"){
-        return adminUserStatus(request,env);
-      }
-
-      if(path === "/api/admin/balance" && method==="POST"){
-        return adminBalance(request,env);
-      }
-
-      if(path === "/api/admin/payments" && method==="GET"){
-        return adminPayments(request,env);
-      }
-
-      if(path === "/api/admin/withdrawals" && method==="GET"){
-        return adminWithdrawals(request,env);
-      }
-
-      if(path === "/api/admin/withdrawal-status" && method==="POST"){
-        return adminWithdrawalStatus(request,env);
-      }
-
-      if(path === "/api/admin/stats" && method==="GET"){
-        return adminStats(request,env);
-      }
-
-      return json({
-        ok:false,
-        error:"مسیر پیدا نشد"
-      },404);
-
-    } catch(error) {
-      return json({
-        ok:false,
-        error:"خطای داخلی سرور",
-        detail:error.message
-      },500);
+const json = (data,status=200) => new Response(
+  JSON.stringify(data),
+  {
+    status,
+    headers:{
+      "Content-Type":"application/json; charset=UTF-8",
+      "Cache-Control":"no-store",
+      "Access-Control-Allow-Origin":"*"
     }
   }
-};
+);
 
-function json(data,status=200){
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers:{
-        "Content-Type":"application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin":"*",
-        "Access-Control-Allow-Headers":"Content-Type, Authorization"
-      }
-    }
-  );
-}
-
-async function body(request){
-  try{
-    return await request.json();
-  }catch(e){
-    return {};
+const htmlResponse = () => new Response(HTML,{
+  headers:{
+    "Content-Type":"text/html; charset=UTF-8",
+    "Cache-Control":"no-store, no-cache, must-revalidate"
   }
-}
+});
 
-function clean(value){
-  return String(value??"").trim();
-}
-
-async function hash(value){
-  const data=new TextEncoder().encode(value);
-  const digest=await crypto.subtle.digest("SHA-256",data);
-  return [...new Uint8Array(digest)]
-    .map(b=>b.toString(16).padStart(2,"0"))
-    .join("");
+function hashPassword(password){
+  // سازگار و ساده برای Worker
+  let h=2166136261;
+  const s=String(password);
+  for(let i=0;i<s.length;i++){
+    h^=s.charCodeAt(i);
+    h=Math.imul(h,16777619);
+  }
+  return (h>>>0).toString(16);
 }
 
 function randomToken(){
-  const bytes=new Uint8Array(32);
-  crypto.getRandomValues(bytes);
+  const a=new Uint8Array(32);
+  crypto.getRandomValues(a);
+  return Array.from(a,x=>x.toString(16).padStart(2,"0")).join("");
+}
 
-  return [...bytes]
-    .map(b=>b.toString(16).padStart(2,"0"))
-    .join("");
+function randomCode(){
+  return String(Math.floor(100000+Math.random()*900000));
+}
+
+async function tableExists(db,name){
+  const r=await db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+  ).bind(name).first();
+  return !!r;
+}
+
+async function columns(db,table){
+
+  const r=await db.prepare(
+    "PRAGMA table_info("+table+")"
+  ).all();
+
+  return new Set((r.results||[]).map(x=>x.name));
 }
 
 async function initDB(db){
 
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      balance REAL DEFAULT 0,
-      plan TEXT DEFAULT 'free',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      email TEXT,
-      password_hash TEXT,
-      status TEXT DEFAULT 'فعال',
-      name TEXT DEFAULT ''
-    )
-  `).run();
+  /*
+   * مهم:
+   * این قسمت جدول‌های موجود را حذف یا تغییر نمی‌دهد.
+   */
 
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT,
       user_id INTEGER NOT NULL,
-      token TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
 
@@ -1202,467 +1672,719 @@ async function initDB(db){
   `).run();
 
   await db.prepare(`
-    CREATE TABLE IF NOT EXISTS deposits (
+    CREATE TABLE IF NOT EXISTS admin_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      amount REAL NOT NULL,
-      status TEXT DEFAULT 'pending',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS withdrawals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      amount REAL NOT NULL,
-      status TEXT DEFAULT 'pending',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      method TEXT DEFAULT 'USDT',
-      address TEXT DEFAULT ''
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS subscriptions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      plan TEXT NOT NULL,
-      price REAL NOT NULL,
-      status TEXT DEFAULT 'pending',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      token TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
 
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS reset_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
       code TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS deposits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      plan_name TEXT NOT NULL,
+      amount_toman INTEGER NOT NULL,
+      method TEXT NOT NULL,
+      reference TEXT NOT NULL,
+      note TEXT,
+      status TEXT NOT NULL DEFAULT 'در انتظار',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS withdrawals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      method TEXT NOT NULL,
+      network TEXT NOT NULL DEFAULT 'TRC20',
+      address TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'در انتظار',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      username TEXT,
+      plan TEXT,
+      plan_name TEXT,
+      price REAL DEFAULT 0,
+      status TEXT DEFAULT 'در انتظار',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
 }
 
-async function getToken(request){
-  const auth=request.headers.get("Authorization")||"";
 
-  if(auth.startsWith("Bearer ")){
-    return auth.slice(7).trim();
-  }
+/* =========================
+   USER
+========================= */
 
-  return "";
+async function getUserById(db,id){
+
+  return await db.prepare(
+    "SELECT * FROM users WHERE id=?"
+  ).bind(id).first();
 }
 
-async function getUser(request,env){
-  const token=await getToken(request);
+async function getUserByEmail(db,email){
+
+  return await db.prepare(
+    "SELECT * FROM users WHERE email=?"
+  ).bind(email).first();
+}
+
+async function createSession(db,userId){
+
+  const token=randomToken();
+
+  await db.prepare(
+    "INSERT INTO sessions(token,user_id) VALUES(?,?)"
+  ).bind(token,userId).run();
+
+  return token;
+}
+
+async function getUserFromRequest(request,db){
+
+  const auth=request.headers.get("Authorization")||"";
+
+  if(!auth.startsWith("Bearer "))return null;
+
+  const token=auth.slice(7).trim();
 
   if(!token)return null;
 
-  const row=await env.DB
-    .prepare(`
-      SELECT
-        u.*
-      FROM sessions s
-      JOIN users u
-        ON u.id=s.user_id
-      WHERE s.token=?
-      LIMIT 1
-    `)
-    .bind(token)
-    .first();
+  const s=await db.prepare(
+    "SELECT user_id FROM sessions WHERE token=?"
+  ).bind(token).first();
 
-  return row||null;
+  if(!s)return null;
+
+  return await getUserById(db,s.user_id);
 }
 
-function publicUser(user){
-  return {
-    id:user.id,
-    name:user.name||"",
-    username:user.username,
-    email:user.email||"",
-    balance:Number(user.balance||0),
-    plan:user.plan||"free",
-    status:user.status||"فعال",
-    created_at:user.created_at
-  };
+async function getPlan(db,user){
+
+  if(!user)return "رایگان";
+
+  if(await tableExists(db,"subscriptions")){
+
+    const c=await columns(db,"subscriptions");
+
+    let row=null;
+
+    if(c.has("user_id")){
+
+      row=await db.prepare(`
+        SELECT * FROM subscriptions
+        WHERE user_id=?
+        ORDER BY id DESC LIMIT 1
+      `).bind(user.id).first();
+
+    }else if(c.has("username") && user.username){
+
+      row=await db.prepare(`
+        SELECT * FROM subscriptions
+        WHERE username=?
+        ORDER BY id DESC LIMIT 1
+      `).bind(user.username).first();
+    }
+
+    if(row){
+
+      const status=String(row.status||"").toLowerCase();
+
+      if(
+        status==="فعال" ||
+        status==="active" ||
+        status==="تأیید شده" ||
+        status==="approved"
+      ){
+
+        return row.plan_name||row.plan||"رایگان";
+      }
+    }
+  }
+
+  return user.plan||"رایگان";
 }
+
+
+/* =========================
+   REGISTER
+========================= */
 
 async function register(request,env){
-  const b=await body(request);
 
-  const name=clean(b.name);
-  const email=clean(b.email).toLowerCase();
-  const password=String(b.password||"");
+  const db=env.DB;
+  const body=await request.json();
 
-  if(!name||!email||!password){
-    return json({
-      ok:false,
-      error:"نام، ایمیل و رمز عبور الزامی است."
-    },400);
+  const name=String(body.name||"").trim();
+  const email=String(body.email||"").trim().toLowerCase();
+  const password=String(body.password||"");
+
+  if(!name || !email || !password){
+    return json({ok:false,error:"همه اطلاعات را وارد کنید."},400);
   }
 
   if(password.length<6){
-    return json({
-      ok:false,
-      error:"رمز عبور باید حداقل ۶ کاراکتر باشد."
-    },400);
+    return json({ok:false,error:"رمز عبور باید حداقل ۶ کاراکتر باشد."},400);
   }
 
-  const exists=await env.DB
-    .prepare(`
-      SELECT id
-      FROM users
-      WHERE lower(email)=?
-      LIMIT 1
-    `)
-    .bind(email)
-    .first();
+  const old=await getUserByEmail(db,email);
 
-  if(exists){
-    return json({
-      ok:false,
-      error:"این ایمیل قبلاً ثبت شده است."
-    },409);
+  if(old){
+    return json({ok:false,error:"این ایمیل قبلاً ثبت شده است."},400);
   }
 
-  const passwordHash=await hash(password);
+  const c=await columns(db,"users");
 
-  const result=await env.DB
-    .prepare(`
+  let username=null;
+
+  if(c.has("username")){
+    username="user_"+Date.now().toString(36);
+  }
+
+  let sql;
+  let values;
+
+  if(c.has("username")){
+
+    sql=`
       INSERT INTO users
-      (username,name,email,password_hash,balance,plan,status)
-      VALUES(?,?,?, ?,0,'free','فعال')
-    `)
-    .bind(
-      email,
+      (username,name,email,password_hash,balance,status)
+      VALUES(?,?,?,?,?,?)
+    `;
+
+    values=[
+      username,
       name,
       email,
-      passwordHash
-    )
-    .run();
+      hashPassword(password),
+      0,
+      "فعال"
+    ];
 
-  const userId=result.meta.last_row_id;
+  }else{
 
-  const token=randomToken();
+    sql=`
+      INSERT INTO users
+      (name,email,password_hash,balance,status)
+      VALUES(?,?,?,?,?)
+    `;
 
-  await env.DB
-    .prepare(`
-      INSERT INTO sessions
-      (user_id,token)
-      VALUES(?,?)
-    `)
-    .bind(userId,token)
-    .run();
+    values=[
+      name,
+      email,
+      hashPassword(password),
+      0,
+      "فعال"
+    ];
+  }
+
+  const result=await db.prepare(sql).bind(...values).run();
+
+  const user=await getUserById(db,result.meta.last_row_id);
+
+  const token=await createSession(db,user.id);
 
   return json({
     ok:true,
     token,
-    message:"ثبت‌نام با موفقیت انجام شد."
+    user:{
+      ...user,
+      plan:"رایگان"
+    }
   });
 }
+
+
+/* =========================
+   LOGIN
+========================= */
 
 async function login(request,env){
-  const b=await body(request);
 
-  const email=clean(b.email).toLowerCase();
-  const password=String(b.password||"");
+  const db=env.DB;
+  const body=await request.json();
 
-  if(!email||!password){
-    return json({
-      ok:false,
-      error:"ایمیل و رمز عبور را وارد کنید."
-    },400);
+  const email=String(body.email||"").trim().toLowerCase();
+  const password=String(body.password||"");
+
+  const user=await getUserByEmail(db,email);
+
+  if(!user || user.password_hash!==hashPassword(password)){
+    return json({ok:false,error:"ایمیل یا رمز عبور اشتباه است."},401);
   }
 
-  const passwordHash=await hash(password);
-
-  const user=await env.DB
-    .prepare(`
-      SELECT *
-      FROM users
-      WHERE lower(email)=?
-      AND password_hash=?
-      LIMIT 1
-    `)
-    .bind(email,passwordHash)
-    .first();
-
-  if(!user){
-    return json({
-      ok:false,
-      error:"ایمیل یا رمز عبور اشتباه است."
-    },401);
+  if(
+    user.status==="مسدود" ||
+    user.status==="blocked"
+  ){
+    return json({ok:false,error:"حساب شما مسدود شده است."},403);
   }
 
-  if(user.status==="مسدود"){
-    return json({
-      ok:false,
-      error:"حساب شما مسدود است."
-    },403);
-  }
-
-  const token=randomToken();
-
-  await env.DB
-    .prepare(`
-      INSERT INTO sessions
-      (user_id,token)
-      VALUES(?,?)
-    `)
-    .bind(user.id,token)
-    .run();
+  const token=await createSession(db,user.id);
+  const plan=await getPlan(db,user);
 
   return json({
     ok:true,
     token,
-    user:publicUser(user)
+    user:{
+      ...user,
+      plan
+    }
   });
 }
 
-async function logout(request,env){
-  const token=await getToken(request);
 
-  if(token){
-    await env.DB
-      .prepare(`
-        DELETE FROM sessions
-        WHERE token=?
-      `)
-      .bind(token)
-      .run();
-  }
-
-  return json({
-    ok:true
-  });
-}
+/* =========================
+   ME
+========================= */
 
 async function me(request,env){
-  const user=await getUser(request,env);
+
+  const user=await getUserFromRequest(request,env.DB);
 
   if(!user){
-    return json({
-      ok:false,
-      error:"وارد حساب نشده‌اید."
-    },401);
+    return json({ok:false,error:"وارد حساب نشده‌اید."},401);
   }
+
+  const plan=await getPlan(env.DB,user);
 
   return json({
     ok:true,
-    user:publicUser(user)
+    user:{
+      ...user,
+      plan
+    }
   });
 }
+
+
+/* =========================
+   PROFILE
+========================= */
 
 async function profile(request,env){
-  const user=await getUser(request,env);
+
+  const db=env.DB;
+  const user=await getUserFromRequest(request,db);
 
   if(!user){
-    return json({
-      ok:false,
-      error:"وارد حساب نشده‌اید."
-    },401);
+    return json({ok:false,error:"دسترسی ندارید."},401);
   }
 
-  const b=await body(request);
+  const body=await request.json();
 
-  const name=clean(b.name);
-  const email=clean(b.email).toLowerCase();
+  const name=String(body.name||"").trim();
+  const email=String(body.email||"").trim().toLowerCase();
 
-  if(!name||!email){
-    return json({
-      ok:false,
-      error:"نام و ایمیل الزامی است."
-    },400);
+  if(!name || !email){
+    return json({ok:false,error:"نام و ایمیل الزامی است."},400);
   }
 
-  const exists=await env.DB
-    .prepare(`
-      SELECT id
-      FROM users
-      WHERE lower(email)=?
-      AND id<>?
-      LIMIT 1
-    `)
-    .bind(email,user.id)
-    .first();
+  const c=await columns(db,"users");
 
-  if(exists){
-    return json({
-      ok:false,
-      error:"این ایمیل قبلاً استفاده شده است."
-    },409);
-  }
+  if(c.has("username")){
 
-  await env.DB
-    .prepare(`
+    await db.prepare(`
       UPDATE users
-      SET name=?,email=?,username=?
+      SET name=?,email=?
       WHERE id=?
-    `)
-    .bind(
-      name,
-      email,
-      email,
-      user.id
-    )
-    .run();
+    `).bind(name,email,user.id).run();
+
+  }else{
+
+    await db.prepare(`
+      UPDATE users
+      SET name=?,email=?
+      WHERE id=?
+    `).bind(name,email,user.id).run();
+  }
+
+  const updated=await getUserById(db,user.id);
 
   return json({
     ok:true,
-    message:"اطلاعات با موفقیت ذخیره شد."
+    user:{
+      ...updated,
+      plan:await getPlan(db,updated)
+    }
   });
 }
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout(request,env){
+
+  const auth=request.headers.get("Authorization")||"";
+
+  if(auth.startsWith("Bearer ")){
+
+    const token=auth.slice(7).trim();
+
+    await env.DB.prepare(
+      "DELETE FROM sessions WHERE token=?"
+    ).bind(token).run();
+  }
+
+  return json({ok:true});
+}
+
+
+/* =========================
+   TRANSACTIONS
+========================= */
 
 async function transactions(request,env){
-  const user=await getUser(request,env);
+
+  const db=env.DB;
+  const user=await getUserFromRequest(request,db);
 
   if(!user){
-    return json({
-      ok:false,
-      error:"وارد حساب نشده‌اید."
-    },401);
+    return json({ok:false,error:"دسترسی ندارید."},401);
   }
 
-  const result=await env.DB
-    .prepare(`
-      SELECT *
-      FROM transactions
-      WHERE user_id=?
-      ORDER BY id DESC
-      LIMIT 100
-    `)
-    .bind(user.id)
-    .all();
+  const r=await db.prepare(`
+    SELECT *
+    FROM transactions
+    WHERE user_id=?
+    ORDER BY id DESC
+    LIMIT 100
+  `).bind(user.id).all();
 
   return json({
     ok:true,
-    transactions:result.results||[]
+    transactions:r.results||[]
   });
 }
 
+
+/* =========================
+   WITHDRAW
+========================= */
+
 async function withdrawAPI(request,env){
-  const user=await getUser(request,env);
+
+  const db=env.DB;
+  const user=await getUserFromRequest(request,db);
 
   if(!user){
-    return json({
-      ok:false,
-      error:"وارد حساب نشده‌اید."
-    },401);
+    return json({ok:false,error:"ابتدا وارد حساب شوید."},401);
   }
 
-  const b=await body(request);
+  const body=await request.json();
 
-  const amount=Number(b.amount);
-  const method=clean(b.method)||"USDT";
-  const address=clean(b.address);
+  const amount=Number(body.amount||0);
+  const method=String(body.method||"بانکی");
+  const network=String(body.network||"TRC20");
+  const address=String(body.address||"").trim();
 
-  if(!Number.isFinite(amount)||amount<10000){
-    return json({
-      ok:false,
-      error:"حداقل برداشت 10,000 تومان است."
-    },400);
+  if(!Number.isFinite(amount) || amount<10000){
+    return json({ok:false,error:"حداقل برداشت ۱۰,۰۰۰ تومان است."},400);
   }
 
   if(amount>Number(user.balance||0)){
-    return json({
-      ok:false,
-      error:"موجودی کافی نیست."
-    },400);
+    return json({ok:false,error:"موجودی کافی نیست."},400);
   }
 
   if(!address){
-    return json({
-      ok:false,
-      error:"اطلاعات دریافت وجه را وارد کنید."
-    },400);
+    return json({ok:false,error:"اطلاعات دریافت الزامی است."},400);
   }
 
-  await env.DB.batch([
+  /*
+   * ابتدا موجودی کم می‌شود.
+   * در صورت رد درخواست، در پنل مدیر برگشت داده می‌شود.
+   */
 
-    env.DB.prepare(`
-      UPDATE users
-      SET balance=balance-?
-      WHERE id=?
-    `).bind(amount,user.id),
+  await db.prepare(`
+    UPDATE users
+    SET balance=balance-?
+    WHERE id=? AND balance>=?
+  `).bind(amount,user.id,amount).run();
 
-    env.DB.prepare(`
+  const check=await getUserById(db,user.id);
+
+  if(Number(check.balance) >
+     Number(user.balance)-amount+0.01){
+    return json({ok:false,error:"خطا در کسر موجودی."},500);
+  }
+
+  const c=await columns(db,"withdrawals");
+
+  let result;
+
+  if(c.has("user_id") && c.has("network")){
+
+    result=await db.prepare(`
       INSERT INTO withdrawals
-      (username,amount,status,method,address)
-      VALUES(?,?,'pending',?,?)
-    `).bind(
-      user.username,
-      amount,
-      method,
-      address
-    ),
-
-    env.DB.prepare(`
-      INSERT INTO transactions
-      (user_id,type,amount,description)
-      VALUES(?,'withdraw',?,?)
+      (user_id,amount,method,network,address,status)
+      VALUES(?,?,?,?,?,?)
     `).bind(
       user.id,
       amount,
-      "درخواست برداشت"
-    )
+      method,
+      network,
+      address,
+      "در انتظار"
+    ).run();
 
-  ]);
+  }else{
+
+    return json({
+      ok:false,
+      error:"ساختار جدول برداشت با سیستم سازگار نیست."
+    },500);
+  }
+
+  await db.prepare(`
+    INSERT INTO transactions
+    (user_id,type,amount,description)
+    VALUES(?,?,?,?)
+  `).bind(
+    user.id,
+    "withdraw",
+    -amount,
+    "درخواست برداشت"
+  ).run();
 
   return json({
     ok:true,
-    message:"درخواست برداشت ثبت شد و در انتظار بررسی مدیریت است."
+    message:"درخواست برداشت با موفقیت ثبت شد.",
+    id:result.meta.last_row_id
   });
 }
 
-async function forgotPasswordAPI(request,env){
-  const b=await body(request);
-  const email=clean(b.email).toLowerCase();
 
-  if(!email){
+/* =========================
+   PAYMENT START
+========================= */
+
+async function paymentStart(request,env){
+
+  const db=env.DB;
+  const user=await getUserFromRequest(request,db);
+
+  if(!user){
+    return json({ok:false,error:"ابتدا وارد حساب شوید."},401);
+  }
+
+  const body=await request.json();
+
+  const amount=Math.floor(Number(body.amount||0));
+  const plan=String(body.plan||"افزایش موجودی");
+
+  if(!Number.isFinite(amount) || amount<10000){
+    return json({ok:false,error:"مبلغ پرداخت نامعتبر است."},400);
+  }
+
+  const reference=
+    "DEP-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase();
+
+  const c=await columns(db,"deposits");
+
+  if(
+    c.has("user_id") &&
+    c.has("plan_name") &&
+    c.has("amount_toman") &&
+    c.has("method") &&
+    c.has("reference")
+  ){
+
+    await db.prepare(`
+      INSERT INTO deposits
+      (user_id,plan_name,amount_toman,method,reference,note,status)
+      VALUES(?,?,?,?,?,?,?)
+    `).bind(
+      user.id,
+      plan,
+      amount,
+      "زرین‌پال",
+      reference,
+      "",
+      "در انتظار"
+    ).run();
+
+  }else{
+
     return json({
       ok:false,
-      error:"ایمیل را وارد کنید."
+      error:"ساختار جدول پرداخت با سیستم فعلی سازگار نیست."
+    },500);
+  }
+
+  /*
+   * اگر متغیر PAYMENT_URL در Worker تنظیم شده باشد،
+   * کاربر به آن هدایت می‌شود.
+   *
+   * در غیر این صورت فقط درخواست پرداخت در D1 ثبت می‌شود.
+   */
+
+  let payment_url="";
+
+  if(env.PAYMENT_URL){
+    payment_url=env.PAYMENT_URL;
+  }
+
+  return json({
+    ok:true,
+    message:payment_url
+      ?"در حال انتقال به درگاه..."
+      :"درخواست پرداخت ثبت شد؛ اتصال نهایی درگاه هنوز تنظیم نشده است.",
+    reference,
+    payment_url
+  });
+}
+
+
+/* =========================
+   AI
+========================= */
+
+async function ai(request,env){
+
+  const user=await getUserFromRequest(request,env.DB);
+
+  if(!user){
+    return json({ok:false,error:"ابتدا وارد حساب شوید."},401);
+  }
+
+  if(!env.AI){
+    return json({
+      ok:false,
+      error:"Workers AI به Worker متصل نیست."
+    },500);
+  }
+
+  const body=await request.json();
+  const message=String(body.message||"").trim();
+
+  if(!message){
+    return json({
+      ok:false,
+      error:"پیام خالی است."
     },400);
   }
 
-  const user=await env.DB
-    .prepare(`
-      SELECT id
-      FROM users
-      WHERE lower(email)=?
-      LIMIT 1
-    `)
-    .bind(email)
-    .first();
+  try{
 
-  if(!user){
+    const result=await env.AI.run(
+      "@cf/meta/llama-3.1-8b-instruct",
+      {
+        messages:[
+          {
+            role:"system",
+            content:
+              "تو یک دستیار هوش مصنوعی فارسی هستی. پاسخ‌ها را واضح، مفید، محترمانه و تا حد امکان کوتاه بده."
+          },
+          {
+            role:"user",
+            content:message
+          }
+        ]
+      }
+    );
+
+    const answer=
+      result?.response ||
+      result?.result?.response ||
+      result?.text ||
+      "پاسخی دریافت نشد.";
+
+    return json({
+      ok:true,
+      answer
+    });
+
+  }catch(e){
+
     return json({
       ok:false,
-      error:"حسابی با این ایمیل پیدا نشد."
-    },404);
+      error:"خطا در اجرای هوش مصنوعی",
+      detail:String(e.message||e)
+    },500);
+  }
+}
+
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+
+async function forgotPassword(request,env){
+
+  const db=env.DB;
+  const body=await request.json();
+
+  const email=String(body.email||"").trim().toLowerCase();
+
+  if(!email){
+    return json({ok:false,error:"ایمیل را وارد کنید."},400);
   }
 
-  const code=String(
-    Math.floor(100000+Math.random()*900000)
-  );
+  const user=await getUserByEmail(db,email);
 
-  await env.DB
-    .prepare(`
-      DELETE FROM reset_codes
-      WHERE email=?
-    `)
-    .bind(email)
-    .run();
+  /*
+   * برای امنیت، در حالت واقعی بهتر است کد به ایمیل ارسال شود.
+   * فعلاً برای تست سیستم کد در پاسخ development_code قرار می‌گیرد.
+   */
 
-  await env.DB
-    .prepare(`
+  if(!user){
+
+    return json({
+      ok:true,
+      message:"اگر این ایمیل ثبت شده باشد، کد بازیابی ایجاد شده است."
+    });
+  }
+
+  const code=randomCode();
+  const expiresAt=Date.now()+10*60*1000;
+
+  const c=await columns(db,"reset_codes");
+
+  if(c.has("user_id") && c.has("expires_at")){
+
+    await db.prepare(`
+      DELETE FROM reset_codes WHERE user_id=?
+    `).bind(user.id).run();
+
+    await db.prepare(`
       INSERT INTO reset_codes
-      (email,code)
-      VALUES(?,?)
-    `)
-    .bind(email,code)
-    .run();
+      (user_id,code,expires_at)
+      VALUES(?,?,?)
+    `).bind(
+      user.id,
+      code,
+      expiresAt
+    ).run();
+
+  }else{
+
+    return json({
+      ok:false,
+      error:"ساختار reset_codes سازگار نیست."
+    },500);
+  }
 
   return json({
     ok:true,
@@ -1671,64 +2393,78 @@ async function forgotPasswordAPI(request,env){
   });
 }
 
-async function resetPasswordAPI(request,env){
-  const b=await body(request);
 
-  const email=clean(b.email).toLowerCase();
-  const code=clean(b.code);
-  const password=String(b.password||"");
+/* =========================
+   RESET PASSWORD
+========================= */
 
-  if(!email||!code||!password){
+async function resetPassword(request,env){
+
+  const db=env.DB;
+  const body=await request.json();
+
+  const email=String(body.email||"").trim().toLowerCase();
+  const code=String(body.code||"").trim();
+  const password=String(body.password||"");
+
+  if(!email || !code || !password){
     return json({
       ok:false,
-      error:"اطلاعات را کامل وارد کنید."
+      error:"همه اطلاعات لازم است."
     },400);
   }
 
   if(password.length<6){
     return json({
       ok:false,
-      error:"رمز جدید باید حداقل ۶ کاراکتر باشد."
+      error:"رمز عبور جدید باید حداقل ۶ کاراکتر باشد."
     },400);
   }
 
-  const row=await env.DB
-    .prepare(`
-      SELECT *
-      FROM reset_codes
-      WHERE email=?
-      AND code=?
-      ORDER BY id DESC
-      LIMIT 1
-    `)
-    .bind(email,code)
-    .first();
+  const user=await getUserByEmail(db,email);
 
-  if(!row){
+  if(!user){
     return json({
       ok:false,
-      error:"کد بازیابی اشتباه است."
+      error:"کد بازیابی صحیح نیست."
     },400);
   }
 
-  const passwordHash=await hash(password);
+  const reset=await db.prepare(`
+    SELECT *
+    FROM reset_codes
+    WHERE user_id=? AND code=?
+    ORDER BY id DESC
+    LIMIT 1
+  `).bind(user.id,code).first();
 
-  await env.DB
-    .prepare(`
-      UPDATE users
-      SET password_hash=?
-      WHERE lower(email)=?
-    `)
-    .bind(passwordHash,email)
-    .run();
+  if(!reset){
+    return json({
+      ok:false,
+      error:"کد بازیابی صحیح نیست."
+    },400);
+  }
 
-  await env.DB
-    .prepare(`
-      DELETE FROM reset_codes
-      WHERE email=?
-    `)
-    .bind(email)
-    .run();
+  if(Number(reset.expires_at)<Date.now()){
+    return json({
+      ok:false,
+      error:"کد بازیابی منقضی شده است."
+    },400);
+  }
+
+  await db.prepare(`
+    UPDATE users
+    SET password_hash=?
+    WHERE id=?
+  `).bind(
+    hashPassword(password),
+    user.id
+  ).run();
+
+  await db.prepare(`
+    DELETE FROM reset_codes
+    WHERE user_id=?
+  `).bind(user.id).run();
 
   return json({
     ok:true,
@@ -1736,181 +2472,37 @@ async function resetPasswordAPI(request,env){
   });
 }
 
-async function ai(request,env){
-  const user=await getUser(request,env);
 
-  if(!user){
+/* =========================
+   ADMIN AUTH
+========================= */
+
+async function adminLogin(request,env){
+
+  const body=await request.json();
+  const password=String(body.password||"");
+
+  if(!env.ADMIN_PASSWORD){
     return json({
       ok:false,
-      error:"برای استفاده از هوش مصنوعی ابتدا وارد شوید."
-    },401);
-  }
-
-  if(!env.AI){
-    return json({
-      ok:false,
-      error:"Workers AI binding با نام AI متصل نیست."
+      error:"ADMIN_PASSWORD در Secrets تنظیم نشده است."
     },500);
   }
 
-  const b=await body(request);
-  const prompt=clean(b.prompt);
-
-  if(!prompt){
+  if(password!==env.ADMIN_PASSWORD){
     return json({
       ok:false,
-      error:"متن سؤال خالی است."
-    },400);
-  }
-
-  try{
-    const result=await env.AI.run(
-      "@cf/meta/llama-3.1-8b-instruct",
-      {
-        messages:[
-          {
-            role:"system",
-            content:
-              "تو یک دستیار هوش مصنوعی فارسی، دقیق، مفید و محترم هستی. پاسخ‌ها را به زبان فارسی ارائه کن."
-          },
-          {
-            role:"user",
-            content:prompt
-          }
-        ]
-      }
-    );
-
-    const answer=
-      result?.response||
-      result?.result?.response||
-      JSON.stringify(result);
-
-    return json({
-      ok:true,
-      answer
-    });
-
-  }catch(error){
-    return json({
-      ok:false,
-      error:"خطا در اجرای هوش مصنوعی",
-      detail:error.message
-    },500);
-  }
-}
-
-async function paymentStart(request,env){
-  const user=await getUser(request,env);
-
-  if(!user){
-    return json({
-      ok:false,
-      error:"ابتدا وارد حساب شوید."
-    },401);
-  }
-
-  const b=await body(request);
-
-  const amount=Number(b.amount);
-  const plan=clean(b.plan)||"deposit";
-
-  if(!Number.isFinite(amount)||amount<=0){
-    return json({
-      ok:false,
-      error:"مبلغ پرداخت نامعتبر است."
-    },400);
-  }
-
-  await env.DB.batch([
-
-    env.DB.prepare(`
-      INSERT INTO deposits
-      (username,amount,status)
-      VALUES(? ,?,'pending')
-    `).bind(
-      user.username,
-      amount
-    ),
-
-    env.DB.prepare(`
-      INSERT INTO subscriptions
-      (username,plan,price,status)
-      VALUES(?,?,?,'pending')
-    `).bind(
-      user.username,
-      plan,
-      amount
-    )
-
-  ]);
-
-  return json({
-    ok:true,
-    message:
-      "درخواست پرداخت ثبت شد. درگاه زرین‌پال هنوز به Worker متصل نشده است."
-  });
-}
-
-async function adminOK(request,env){
-  const auth=request.headers.get("Authorization")||"";
-
-  if(!auth.startsWith("Admin ")){
-    return false;
-  }
-
-  const supplied=auth.slice(6).trim();
-
-  if(!supplied){
-    return false;
-  }
-
-  if(
-    env.ADMIN_PASSWORD &&
-    supplied===env.ADMIN_PASSWORD
-  ){
-    return true;
-  }
-
-  const sessions=globalThis.__ADMIN_SESSIONS||
-    (globalThis.__ADMIN_SESSIONS=new Map());
-
-  const item=sessions.get(supplied);
-
-  if(!item){
-    return false;
-  }
-
-  if(Date.now()-item.createdAt>12*60*60*1000){
-    sessions.delete(supplied);
-    return false;
-  }
-
-  return true;
-}
-
-async function adminLoginAPI(request,env){
-  const b=await body(request);
-  const password=String(b.password||"");
-
-  if(
-    !env.ADMIN_PASSWORD ||
-    password!==env.ADMIN_PASSWORD
-  ){
-    return json({
-      ok:false,
-      error:"رمز مدیریت صحیح نیست."
+      error:"رمز مدیریت اشتباه است."
     },401);
   }
 
   const token=randomToken();
+  const expiresAt=Date.now()+12*60*60*1000;
 
-  const sessions=globalThis.__ADMIN_SESSIONS||
-    (globalThis.__ADMIN_SESSIONS=new Map());
-
-  sessions.set(token,{
-    createdAt:Date.now()
-  });
+  await env.DB.prepare(`
+    INSERT INTO admin_sessions(token,expires_at)
+    VALUES(?,?)
+  `).bind(token,expiresAt).run();
 
   return json({
     ok:true,
@@ -1918,64 +2510,105 @@ async function adminLoginAPI(request,env){
   });
 }
 
-async function adminUsers(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی مدیریت غیرمجاز است."
-    },401);
+async function adminOK(request,env){
+
+  const auth=request.headers.get("Authorization")||"";
+
+  if(!auth.startsWith("Admin ")){
+    return false;
   }
 
-  const result=await env.DB
-    .prepare(`
-      SELECT
-        id,
-        username,
-        name,
-        email,
-        balance,
-        plan,
-        status,
-        created_at
-      FROM users
-      ORDER BY id DESC
-    `)
-    .all();
+  const token=auth.slice(6).trim();
+
+  if(!token)return false;
+
+  const row=await env.DB.prepare(`
+    SELECT *
+    FROM admin_sessions
+    WHERE token=?
+    LIMIT 1
+  `).bind(token).first();
+
+  if(!row)return false;
+
+  if(Number(row.expires_at)<Date.now()){
+
+    await env.DB.prepare(
+      "DELETE FROM admin_sessions WHERE token=?"
+    ).bind(token).run();
+
+    return false;
+  }
+
+  return true;
+}
+
+
+/* =========================
+   ADMIN USERS
+========================= */
+
+async function adminUsers(request,env){
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
+  }
+
+  const db=env.DB;
+
+  const r=await db.prepare(`
+    SELECT *
+    FROM users
+    ORDER BY id DESC
+    LIMIT 500
+  `).all();
+
+  const users=[];
+
+  for(const u of (r.results||[])){
+
+    users.push({
+      id:u.id,
+      name:u.name||"",
+      email:u.email||"",
+      username:u.username||"",
+      balance:Number(u.balance||0),
+      status:u.status||"فعال",
+      plan:await getPlan(db,u)
+    });
+  }
 
   return json({
     ok:true,
-    users:result.results||[]
+    users
   });
 }
 
+
+/* =========================
+   ADMIN USER STATUS
+========================= */
+
 async function adminUserStatus(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
   }
 
-  const b=await body(request);
+  const body=await request.json();
 
-  const id=Number(b.id);
-  const status=clean(b.status);
+  const id=Number(body.id);
+  const status=String(body.status||"فعال");
 
-  if(!id||!status){
-    return json({
-      ok:false,
-      error:"اطلاعات ناقص است."
-    },400);
+  if(!id){
+    return json({ok:false,error:"شناسه کاربر نامعتبر است."},400);
   }
 
-  await env.DB
-    .prepare(`
-      UPDATE users
-      SET status=?
-      WHERE id=?
-    `)
-    .bind(status,id)
-    .run();
+  await env.DB.prepare(`
+    UPDATE users
+    SET status=?
+    WHERE id=?
+  `).bind(status,id).run();
 
   return json({
     ok:true,
@@ -1983,51 +2616,61 @@ async function adminUserStatus(request,env){
   });
 }
 
+
+/* =========================
+   ADMIN BALANCE
+========================= */
+
 async function adminBalance(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
   }
 
-  const b=await body(request);
+  const body=await request.json();
 
-  const id=Number(b.id);
-  const amount=Number(b.amount);
+  const id=Number(body.id);
+  const amount=Number(body.amount);
 
-  if(!id||!Number.isFinite(amount)){
+  if(!id || !Number.isFinite(amount)){
     return json({
       ok:false,
-      error:"اطلاعات موجودی نامعتبر است."
+      error:"اطلاعات نامعتبر است."
     },400);
   }
 
-  await env.DB
-    .prepare(`
-      UPDATE users
-      SET balance=balance+?
-      WHERE id=?
-    `)
-    .bind(amount,id)
-    .run();
+  const user=await getUserById(env.DB,id);
 
-  if(amount!==0){
-    await env.DB
-      .prepare(`
-        INSERT INTO transactions
-        (user_id,type,amount,description)
-        VALUES(?,'admin_balance',?,?)
-      `)
-      .bind(
-        id,
-        Math.abs(amount),
-        amount>0
-          ?"افزایش موجودی توسط مدیریت"
-          :"کاهش موجودی توسط مدیریت"
-      )
-      .run();
+  if(!user){
+    return json({
+      ok:false,
+      error:"کاربر پیدا نشد."
+    },404);
   }
+
+  if(Number(user.balance||0)+amount<0){
+    return json({
+      ok:false,
+      error:"موجودی نمی‌تواند منفی شود."
+    },400);
+  }
+
+  await env.DB.prepare(`
+    UPDATE users
+    SET balance=balance+?
+    WHERE id=?
+  `).bind(amount,id).run();
+
+  await env.DB.prepare(`
+    INSERT INTO transactions
+    (user_id,type,amount,description)
+    VALUES(?,?,?,?)
+  `).bind(
+    id,
+    "admin_balance",
+    amount,
+    "تغییر موجودی توسط مدیر"
+  ).run();
 
   return json({
     ok:true,
@@ -2035,81 +2678,97 @@ async function adminBalance(request,env){
   });
 }
 
+
+/* =========================
+   ADMIN PAYMENTS
+========================= */
+
 async function adminPayments(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
   }
 
-  const result=await env.DB
-    .prepare(`
-      SELECT *
-      FROM deposits
-      ORDER BY id DESC
-      LIMIT 200
-    `)
-    .all();
+  const db=env.DB;
+
+  const r=await db.prepare(`
+    SELECT
+      d.*,
+      u.name AS user_name,
+      u.email AS user_email
+    FROM deposits d
+    LEFT JOIN users u ON u.id=d.user_id
+    ORDER BY d.id DESC
+    LIMIT 500
+  `).all();
+
+  const rows=(r.results||[]).map(x=>({
+    ...x,
+    username:x.user_name||x.user_email||String(x.user_id||"")
+  }));
 
   return json({
     ok:true,
-    payments:result.results||[]
+    payments:rows
   });
 }
+
+
+/* =========================
+   ADMIN WITHDRAWALS
+========================= */
 
 async function adminWithdrawals(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
   }
 
-  const result=await env.DB
-    .prepare(`
-      SELECT *
-      FROM withdrawals
-      ORDER BY id DESC
-      LIMIT 200
-    `)
-    .all();
+  const r=await env.DB.prepare(`
+    SELECT
+      w.*,
+      u.name AS user_name,
+      u.email AS user_email,
+      u.username AS username
+    FROM withdrawals w
+    LEFT JOIN users u ON u.id=w.user_id
+    ORDER BY w.id DESC
+    LIMIT 500
+  `).all();
+
+  const rows=(r.results||[]).map(x=>({
+    ...x,
+    username:x.username||x.user_name||x.user_email||String(x.user_id||"")
+  }));
 
   return json({
     ok:true,
-    withdrawals:result.results||[]
+    withdrawals:rows
   });
 }
 
+
+/* =========================
+   ADMIN WITHDRAWAL STATUS
+========================= */
+
 async function adminWithdrawalStatus(request,env){
-  if(!(await adminOK(request,env))){
-    return json({
-      ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+
+  if(!await adminOK(request,env)){
+    return json({ok:false,error:"دسترسی مدیر لازم است."},403);
   }
 
-  const b=await body(request);
+  const db=env.DB;
+  const body=await request.json();
 
-  const id=Number(b.id);
-  const status=clean(b.status);
+  const id=Number(body.id);
+  const action=String(body.status||"");
 
-  if(!id||!["approved","rejected"].includes(status)){
-    return json({
-      ok:false,
-      error:"وضعیت نامعتبر است."
-    },400);
-  }
-
-  const withdrawal=await env.DB
-    .prepare(`
-      SELECT *
-      FROM withdrawals
-      WHERE id=?
-      LIMIT 1
-    `)
-    .bind(id)
-    .first();
+  const withdrawal=await db.prepare(`
+    SELECT *
+    FROM withdrawals
+    WHERE id=?
+  `).bind(id).first();
 
   if(!withdrawal){
     return json({
@@ -2118,26 +2777,41 @@ async function adminWithdrawalStatus(request,env){
     },404);
   }
 
-  if(
-    withdrawal.status==="approved"||
-    withdrawal.status==="rejected"
-  ){
+  const current=String(withdrawal.status||"");
+
+  const isPending=
+    current==="در انتظار" ||
+    current==="pending" ||
+    current==="در انتظار بررسی";
+
+  if(!isPending){
     return json({
       ok:false,
-      error:"این درخواست قبلاً تعیین تکلیف شده است."
+      error:"این درخواست قبلاً بررسی شده است."
     },400);
   }
 
-  if(status==="approved"){
+  if(action==="approved"){
 
-    await env.DB
-      .prepare(`
-        UPDATE withdrawals
-        SET status='approved'
-        WHERE id=?
-      `)
-      .bind(id)
-      .run();
+    await db.prepare(`
+      UPDATE withdrawals
+      SET status=?
+      WHERE id=?
+    `).bind(
+      "تأیید شده",
+      id
+    ).run();
+
+    await db.prepare(`
+      INSERT INTO transactions
+      (user_id,type,amount,description)
+      VALUES(?,?,?,?)
+    `).bind(
+      withdrawal.user_id,
+      "withdraw_approved",
+      0,
+      "برداشت تأیید شد"
+    ).run();
 
     return json({
       ok:true,
@@ -2145,109 +2819,264 @@ async function adminWithdrawalStatus(request,env){
     });
   }
 
-  const user=await env.DB
-    .prepare(`
-      SELECT *
-      FROM users
-      WHERE username=?
-      LIMIT 1
-    `)
-    .bind(withdrawal.username)
-    .first();
+  if(action==="rejected"){
 
-  if(user){
+    const user=await getUserById(db,withdrawal.user_id);
 
-    await env.DB.batch([
+    if(!user){
+      return json({
+        ok:false,
+        error:"کاربر پیدا نشد."
+      },404);
+    }
 
-      env.DB.prepare(`
-        UPDATE withdrawals
-        SET status='rejected'
-        WHERE id=?
-      `).bind(id),
+    await db.prepare(`
+      UPDATE users
+      SET balance=balance+?
+      WHERE id=?
+    `).bind(
+      Number(withdrawal.amount||0),
+      withdrawal.user_id
+    ).run();
 
-      env.DB.prepare(`
-        UPDATE users
-        SET balance=balance+?
-        WHERE id=?
-      `).bind(
-        Number(withdrawal.amount),
-        user.id
-      ),
+    await db.prepare(`
+      UPDATE withdrawals
+      SET status=?
+      WHERE id=?
+    `).bind(
+      "رد شده",
+      id
+    ).run();
 
-      env.DB.prepare(`
-        INSERT INTO transactions
-        (user_id,type,amount,description)
-        VALUES(?,'withdraw_refund',?,?)
-      `).bind(
-        user.id,
-        Number(withdrawal.amount),
-        "برگشت مبلغ برداشت ردشده"
-      )
+    await db.prepare(`
+      INSERT INTO transactions
+      (user_id,type,amount,description)
+      VALUES(?,?,?,?)
+    `).bind(
+      withdrawal.user_id,
+      "withdraw_refund",
+      Number(withdrawal.amount||0),
+      "برگشت مبلغ برداشت رد شده"
+    ).run();
 
-    ]);
-
-  }else{
-
-    await env.DB
-      .prepare(`
-        UPDATE withdrawals
-        SET status='rejected'
-        WHERE id=?
-      `)
-      .bind(id)
-      .run();
+    return json({
+      ok:true,
+      message:"برداشت رد شد و مبلغ به موجودی برگشت."
+    });
   }
 
   return json({
-    ok:true,
-    message:"برداشت رد شد و مبلغ به موجودی کاربر برگشت."
-  });
+    ok:false,
+    error:"عملیات نامعتبر است."
+  },400);
 }
+
+
+/* =========================
+   ADMIN STATS
+========================= */
 
 async function adminStats(request,env){
-  if(!(await adminOK(request,env))){
+
+  if(!await adminOK(request,env)){
     return json({
       ok:false,
-      error:"دسترسی غیرمجاز"
-    },401);
+      error:"دسترسی مدیر لازم است."
+    },403);
   }
 
-  const users=await env.DB
-    .prepare(`
-      SELECT COUNT(*) AS count
-      FROM users
-    `)
-    .first();
+  const db=env.DB;
 
-  const balance=await env.DB
-    .prepare(`
-      SELECT COALESCE(SUM(balance),0) AS total
-      FROM users
-    `)
-    .first();
+  const users=await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM users
+  `).first();
 
-  const withdrawals=await env.DB
-    .prepare(`
+  const balance=await db.prepare(`
+    SELECT COALESCE(SUM(balance),0) AS total
+    FROM users
+  `).first();
+
+  let pendingWithdrawals=0;
+  let pendingDeposits=0;
+
+  if(await tableExists(db,"withdrawals")){
+
+    const r=await db.prepare(`
       SELECT COUNT(*) AS count
       FROM withdrawals
-      WHERE status='pending'
-    `)
-    .first();
+      WHERE status IN ('در انتظار','pending','در انتظار بررسی')
+    `).first();
 
-  const payments=await env.DB
-    .prepare(`
+    pendingWithdrawals=Number(r?.count||0);
+  }
+
+  if(await tableExists(db,"deposits")){
+
+    const r=await db.prepare(`
       SELECT COUNT(*) AS count
       FROM deposits
-      WHERE status='pending'
-    `)
-    .first();
+      WHERE status IN ('در انتظار','pending','در انتظار بررسی')
+    `).first();
+
+    pendingDeposits=Number(r?.count||0);
+  }
 
   return json({
     ok:true,
-    users:Number(users?.count||0),
-    balance:Number(balance?.total||0),
-    pendingWithdrawals:Number(withdrawals?.count||0),
-    pendingPayments:Number(payments?.count||0)
+    stats:{
+      users:Number(users?.count||0),
+      balance:Number(balance?.total||0),
+      pending_withdrawals:pendingWithdrawals,
+      pending_deposits:pendingDeposits
+    }
   });
 }
-      
+
+
+/* =========================
+   MAIN FETCH
+========================= */
+
+export default {
+
+  async fetch(request,env){
+
+    const url=new URL(request.url);
+    const path=url.pathname;
+    const method=request.method;
+
+    try{
+
+      if(!env.DB){
+
+        return json({
+          ok:false,
+          error:"D1 binding با نام DB متصل نیست."
+        },500);
+      }
+
+      await initDB(env.DB);
+
+      if(
+        method==="OPTIONS"
+      ){
+
+        return new Response(null,{
+          status:204,
+          headers:{
+            "Access-Control-Allow-Origin":"*",
+            "Access-Control-Allow-Headers":"Content-Type, Authorization",
+            "Access-Control-Allow-Methods":"GET,POST,OPTIONS"
+          }
+        });
+      }
+
+
+      /* HTML */
+
+      if(path==="/" || path==="/index.html"){
+        return htmlResponse();
+      }
+
+
+      /* USER */
+
+      if(path==="/api/register" && method==="POST"){
+        return await register(request,env);
+      }
+
+      if(path==="/api/login" && method==="POST"){
+        return await login(request,env);
+      }
+
+      if(path==="/api/logout" && method==="POST"){
+        return await logout(request,env);
+      }
+
+      if(path==="/api/me" && method==="GET"){
+        return await me(request,env);
+      }
+
+      if(path==="/api/profile" && method==="POST"){
+        return await profile(request,env);
+      }
+
+      if(path==="/api/transactions" && method==="GET"){
+        return await transactions(request,env);
+      }
+
+      if(path==="/api/withdraw" && method==="POST"){
+        return await withdrawAPI(request,env);
+      }
+
+      if(path==="/api/payment/start" && method==="POST"){
+        return await paymentStart(request,env);
+      }
+
+      if(path==="/api/forgot-password" && method==="POST"){
+        return await forgotPassword(request,env);
+      }
+
+      if(path==="/api/reset-password" && method==="POST"){
+        return await resetPassword(request,env);
+      }
+
+      if(path==="/api/ai" && method==="POST"){
+        return await ai(request,env);
+      }
+
+
+      /* ADMIN */
+
+      if(path==="/api/admin/login" && method==="POST"){
+        return await adminLogin(request,env);
+      }
+
+      if(path==="/api/admin/users" && method==="GET"){
+        return await adminUsers(request,env);
+      }
+
+      if(path==="/api/admin/user-status" && method==="POST"){
+        return await adminUserStatus(request,env);
+      }
+
+      if(path==="/api/admin/balance" && method==="POST"){
+        return await adminBalance(request,env);
+      }
+
+      if(path==="/api/admin/payments" && method==="GET"){
+        return await adminPayments(request,env);
+      }
+
+      if(path==="/api/admin/withdrawals" && method==="GET"){
+        return await adminWithdrawals(request,env);
+      }
+
+      if(path==="/api/admin/withdrawal-status" && method==="POST"){
+        return await adminWithdrawalStatus(request,env);
+      }
+
+      if(path==="/api/admin/stats" && method==="GET"){
+        return await adminStats(request,env);
+      }
+
+
+      return json({
+        ok:false,
+        error:"مسیر پیدا نشد.",
+        path
+      },404);
+
+    }catch(e){
+
+      console.error(e);
+
+      return json({
+        ok:false,
+        error:"خطای داخلی سرور",
+        detail:String(e?.message||e)
+      },500);
+    }
+  }
+};
