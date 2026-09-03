@@ -1,3 +1,4 @@
+
 // =============================================================
 // worker.js — دستیار هوشمند: صفحه اصلی + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
 //
@@ -175,8 +176,10 @@ async function handlePlans(request, env) {
   // Static plan list for now — move to a "plans" table later if needed.
   return json({
     plans: [
-      { id: "basic", name: "پایه", price: 0, messages_per_day: 10 },
-      { id: "pro", name: "حرفه‌ای", price: 400, currency: "toman", messages_per_day: 200 },
+      { id: "free", name: "رایگان", price: 0, currency: "toman", period: "monthly", messages_per_day: 10, features: ["۱۰ پیام در روز"] },
+      { id: "basic", name: "پایه", price: 400000, currency: "toman", period: "monthly", messages_per_day: null, features: ["پیام نامحدود", "امکانات پایه"] },
+      { id: "plus", name: "پیشرفته", price: 900000, currency: "toman", period: "monthly", messages_per_day: null, features: ["پیام نامحدود", "پاسخ سریع‌تر"] },
+      { id: "pro", name: "ویژه", price: 2000000, currency: "toman", period: "monthly", messages_per_day: null, features: ["پیام نامحدود", "اولویت صف پاسخ‌دهی", "پشتیبانی اختصاصی"] },
     ],
   });
 }
@@ -341,7 +344,11 @@ async function loadPlans() {
   const res = await fetch('/api/plans');
   const data = await res.json();
   document.getElementById('plans-list').innerHTML = data.plans.map(p =>
-    '<p><b>' + p.name + '</b> — ' + (p.price > 0 ? p.price + ' تومان' : 'رایگان') + '</p>'
+    '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+    '<b>' + p.name + '</b><br>' +
+    '<span style="color:#2952e3;font-size:1.1rem;">' + (p.price > 0 ? p.price.toLocaleString('fa-IR') + ' تومان / ماهانه' : 'رایگان') + '</span><br>' +
+    '<ul style="margin:6px 0 0;padding-right:18px;">' + p.features.map(f => '<li>' + f + '</li>').join('') + '</ul>' +
+    '</div>'
   ).join('');
 }
 
