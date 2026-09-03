@@ -1,4 +1,3 @@
-
 // =============================================================
 // worker.js — دستیار هوشمند: صفحه اصلی + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
 //
@@ -299,29 +298,37 @@ async function doSignup() {
   const name = document.getElementById('signup-name').value;
   const email = document.getElementById('signup-email').value;
   const password = document.getElementById('signup-password').value;
-  const res = await fetch('/api/signup', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, email, password })
-  });
-  const data = await res.json();
-  if (!res.ok) { showMsg('signup-msg', data.error, 'error'); return; }
-  token = data.token;
-  localStorage.setItem('token', token);
-  showView('account');
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg('signup-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error'); return; }
+    token = data.token;
+    localStorage.setItem('token', token);
+    showView('account');
+  } catch (err) {
+    showMsg('signup-msg', 'خطای فنی: ' + err.message, 'error');
+  }
 }
 
 async function doLogin() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
-  const res = await fetch('/api/login', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ email, password })
-  });
-  const data = await res.json();
-  if (!res.ok) { showMsg('login-msg', data.error, 'error'); return; }
-  token = data.token;
-  localStorage.setItem('token', token);
-  showView('account');
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg('login-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error'); return; }
+    token = data.token;
+    localStorage.setItem('token', token);
+    showView('account');
+  } catch (err) {
+    showMsg('login-msg', 'خطای فنی: ' + err.message, 'error');
+  }
 }
 
 function logout() {
@@ -362,15 +369,19 @@ async function sendAiMessage() {
   input.value = '';
   document.getElementById('ai-msg').innerHTML = '';
 
-  const res = await fetch('/api/ai/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ message })
-  });
-  const data = await res.json();
-  if (!res.ok) { showMsg('ai-msg', data.error, 'error'); return; }
-  chatBox.innerHTML += '<div class="bubble ai">' + data.reply + '</div>';
-  chatBox.scrollTop = chatBox.scrollHeight;
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg('ai-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error'); return; }
+    chatBox.innerHTML += '<div class="bubble ai">' + data.reply + '</div>';
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } catch (err) {
+    showMsg('ai-msg', 'خطای فنی: ' + err.message, 'error');
+  }
 }
 
 // Initial view
