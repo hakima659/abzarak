@@ -707,13 +707,13 @@ async function handleCreateCheckout(request, env) {
 
     await env.DB
       .prepare(
-        "INSERT INTO payments (id, user_id, plan_id, amount_usd, status, stripe_session_id, created_at) VALUES (?, ?, ?, ?, 'pending', ?, ?)"
+        "INSERT INTO payments (id, user_id, plan_id, currency, amount, status, stripe_session_id, created_at) VALUES (?, ?, ?, 'usd', ?, 'pending', ?, ?)"
       )
       .bind(
         uuid(),
         user.id,
         plan.id,
-        plan.price_usd,
+        Math.round(plan.price_usd * 100), // ذخیره به سنت برای دقت بیشتر
         data.id,
         new Date().toISOString()
       )
@@ -750,9 +750,9 @@ async function handleStripeWebhook(request, env) {
     if (userId && planId) {
       await env.DB
         .prepare(
-          "UPDATE payments SET status = 'paid' WHERE stripe_session_id = ?"
+          "UPDATE payments SET status = 'paid', ref_id = ? WHERE stripe_session_id = ?"
         )
-        .bind(session.id)
+        .bind(session.payment_intent || "", session.id)
         .run();
 
       await env.DB
@@ -820,15 +820,21 @@ async function handleAdminPayments(request, env) {
 
   const { results } = await env.DB
     .prepare(
-      `SELECT payments.id, payments.plan_id, payments.amount_usd, payments.status,
-              payments.created_at, users.email
+      `SELECT payments.id, payments.plan_id, payments.amount, payments.currency,
+              payments.status, payments.created_at, users.email
        FROM payments
        JOIN users ON users.id = payments.user_id
        ORDER BY payments.created_at DESC LIMIT 200`
     )
     .all();
 
-  return json({ payments: results });
+  // amount در سنت ذخیره شده؛ برای نمایش به دلار تبدیل می‌کنیم
+  const paymentsUsd = results.map((p) => ({
+    ...p,
+    amount_usd: p.currency === "usd" ? (p.amount / 100).toFixed(2) : p.amount,
+  }));
+
+  return json({ payments: paymentsUsd });
 }
 
 // ---------------- Homepage HTML ----------------
