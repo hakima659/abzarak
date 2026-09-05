@@ -1,3 +1,4 @@
+
 // =============================================================
 // worker.js — دستیار هوشمند: صفحه اصلی + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
 //            + بازیابی رمز + پنل مدیریت + پرداخت (Stripe - دلاری)
@@ -845,6 +846,7 @@ function renderHomepage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="enamad" content="18824904" />
 <title>دستیار هوشمند 🤖</title>
 <style>
 * { box-sizing: border-box; }
@@ -1409,4 +1411,3 @@ export default {
     return json({ error: "مسیر یافت نشد" }, 404);
   },
 };
-
