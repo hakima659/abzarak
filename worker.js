@@ -1,4 +1,3 @@
-
 // =============================================================
 // worker.js — دستیار هوشمند: صفحه اصلی + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
 //            + بازیابی رمز + پنل مدیریت + پرداخت (زرین‌پال - تومانی)
@@ -754,7 +753,7 @@ async function handleVerifyPayment(request, env) {
   const baseUrl = env.PUBLIC_BASE_URL || url.origin;
 
   if (!authority || !paymentId) {
-    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+    return Response.redirect(`${baseUrl}/?payment=error&reason=missing_params`, 302);
   }
 
   const payment = await env.DB
@@ -763,7 +762,7 @@ async function handleVerifyPayment(request, env) {
     .first();
 
   if (!payment) {
-    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+    return Response.redirect(`${baseUrl}/?payment=error&reason=payment_not_found`, 302);
   }
 
   // جلوگیری از پردازش تکراری (مثلاً اگه کاربر صفحه رو رفرش کنه)
@@ -844,7 +843,8 @@ async function handleVerifyPayment(request, env) {
     }
   } catch (err) {
     console.error("ZarinPal verify error:", err);
-    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+    const reason = encodeURIComponent((err?.message || String(err)).slice(0, 200));
+    return Response.redirect(`${baseUrl}/?payment=error&reason=${reason}`, 302);
   }
 }
 
@@ -927,18 +927,19 @@ function renderHomepage() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="enamad" content="20274647" />
-<title>دستیار هوشمند 🤖</title>
+<title data-i18n="page_title">دستیار هوشمند 🤖</title>
 <style>
 * { box-sizing: border-box; }
-body { font-family: Tahoma, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a2e; }
-header { background: #12163a; color: white; padding: 20px; }
+body { font-family: Tahoma, "Segoe UI", Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a2e; }
+header { background: #12163a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 header h1 { margin: 0; font-size: 1.4rem; }
 header p { margin: 6px 0 0; opacity: 0.8; font-size: 0.85rem; }
+.lang-switch { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
 nav { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; background: white; }
 nav button { background: #2952e3; color: white; border: none; border-radius: 10px; padding: 12px 18px; font-size: 0.95rem; cursor: pointer; }
 main { padding: 20px; max-width: 480px; margin: 0 auto; }
 .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.card h2 { margin-top: 0; text-align: right; }
+.card h2 { margin-top: 0; text-align: start; }
 input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #dcdfe8; background: #f0f2fa; font-size: 1rem; }
 .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
 .actions button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.95rem; }
@@ -954,114 +955,118 @@ input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 
 .bubble.user { background: #2952e3; color: white; align-self: flex-start; }
 .bubble.ai { background: #eef0f7; align-self: flex-end; }
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-table th, table td { border: 1px solid #e5e7eb; padding: 6px; text-align: right; }
+table th, table td { border: 1px solid #e5e7eb; padding: 6px; text-align: start; }
 table th { background: #f0f2fa; }
 .plan-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
 .plan-price { color: #2952e3; font-size: 1.1rem; }
+.note { font-size: 0.85rem; color: #555; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>🤖 دستیار هوش مصنوعی</h1>
-  <p>دستیار هوشمند • حساب کاربری</p>
+  <div>
+    <h1 data-i18n="app_title">🤖 دستیار هوش مصنوعی</h1>
+    <p data-i18n="app_subtitle">دستیار هوشمند • حساب کاربری</p>
+  </div>
+  <button class="lang-switch" id="lang-switch-btn" onclick="toggleLang()">English</button>
 </header>
 
 <nav>
-  <button onclick="showView('account')">🏠 حساب</button>
-  <button onclick="showView('ai')">🤖 هوش مصنوعی</button>
-  <button onclick="showView('plans')">💰 پلن‌ها</button>
-  <button onclick="showView('admin-login')">🛠️ مدیریت</button>
+  <button onclick="showView('account')" data-i18n="nav_account">🏠 حساب</button>
+  <button onclick="showView('ai')" data-i18n="nav_ai">🤖 هوش مصنوعی</button>
+  <button onclick="showView('plans')" data-i18n="nav_plans">💰 پلن‌ها</button>
+  <button onclick="showView('admin-login')" data-i18n="nav_admin">🛠️ مدیریت</button>
 </nav>
 
 <main>
 
   <div id="view-login" class="card">
-    <h2>🔑 ورود به حساب</h2>
-    <input id="login-email" type="email" placeholder="ایمیل">
-    <input id="login-password" type="password" placeholder="رمز عبور">
+    <h2 data-i18n="login_title">🔑 ورود به حساب</h2>
+    <input id="login-email" type="email" data-i18n-placeholder="email_placeholder" placeholder="ایمیل">
+    <input id="login-password" type="password" data-i18n-placeholder="password_placeholder" placeholder="رمز عبور">
     <div class="actions">
-      <button class="link-btn" onclick="showView('forgot')">فراموشی رمز عبور؟</button>
+      <button class="link-btn" onclick="showView('forgot')" data-i18n="forgot_link">فراموشی رمز عبور؟</button>
     </div>
     <div class="actions">
-      <button class="btn-secondary" onclick="showView('signup')">ثبت‌نام</button>
-      <button class="btn-primary" onclick="doLogin()">ورود</button>
+      <button class="btn-secondary" onclick="showView('signup')" data-i18n="signup_link">ثبت‌نام</button>
+      <button class="btn-primary" onclick="doLogin()" data-i18n="login_button">ورود</button>
     </div>
     <div id="login-msg"></div>
   </div>
 
   <div id="view-signup" class="card hidden">
-    <h2>📝 ثبت‌نام</h2>
-    <input id="signup-name" type="text" placeholder="نام">
-    <input id="signup-email" type="email" placeholder="ایمیل">
-    <input id="signup-password" type="password" placeholder="رمز عبور (حداقل ۶ کاراکتر)">
+    <h2 data-i18n="signup_title">📝 ثبت‌نام</h2>
+    <input id="signup-name" type="text" data-i18n-placeholder="name_placeholder" placeholder="نام">
+    <input id="signup-email" type="email" data-i18n-placeholder="email_placeholder" placeholder="ایمیل">
+    <input id="signup-password" type="password" data-i18n-placeholder="signup_password_placeholder" placeholder="رمز عبور (حداقل ۶ کاراکتر)">
     <div class="actions">
-      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
-      <button class="btn-primary" onclick="doSignup()">ثبت‌نام</button>
+      <button class="btn-secondary" onclick="showView('login')" data-i18n="back_button">بازگشت</button>
+      <button class="btn-primary" onclick="doSignup()" data-i18n="signup_button">ثبت‌نام</button>
     </div>
     <div id="signup-msg"></div>
   </div>
 
   <div id="view-forgot" class="card hidden">
-    <h2>🔐 فراموشی رمز عبور</h2>
-    <p style="font-size:0.85rem;color:#555;">ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.</p>
-    <input id="forgot-email" type="email" placeholder="ایمیل">
+    <h2 data-i18n="forgot_title">🔐 فراموشی رمز عبور</h2>
+    <p class="note" data-i18n="forgot_intro">ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.</p>
+    <input id="forgot-email" type="email" data-i18n-placeholder="email_placeholder" placeholder="ایمیل">
     <div class="actions">
-      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
-      <button class="btn-primary" onclick="doForgotPassword()">ارسال کد</button>
+      <button class="btn-secondary" onclick="showView('login')" data-i18n="back_button">بازگشت</button>
+      <button class="btn-primary" onclick="doForgotPassword()" data-i18n="send_code_button">ارسال کد</button>
     </div>
     <div id="forgot-msg"></div>
 
     <hr style="margin:16px 0;border:none;border-top:1px solid #eee;">
 
-    <p style="font-size:0.85rem;color:#555;">کد دریافتی و رمز جدید را وارد کنید:</p>
-    <input id="reset-code" type="text" placeholder="کد ۶ رقمی">
-    <input id="reset-password" type="password" placeholder="رمز عبور جدید">
+    <p class="note" data-i18n="reset_intro">کد دریافتی و رمز جدید را وارد کنید:</p>
+    <input id="reset-code" type="text" data-i18n-placeholder="code_placeholder" placeholder="کد ۶ رقمی">
+    <input id="reset-password" type="password" data-i18n-placeholder="new_password_placeholder" placeholder="رمز عبور جدید">
     <div class="actions">
-      <button class="btn-primary" onclick="doResetPassword()">تغییر رمز عبور</button>
+      <button class="btn-primary" onclick="doResetPassword()" data-i18n="reset_button">تغییر رمز عبور</button>
     </div>
     <div id="reset-msg"></div>
   </div>
 
   <div id="view-account" class="card hidden">
-    <h2>🏠 حساب من</h2>
-    <div id="account-info">در حال بارگذاری...</div>
+    <h2 data-i18n="account_title">🏠 حساب من</h2>
+    <div id="account-info" data-i18n="loading">در حال بارگذاری...</div>
     <div class="actions">
-      <button class="btn-secondary" onclick="logout()">خروج</button>
+      <button class="btn-secondary" onclick="logout()" data-i18n="logout_button">خروج</button>
     </div>
   </div>
 
   <div id="view-ai" class="card hidden">
-    <h2>🤖 گفتگو با هوش مصنوعی</h2>
+    <h2 data-i18n="ai_title">🤖 گفتگو با هوش مصنوعی</h2>
     <div class="chat-box" id="chat-box"></div>
-    <input id="ai-input" type="text" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key === 'Enter') sendAiMessage()">
+    <input id="ai-input" type="text" data-i18n-placeholder="ai_input_placeholder" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key === 'Enter') sendAiMessage()">
     <div class="actions">
-      <button class="btn-primary" onclick="sendAiMessage()">ارسال</button>
+      <button class="btn-primary" onclick="sendAiMessage()" data-i18n="send_button">ارسال</button>
     </div>
     <div id="ai-msg"></div>
   </div>
 
   <div id="view-plans" class="card hidden">
-    <h2>💰 پلن‌ها (قیمت به تومان)</h2>
-    <div id="plans-list">در حال بارگذاری...</div>
+    <h2 data-i18n="plans_title">💰 پلن‌ها (قیمت به تومان)</h2>
+    <div id="plans-list" data-i18n="loading">در حال بارگذاری...</div>
   </div>
 
   <div id="view-admin-login" class="card hidden">
-    <h2>🛠️ ورود به پنل مدیریت</h2>
-    <input id="admin-password" type="password" placeholder="رمز مدیریت">
+    <h2 data-i18n="admin_login_title">🛠️ ورود به پنل مدیریت</h2>
+    <input id="admin-password" type="password" data-i18n-placeholder="admin_password_placeholder" placeholder="رمز مدیریت">
     <div class="actions">
-      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
-      <button class="btn-primary" onclick="doAdminLogin()">ورود</button>
+      <button class="btn-secondary" onclick="showView('login')" data-i18n="back_button">بازگشت</button>
+      <button class="btn-primary" onclick="doAdminLogin()" data-i18n="login_button">ورود</button>
     </div>
     <div id="admin-login-msg"></div>
   </div>
 
   <div id="view-admin-panel" class="card hidden">
-    <h2>🛠️ پنل مدیریت</h2>
+    <h2 data-i18n="admin_panel_title">🛠️ پنل مدیریت</h2>
     <div class="actions">
-      <button class="btn-secondary" onclick="loadAdminUsers()">کاربران</button>
-      <button class="btn-secondary" onclick="loadAdminPayments()">تراکنش‌ها</button>
-      <button class="btn-secondary" onclick="adminLogout()">خروج از مدیریت</button>
+      <button class="btn-secondary" onclick="loadAdminUsers()" data-i18n="admin_users_button">کاربران</button>
+      <button class="btn-secondary" onclick="loadAdminPayments()" data-i18n="admin_payments_button">تراکنش‌ها</button>
+      <button class="btn-secondary" onclick="adminLogout()" data-i18n="admin_logout_button">خروج از مدیریت</button>
     </div>
     <div id="admin-content" style="margin-top:14px;overflow-x:auto;"></div>
   </div>
@@ -1069,6 +1074,186 @@ table th { background: #f0f2fa; }
 </main>
 
 <script>
+
+// =============================================================
+// i18n — دیکشنری ترجمه فارسی/انگلیسی
+// =============================================================
+
+const translations = {
+  fa: {
+    page_title: 'دستیار هوشمند 🤖',
+    app_title: '🤖 دستیار هوش مصنوعی',
+    app_subtitle: 'دستیار هوشمند • حساب کاربری',
+    nav_account: '🏠 حساب',
+    nav_ai: '🤖 هوش مصنوعی',
+    nav_plans: '💰 پلن‌ها',
+    nav_admin: '🛠️ مدیریت',
+    login_title: '🔑 ورود به حساب',
+    email_placeholder: 'ایمیل',
+    password_placeholder: 'رمز عبور',
+    forgot_link: 'فراموشی رمز عبور؟',
+    signup_link: 'ثبت‌نام',
+    login_button: 'ورود',
+    signup_title: '📝 ثبت‌نام',
+    name_placeholder: 'نام',
+    signup_password_placeholder: 'رمز عبور (حداقل ۶ کاراکتر)',
+    back_button: 'بازگشت',
+    signup_button: 'ثبت‌نام',
+    forgot_title: '🔐 فراموشی رمز عبور',
+    forgot_intro: 'ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.',
+    send_code_button: 'ارسال کد',
+    reset_intro: 'کد دریافتی و رمز جدید را وارد کنید:',
+    code_placeholder: 'کد ۶ رقمی',
+    new_password_placeholder: 'رمز عبور جدید',
+    reset_button: 'تغییر رمز عبور',
+    account_title: '🏠 حساب من',
+    loading: 'در حال بارگذاری...',
+    logout_button: 'خروج',
+    ai_title: '🤖 گفتگو با هوش مصنوعی',
+    ai_input_placeholder: 'پیام خود را بنویسید...',
+    send_button: 'ارسال',
+    sending_button: 'در حال پاسخ...',
+    plans_title: '💰 پلن‌ها (قیمت به تومان)',
+    admin_login_title: '🛠️ ورود به پنل مدیریت',
+    admin_password_placeholder: 'رمز مدیریت',
+    admin_panel_title: '🛠️ پنل مدیریت',
+    admin_users_button: 'کاربران',
+    admin_payments_button: 'تراکنش‌ها',
+    admin_logout_button: 'خروج از مدیریت',
+    label_name: 'نام',
+    label_email: 'ایمیل',
+    label_balance: 'موجودی',
+    label_signup_date: 'تاریخ ثبت‌نام',
+    label_plan: 'پلن',
+    label_amount_toman: 'مبلغ (تومان)',
+    label_status: 'وضعیت',
+    label_date: 'تاریخ',
+    monthly_suffix: 'تومان / ماهانه',
+    free_label: 'رایگان',
+    buy_plan_button: 'خرید این پلن',
+    unknown_error: 'خطای ناشناخته (کد {status})',
+    technical_error: 'خطای فنی: {message}',
+    code_sent: 'کد ارسال شد.',
+    password_changed: 'رمز عبور با موفقیت تغییر کرد.',
+    error_fetching_account: 'خطا در دریافت حساب: {message}',
+    error_fetching_plans: 'خطا در دریافت پلن‌ها: {message}',
+    error_creating_payment: 'خطا در ساخت پرداخت',
+    no_reply: 'پاسخی دریافت نشد.',
+    generic_error: 'خطا',
+  },
+  en: {
+    page_title: 'AI Assistant 🤖',
+    app_title: '🤖 AI Assistant',
+    app_subtitle: 'Smart assistant • Your account',
+    nav_account: '🏠 Account',
+    nav_ai: '🤖 AI Chat',
+    nav_plans: '💰 Plans',
+    nav_admin: '🛠️ Admin',
+    login_title: '🔑 Sign In',
+    email_placeholder: 'Email',
+    password_placeholder: 'Password',
+    forgot_link: 'Forgot password?',
+    signup_link: 'Sign Up',
+    login_button: 'Sign In',
+    signup_title: '📝 Sign Up',
+    name_placeholder: 'Name',
+    signup_password_placeholder: 'Password (min. 6 characters)',
+    back_button: 'Back',
+    signup_button: 'Sign Up',
+    forgot_title: '🔐 Forgot Password',
+    forgot_intro: 'Enter your email to receive a recovery code.',
+    send_code_button: 'Send Code',
+    reset_intro: 'Enter the code you received and your new password:',
+    code_placeholder: '6-digit code',
+    new_password_placeholder: 'New password',
+    reset_button: 'Change Password',
+    account_title: '🏠 My Account',
+    loading: 'Loading...',
+    logout_button: 'Log Out',
+    ai_title: '🤖 Chat with AI',
+    ai_input_placeholder: 'Type your message...',
+    send_button: 'Send',
+    sending_button: 'Sending...',
+    plans_title: '💰 Plans (prices in Toman)',
+    admin_login_title: '🛠️ Admin Login',
+    admin_password_placeholder: 'Admin password',
+    admin_panel_title: '🛠️ Admin Panel',
+    admin_users_button: 'Users',
+    admin_payments_button: 'Payments',
+    admin_logout_button: 'Log Out of Admin',
+    label_name: 'Name',
+    label_email: 'Email',
+    label_balance: 'Balance',
+    label_signup_date: 'Signup Date',
+    label_plan: 'Plan',
+    label_amount_toman: 'Amount (Toman)',
+    label_status: 'Status',
+    label_date: 'Date',
+    monthly_suffix: 'Toman / month',
+    free_label: 'Free',
+    buy_plan_button: 'Buy this plan',
+    unknown_error: 'Unknown error (code {status})',
+    technical_error: 'Technical error: {message}',
+    code_sent: 'Code sent.',
+    password_changed: 'Password changed successfully.',
+    error_fetching_account: 'Error fetching account: {message}',
+    error_fetching_plans: 'Error fetching plans: {message}',
+    error_creating_payment: 'Error creating payment',
+    no_reply: 'No reply received.',
+    generic_error: 'Error',
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'fa';
+
+function t(key, vars) {
+  const dict = translations[currentLang] || translations.fa;
+  let text = dict[key] || translations.fa[key] || key;
+  if (vars) {
+    Object.keys(vars).forEach(k => {
+      text = text.replace('{' + k + '}', vars[k]);
+    });
+  }
+  return text;
+}
+
+function applyTranslations() {
+  document.documentElement.lang = currentLang === 'fa' ? 'fa' : 'en';
+  document.documentElement.dir = currentLang === 'fa' ? 'rtl' : 'ltr';
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.setAttribute('placeholder', t(key));
+  });
+
+  const btn = document.getElementById('lang-switch-btn');
+  if (btn) btn.textContent = currentLang === 'fa' ? 'English' : 'فارسی';
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'fa' ? 'en' : 'fa';
+  localStorage.setItem('lang', currentLang);
+  applyTranslations();
+  // بازخوانی محتوای پویا (پلن‌ها/حساب/جداول مدیریت) با زبان جدید
+  const activeView = document.querySelector('main > div:not(.hidden)');
+  if (activeView) {
+    const id = activeView.id.replace('view-', '');
+    if (id === 'account' && token) loadAccount();
+    if (id === 'plans') loadPlans();
+    if (id === 'admin-panel' && adminToken) {
+      // آخرین جدول مدیریتی که باز بود رو دوباره لود کن
+    }
+  }
+}
+
+// =============================================================
+// منطق برنامه
+// =============================================================
 
 let token = localStorage.getItem('token') || null;
 let adminToken = localStorage.getItem('adminToken') || null;
@@ -1122,7 +1307,7 @@ async function doSignup() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('signup-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      showMsg('signup-msg', data.error || t('unknown_error', { status: res.status }), 'error');
       return;
     }
 
@@ -1130,7 +1315,7 @@ async function doSignup() {
     localStorage.setItem('token', token);
     showView('account');
   } catch (err) {
-    showMsg('signup-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('signup-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1147,7 +1332,7 @@ async function doLogin() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('login-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      showMsg('login-msg', data.error || t('unknown_error', { status: res.status }), 'error');
       return;
     }
 
@@ -1155,7 +1340,7 @@ async function doLogin() {
     localStorage.setItem('token', token);
     showView('account');
   } catch (err) {
-    showMsg('login-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('login-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1171,13 +1356,13 @@ async function doForgotPassword() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('forgot-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      showMsg('forgot-msg', data.error || t('unknown_error', { status: res.status }), 'error');
       return;
     }
 
-    showMsg('forgot-msg', data.message || 'کد ارسال شد.', 'success');
+    showMsg('forgot-msg', data.message || t('code_sent'), 'success');
   } catch (err) {
-    showMsg('forgot-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('forgot-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1195,14 +1380,14 @@ async function doResetPassword() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('reset-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      showMsg('reset-msg', data.error || t('unknown_error', { status: res.status }), 'error');
       return;
     }
 
-    showMsg('reset-msg', data.message || 'رمز تغییر کرد.', 'success');
+    showMsg('reset-msg', data.message || t('password_changed'), 'success');
     setTimeout(() => showView('login'), 1500);
   } catch (err) {
-    showMsg('reset-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('reset-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1225,12 +1410,12 @@ async function loadAccount() {
     }
 
     document.getElementById('account-info').innerHTML =
-      '<p><b>نام:</b> ' + escapeHtml(data.user.name || '-') + '</p>' +
-      '<p><b>ایمیل:</b> ' + escapeHtml(data.user.email) + '</p>' +
-      '<p><b>موجودی:</b> ' + escapeHtml(data.user.balance) + '</p>';
+      '<p><b>' + t('label_name') + ':</b> ' + escapeHtml(data.user.name || '-') + '</p>' +
+      '<p><b>' + t('label_email') + ':</b> ' + escapeHtml(data.user.email) + '</p>' +
+      '<p><b>' + t('label_balance') + ':</b> ' + escapeHtml(data.user.balance) + '</p>';
   } catch (err) {
     document.getElementById('account-info').innerHTML =
-      '<div class="msg error">خطا در دریافت حساب: ' + escapeHtml(err.message) + '</div>';
+      '<div class="msg error">' + t('error_fetching_account', { message: err.message }) + '</div>';
   }
 }
 
@@ -1243,19 +1428,19 @@ async function loadPlans() {
       '<div class="plan-card">' +
         '<b>' + escapeHtml(p.name) + '</b><br>' +
         '<span class="plan-price">' +
-          (p.price_toman > 0 ? Number(p.price_toman).toLocaleString('fa-IR') + ' تومان / ماهانه' : 'رایگان') +
+          (p.price_toman > 0 ? Number(p.price_toman).toLocaleString(currentLang === 'fa' ? 'fa-IR' : 'en-US') + ' ' + t('monthly_suffix') : t('free_label')) +
         '</span><br>' +
-        '<ul style="margin:6px 0 0;padding-right:18px;">' +
+        '<ul style="margin:6px 0 0;padding-inline-start:18px;">' +
           p.features.map(f => '<li>' + escapeHtml(f) + '</li>').join('') +
         '</ul>' +
         (p.price_toman > 0
-          ? '<div class="actions"><button class="btn-primary" onclick="buyPlan(\\'' + p.id + '\\')">خرید این پلن</button></div>'
+          ? '<div class="actions"><button class="btn-primary" onclick="buyPlan(\\'' + p.id + '\\')">' + t('buy_plan_button') + '</button></div>'
           : '') +
       '</div>'
     ).join('');
   } catch (err) {
     document.getElementById('plans-list').innerHTML =
-      '<div class="msg error">خطا در دریافت پلن‌ها: ' + escapeHtml(err.message) + '</div>';
+      '<div class="msg error">' + t('error_fetching_plans', { message: err.message }) + '</div>';
   }
 }
 
@@ -1277,13 +1462,13 @@ async function buyPlan(planId) {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || 'خطا در ساخت پرداخت');
+      alert(data.error || t('error_creating_payment'));
       return;
     }
 
     window.location.href = data.payment_url;
   } catch (err) {
-    alert('خطای فنی: ' + err.message);
+    alert(t('technical_error', { message: err.message }));
   }
 }
 
@@ -1305,7 +1490,7 @@ async function sendAiMessage() {
   const sendButton = document.querySelector('#view-ai .btn-primary');
   if (sendButton) {
     sendButton.disabled = true;
-    sendButton.textContent = 'در حال پاسخ...';
+    sendButton.textContent = t('sending_button');
   }
 
   try {
@@ -1320,18 +1505,18 @@ async function sendAiMessage() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('ai-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      showMsg('ai-msg', data.error || t('unknown_error', { status: res.status }), 'error');
       return;
     }
 
-    chatBox.innerHTML += '<div class="bubble ai">' + escapeHtml(data.reply || 'پاسخی دریافت نشد.') + '</div>';
+    chatBox.innerHTML += '<div class="bubble ai">' + escapeHtml(data.reply || t('no_reply')) + '</div>';
     chatBox.scrollTop = chatBox.scrollHeight;
   } catch (err) {
-    showMsg('ai-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('ai-msg', t('technical_error', { message: err.message }), 'error');
   } finally {
     if (sendButton) {
       sendButton.disabled = false;
-      sendButton.textContent = 'ارسال';
+      sendButton.textContent = t('send_button');
     }
   }
 }
@@ -1348,7 +1533,7 @@ async function doAdminLogin() {
     const data = await res.json();
 
     if (!res.ok) {
-      showMsg('admin-login-msg', data.error || 'خطا', 'error');
+      showMsg('admin-login-msg', data.error || t('generic_error'), 'error');
       return;
     }
 
@@ -1356,7 +1541,7 @@ async function doAdminLogin() {
     localStorage.setItem('adminToken', adminToken);
     showView('admin-panel');
   } catch (err) {
-    showMsg('admin-login-msg', 'خطای فنی: ' + err.message, 'error');
+    showMsg('admin-login-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1368,7 +1553,7 @@ function adminLogout() {
 
 async function loadAdminUsers() {
   const content = document.getElementById('admin-content');
-  content.innerHTML = 'در حال بارگذاری...';
+  content.innerHTML = t('loading');
 
   try {
     const res = await fetch('/api/admin/users', {
@@ -1377,23 +1562,23 @@ async function loadAdminUsers() {
     const data = await res.json();
 
     if (!res.ok) {
-      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || 'خطا') + '</div>';
+      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || t('generic_error')) + '</div>';
       return;
     }
 
-    content.innerHTML = '<table><tr><th>نام</th><th>ایمیل</th><th>موجودی</th><th>تاریخ ثبت‌نام</th></tr>' +
+    content.innerHTML = '<table><tr><th>' + t('label_name') + '</th><th>' + t('label_email') + '</th><th>' + t('label_balance') + '</th><th>' + t('label_signup_date') + '</th></tr>' +
       data.users.map(u =>
         '<tr><td>' + escapeHtml(u.name || '-') + '</td><td>' + escapeHtml(u.email) +
         '</td><td>' + escapeHtml(u.balance) + '</td><td>' + escapeHtml(u.created_at) + '</td></tr>'
       ).join('') + '</table>';
   } catch (err) {
-    content.innerHTML = '<div class="msg error">خطای فنی: ' + escapeHtml(err.message) + '</div>';
+    content.innerHTML = '<div class="msg error">' + t('technical_error', { message: err.message }) + '</div>';
   }
 }
 
 async function loadAdminPayments() {
   const content = document.getElementById('admin-content');
-  content.innerHTML = 'در حال بارگذاری...';
+  content.innerHTML = t('loading');
 
   try {
     const res = await fetch('/api/admin/payments', {
@@ -1402,22 +1587,23 @@ async function loadAdminPayments() {
     const data = await res.json();
 
     if (!res.ok) {
-      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || 'خطا') + '</div>';
+      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || t('generic_error')) + '</div>';
       return;
     }
 
-    content.innerHTML = '<table><tr><th>ایمیل</th><th>پلن</th><th>مبلغ (تومان)</th><th>وضعیت</th><th>تاریخ</th></tr>' +
+    content.innerHTML = '<table><tr><th>' + t('label_email') + '</th><th>' + t('label_plan') + '</th><th>' + t('label_amount_toman') + '</th><th>' + t('label_status') + '</th><th>' + t('label_date') + '</th></tr>' +
       data.payments.map(p =>
         '<tr><td>' + escapeHtml(p.email) + '</td><td>' + escapeHtml(p.plan_id) +
         '</td><td>' + escapeHtml(p.amount_toman) + '</td><td>' + escapeHtml(p.status) +
         '</td><td>' + escapeHtml(p.created_at) + '</td></tr>'
       ).join('') + '</table>';
   } catch (err) {
-    content.innerHTML = '<div class="msg error">خطای فنی: ' + escapeHtml(err.message) + '</div>';
+    content.innerHTML = '<div class="msg error">' + t('technical_error', { message: err.message }) + '</div>';
   }
 }
 
-// Initial view
+// Initial setup
+applyTranslations();
 showView(token ? 'account' : 'login');
 
 </script>
