@@ -1,145 +1,1501 @@
+
 // =============================================================
-// تابع تایید امضای Stripe (signature verification)
-// این تابع رو باید به بخش "Email sending (Resend)" یا هرجای
-// مناسب دیگه توی worker.js اضافه کنی — قبل از handleStripeWebhook
+// worker.js — دستیار هوشمند: صفحه اصلی + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
+//            + بازیابی رمز + پنل مدیریت + پرداخت (زرین‌پال - تومانی)
+//
+// Bindings required in Cloudflare dashboard:
+//   DB -> D1 database
+//   AI -> Workers AI binding
+//
+// Variables/Secrets required:
+//   ADMIN_PASSWORD        -> رمز ورود به پنل مدیریت
+//   RESEND_API_KEY        -> کلید API سرویس Resend برای ارسال ایمیل بازیابی رمز
+//   RESEND_FROM_EMAIL     -> ایمیل فرستنده (مثلاً no-reply@yourdomain.com)
+//   ZARINPAL_MERCHANT_ID  -> کد مرچنت از پنل زرین‌پال
+//   ZARINPAL_SANDBOX      -> "true" برای حالت تست، یا حذفش کن برای حالت واقعی
+//   PUBLIC_BASE_URL       -> آدرس کامل سایت، مثل https://xxxx.workers.dev
+//
+// D1 schema note:
+//   جدول payments باید ستون zarinpal_authority داشته باشه:
+//     ALTER TABLE payments ADD COLUMN zarinpal_authority TEXT;
 // =============================================================
 
-async function verifyStripeSignature(rawBody, signatureHeader, secret) {
-  if (!signatureHeader) {
-    return { valid: false, reason: "هدر Stripe-Signature وجود ندارد" };
+// ---------------- Utilities ----------------
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
+
+function html(content) {
+  return new Response(content, {
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
+function uuid() {
+  return crypto.randomUUID();
+}
+
+function randomCode(len = 6) {
+  const digits = "0123456789";
+  let out = "";
+  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  for (let i = 0; i < len; i++) {
+    out += digits[bytes[i] % digits.length];
   }
+  return out;
+}
 
-  // پارس کردن هدر: "t=1614556800,v1=abcdef123..."
-  const parts = signatureHeader.split(",").reduce((acc, part) => {
-    const [key, value] = part.split("=");
-    if (key === "t") acc.timestamp = value;
-    if (key === "v1") acc.signatures = acc.signatures || [];
-    if (key === "v1") acc.signatures.push(value);
-    return acc;
-  }, {});
-
-  if (!parts.timestamp || !parts.signatures || parts.signatures.length === 0) {
-    return { valid: false, reason: "فرمت هدر Stripe-Signature نامعتبر است" };
-  }
-
-  // جلوگیری از replay attack: رد کردن رویدادهای قدیمی‌تر از ۵ دقیقه
-  const timestampSeconds = parseInt(parts.timestamp, 10);
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  const tolerance = 5 * 60; // ۵ دقیقه
-
-  if (Math.abs(nowSeconds - timestampSeconds) > tolerance) {
-    return { valid: false, reason: "زمان رویداد خیلی قدیمی یا نامعتبر است (احتمال replay attack)" };
-  }
-
-  // ساخت signed_payload طبق مستندات Stripe: "{timestamp}.{raw_body}"
-  const signedPayload = `${parts.timestamp}.${rawBody}`;
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(signedPayload)
-  );
-
-  const computedSignature = [...new Uint8Array(signatureBuffer)]
+async function hashPassword(password) {
+  const iterations = 100000;
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const saltHex = [...saltBytes]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  // مقایسه timing-safe با تمام امضاهای v1 موجود در هدر
-  // (Stripe ممکنه چند نسخه امضا بفرسته موقع rotate کردن secret)
-  const isValid = parts.signatures.some((sig) =>
-    timingSafeEqual(sig, computedSignature)
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
   );
 
-  if (!isValid) {
-    return { valid: false, reason: "امضا با مقدار محاسبه‌شده مطابقت ندارد" };
-  }
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256
+  );
 
-  return { valid: true };
+  const hashHex = [...new Uint8Array(derivedBits)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return `pbkdf2:${iterations}:${saltHex}:${hashHex}`;
 }
 
-function timingSafeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+async function verifyPassword(password, stored) {
+  const parts = stored.split(":");
+
+  if (parts.length !== 4 || parts[0] !== "pbkdf2") {
+    return false;
   }
+
+  const iterations = parseInt(parts[1], 10);
+
+  const saltBytes = new Uint8Array(
+    parts[2].match(/.{1,2}/g).map((b) => parseInt(b, 16))
+  );
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256
+  );
+
+  const hashHex = [...new Uint8Array(derivedBits)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  if (hashHex.length !== parts[3].length) {
+    return false;
+  }
+
+  let diff = 0;
+
+  for (let i = 0; i < hashHex.length; i++) {
+    diff |= hashHex.charCodeAt(i) ^ parts[3].charCodeAt(i);
+  }
+
   return diff === 0;
 }
 
-// =============================================================
-// نسخه اصلاح‌شده handleStripeWebhook
-// این تابع باید جایگزین نسخه فعلی توی worker.js بشه
-// =============================================================
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
-async function handleStripeWebhook(request, env) {
-  if (!env.STRIPE_WEBHOOK_SECRET) {
-    return json({ error: "وبهوک تنظیم نشده است" }, 503);
+async function getUserFromToken(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.replace(/^Bearer\s+/i, "");
+
+  if (!token) return null;
+
+  const session = await env.DB
+    .prepare("SELECT user_id FROM sessions WHERE token = ?")
+    .bind(token)
+    .first();
+
+  if (!session) return null;
+
+  const user = await env.DB
+    .prepare(
+      "SELECT id, name, email, balance FROM users WHERE id = ?"
+    )
+    .bind(session.user_id)
+    .first();
+
+  return user || null;
+}
+
+function getAdminToken(request) {
+  const auth = request.headers.get("Authorization") || "";
+  return auth.replace(/^Bearer\s+/i, "");
+}
+
+async function requireAdmin(request, env) {
+  const token = getAdminToken(request);
+  if (!token) return false;
+
+  const session = await env.DB
+    .prepare(
+      "SELECT id FROM admin_sessions WHERE token = ?"
+    )
+    .bind(token)
+    .first();
+
+  return !!session;
+}
+
+// ---------------- Email sending (Resend) ----------------
+
+async function sendEmail(env, to, subject, htmlBody) {
+  if (!env.RESEND_API_KEY) {
+    return {
+      ok: false,
+      error:
+        "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)",
+    };
   }
 
-  // مهم: باید raw body رو قبل از parse کردن JSON بخونیم،
-  // چون امضا روی متن خام محاسبه شده، نه روی آبجکت parse‌شده
-  const rawBody = await request.text();
-  const signatureHeader = request.headers.get("Stripe-Signature");
+  const fromEmail =
+    env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-  const verification = await verifyStripeSignature(
-    rawBody,
-    signatureHeader,
-    env.STRIPE_WEBHOOK_SECRET
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [to],
+        subject,
+        html: htmlBody,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { ok: false, error: errText };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
+// ---------------- Auth routes ----------------
+
+async function handleSignup(request, env) {
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { name, email, password } = body;
+
+  if (!email || !password) {
+    return json({ error: "ایمیل و رمز عبور الزامی است" }, 400);
+  }
+
+  if (!isValidEmail(email)) {
+    return json({ error: "فرمت ایمیل نامعتبر است" }, 400);
+  }
+
+  if (password.length < 6) {
+    return json(
+      { error: "رمز عبور باید حداقل ۶ کاراکتر باشد" },
+      400
+    );
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existing = await env.DB
+    .prepare("SELECT id FROM users WHERE email = ?")
+    .bind(normalizedEmail)
+    .first();
+
+  if (existing) {
+    return json(
+      { error: "این ایمیل قبلاً ثبت‌نام کرده است" },
+      409
+    );
+  }
+
+  const passwordHash = await hashPassword(password);
+  const userId = uuid();
+  const createdAt = new Date().toISOString();
+
+  await env.DB
+    .prepare(
+      "INSERT INTO users (id, name, email, password_hash, balance, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+    .bind(userId, name || "", normalizedEmail, passwordHash, 0, createdAt)
+    .run();
+
+  const token = uuid() + uuid();
+
+  await env.DB
+    .prepare(
+      "INSERT INTO sessions (id, user_id, token, created_at) VALUES (?, ?, ?, ?)"
+    )
+    .bind(uuid(), userId, token, createdAt)
+    .run();
+
+  return json({
+    success: true,
+    user: { id: userId, name: name || "", email: normalizedEmail, balance: 0 },
+    token,
+  });
+}
+
+async function handleLogin(request, env) {
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return json({ error: "ایمیل و رمز عبور الزامی است" }, 400);
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await env.DB
+    .prepare(
+      "SELECT id, name, email, password_hash, balance FROM users WHERE email = ?"
+    )
+    .bind(normalizedEmail)
+    .first();
+
+  const genericError = { error: "ایمیل یا رمز عبور اشتباه است" };
+
+  if (!user) {
+    return json(genericError, 401);
+  }
+
+  const isValid = await verifyPassword(password, user.password_hash);
+
+  if (!isValid) {
+    if (!user.password_hash.startsWith("pbkdf2:")) {
+      return json(
+        {
+          error: "رمز عبور این حساب نیاز به بازیابی دارد (فرمت قدیمی)",
+        },
+        401
+      );
+    }
+    return json(genericError, 401);
+  }
+
+  const token = uuid() + uuid();
+
+  await env.DB
+    .prepare(
+      "INSERT INTO sessions (id, user_id, token, created_at) VALUES (?, ?, ?, ?)"
+    )
+    .bind(uuid(), user.id, token, new Date().toISOString())
+    .run();
+
+  return json({
+    success: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      balance: user.balance,
+    },
+    token,
+  });
+}
+
+async function handleMe(request, env) {
+  const user = await getUserFromToken(request, env);
+
+  if (!user) {
+    return json({ error: "نشست نامعتبر یا منقضی شده است" }, 401);
+  }
+
+  return json({ user });
+}
+
+// ---------------- Password reset ----------------
+
+async function handleForgotPassword(request, env) {
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { email } = body;
+
+  if (!email || !isValidEmail(email)) {
+    return json({ error: "ایمیل معتبر وارد کنید" }, 400);
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await env.DB
+    .prepare("SELECT id FROM users WHERE email = ?")
+    .bind(normalizedEmail)
+    .first();
+
+  // به دلایل امنیتی، حتی اگر کاربر پیدا نشد پیام یکسان می‌دهیم
+  if (!user) {
+    return json({
+      success: true,
+      message: "اگر این ایمیل ثبت شده باشد، کد بازیابی ارسال می‌شود.",
+    });
+  }
+
+  const code = randomCode(6);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+  await env.DB
+    .prepare(
+      "INSERT INTO reset_codes (id, user_id, code, expires_at, used, created_at) VALUES (?, ?, ?, ?, 0, ?)"
+    )
+    .bind(uuid(), user.id, code, expiresAt, new Date().toISOString())
+    .run();
+
+  const emailResult = await sendEmail(
+    env,
+    normalizedEmail,
+    "کد بازیابی رمز عبور",
+    `<div dir="rtl" style="font-family:Tahoma,sans-serif;">
+       <p>کد بازیابی رمز عبور شما:</p>
+       <h2 style="letter-spacing:4px;">${code}</h2>
+       <p>این کد تا ۱۵ دقیقه دیگر معتبر است.</p>
+     </div>`
   );
 
-  if (!verification.valid) {
-    console.error("Stripe webhook signature verification failed:", verification.reason);
-    return json({ error: "امضای نامعتبر: " + verification.reason }, 400);
+  if (!emailResult.ok) {
+    return json(
+      {
+        error:
+          "کد ساخته شد اما ارسال ایمیل ناموفق بود: " +
+          emailResult.error,
+      },
+      503
+    );
   }
 
-  let event;
+  return json({
+    success: true,
+    message: "کد بازیابی به ایمیل شما ارسال شد.",
+  });
+}
+
+async function handleResetPassword(request, env) {
+  let body;
+
   try {
-    event = JSON.parse(rawBody);
+    body = await request.json();
   } catch {
-    return json({ error: "بدنه نامعتبر" }, 400);
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const userId = session.metadata?.user_id;
-    const planId = session.metadata?.plan_id;
+  const { email, code, newPassword } = body;
 
-    if (userId && planId) {
-      // جلوگیری از پردازش تکراری همان session
-      // (Stripe ممکنه یک event رو بیش از یک بار بفرسته)
-      const existingPayment = await env.DB
-        .prepare("SELECT status FROM payments WHERE stripe_session_id = ?")
-        .bind(session.id)
+  if (!email || !code || !newPassword) {
+    return json(
+      { error: "ایمیل، کد و رمز جدید الزامی است" },
+      400
+    );
+  }
+
+  if (newPassword.length < 6) {
+    return json(
+      { error: "رمز عبور باید حداقل ۶ کاراکتر باشد" },
+      400
+    );
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await env.DB
+    .prepare("SELECT id FROM users WHERE email = ?")
+    .bind(normalizedEmail)
+    .first();
+
+  if (!user) {
+    return json({ error: "کد نامعتبر یا منقضی شده است" }, 400);
+  }
+
+  const resetRow = await env.DB
+    .prepare(
+      "SELECT id, expires_at, used FROM reset_codes WHERE user_id = ? AND code = ? ORDER BY created_at DESC LIMIT 1"
+    )
+    .bind(user.id, code)
+    .first();
+
+  if (!resetRow) {
+    return json({ error: "کد نامعتبر یا منقضی شده است" }, 400);
+  }
+
+  if (resetRow.used) {
+    return json({ error: "این کد قبلاً استفاده شده است" }, 400);
+  }
+
+  if (new Date(resetRow.expires_at).getTime() < Date.now()) {
+    return json({ error: "کد منقضی شده است" }, 400);
+  }
+
+  const newHash = await hashPassword(newPassword);
+
+  await env.DB
+    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+    .bind(newHash, user.id)
+    .run();
+
+  await env.DB
+    .prepare("UPDATE reset_codes SET used = 1 WHERE id = ?")
+    .bind(resetRow.id)
+    .run();
+
+  // همه نشست‌های قبلی این کاربر باطل می‌شود برای امنیت بیشتر
+  await env.DB
+    .prepare("DELETE FROM sessions WHERE user_id = ?")
+    .bind(user.id)
+    .run();
+
+  return json({
+    success: true,
+    message: "رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.",
+  });
+}
+
+// =============================================================
+// AI CHAT
+// =============================================================
+
+async function handleAiChat(request, env) {
+  const user = await getUserFromToken(request, env);
+
+  if (!user) {
+    return json(
+      { error: "برای استفاده از هوش مصنوعی ابتدا وارد حساب شوید" },
+      401
+    );
+  }
+
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { message } = body;
+
+  if (!message || typeof message !== "string") {
+    return json({ error: "پیام الزامی است" }, 400);
+  }
+
+  if (!env.AI) {
+    return json(
+      {
+        error:
+          "سرویس هوش مصنوعی تنظیم نشده است. Binding با نام AI را به Worker اضافه کنید.",
+      },
+      503
+    );
+  }
+
+  try {
+    const aiResponse = await env.AI.run(
+      "@cf/meta/llama-3.1-8b-instruct-fast",
+      {
+        messages: [
+          {
+            role: "system",
+            content:
+              "تو یک دستیار هوشمند فارسی‌زبان هستی. مفید، دقیق، کوتاه و مودب پاسخ بده.",
+          },
+          { role: "user", content: message },
+        ],
+        max_tokens: 512,
+        temperature: 0.6,
+      }
+    );
+
+    const reply =
+      aiResponse?.response ||
+      aiResponse?.result?.response ||
+      "پاسخی از هوش مصنوعی دریافت نشد.";
+
+    return json({ success: true, reply });
+  } catch (err) {
+    console.error("Workers AI Error:", err);
+    return json(
+      {
+        error:
+          "خطا در ارتباط با هوش مصنوعی: " +
+          (err?.message || String(err)),
+      },
+      500
+    );
+  }
+}
+
+// ---------------- Plans route ----------------
+// نکته: قیمت‌ها به تومان هستند (نه دلار)، چون پرداخت با زرین‌پال تومانی‌ست
+
+const PLANS = [
+  {
+    id: "free",
+    name: "رایگان",
+    price_toman: 0,
+    period: "monthly",
+    messages_per_day: 10,
+    features: ["۱۰ پیام در روز"],
+  },
+  {
+    id: "basic",
+    name: "پایه",
+    price_toman: 250000,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["پیام نامحدود", "امکانات پایه"],
+  },
+  {
+    id: "plus",
+    name: "پیشرفته",
+    price_toman: 490000,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["پیام نامحدود", "پاسخ سریع‌تر"],
+  },
+  {
+    id: "pro",
+    name: "ویژه",
+    price_toman: 990000,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["پیام نامحدود", "اولویت صف پاسخ‌دهی", "پشتیبانی اختصاصی"],
+  },
+];
+
+async function handlePlans(request, env) {
+  return json({ plans: PLANS });
+}
+
+// =============================================================
+// PAYMENTS (ZarinPal - تومانی)
+// =============================================================
+
+const ZARINPAL_BASE = (env) =>
+  env.ZARINPAL_SANDBOX === "true"
+    ? "https://sandbox.zarinpal.com"
+    : "https://api.zarinpal.com";
+
+// ---------------- شروع پرداخت ----------------
+
+async function handleCreatePayment(request, env) {
+  const user = await getUserFromToken(request, env);
+
+  if (!user) {
+    return json({ error: "ابتدا وارد حساب شوید" }, 401);
+  }
+
+  if (!env.ZARINPAL_MERCHANT_ID) {
+    return json(
+      {
+        error:
+          "درگاه پرداخت هنوز تنظیم نشده است. ZARINPAL_MERCHANT_ID را اضافه کنید.",
+      },
+      503
+    );
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { planId } = body;
+  const plan = PLANS.find((p) => p.id === planId);
+
+  if (!plan || !plan.price_toman || plan.price_toman <= 0) {
+    return json({ error: "پلن نامعتبر است" }, 400);
+  }
+
+  const baseUrl = env.PUBLIC_BASE_URL || new URL(request.url).origin;
+  const paymentId = uuid();
+
+  // زرین‌پال مبلغ رو به ریال می‌گیره (۱ تومان = ۱۰ ریال)
+  const amountRial = plan.price_toman * 10;
+
+  try {
+    const res = await fetch(`${ZARINPAL_BASE(env)}/pg/v4/payment/request.json`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant_id: env.ZARINPAL_MERCHANT_ID,
+        amount: amountRial,
+        callback_url: `${baseUrl}/api/payment/verify?pid=${paymentId}`,
+        description: `اشتراک ${plan.name}`,
+        metadata: {
+          email: user.email,
+        },
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data?.errors && Object.keys(data.errors).length > 0) {
+      return json(
+        {
+          error:
+            "خطای زرین‌پال: " +
+            (data.errors.message || JSON.stringify(data.errors)),
+        },
+        502
+      );
+    }
+
+    const authority = data?.data?.authority;
+
+    if (!authority) {
+      return json({ error: "پاسخ نامعتبر از زرین‌پال" }, 502);
+    }
+
+    // ذخیره پرداخت به‌صورت pending، قبل از هدایت کاربر
+    await env.DB
+      .prepare(
+        `INSERT INTO payments
+         (id, user_id, plan_id, currency, amount, status, zarinpal_authority, created_at)
+         VALUES (?, ?, ?, 'irt', ?, 'pending', ?, ?)`
+      )
+      .bind(
+        paymentId,
+        user.id,
+        plan.id,
+        amountRial,
+        authority,
+        new Date().toISOString()
+      )
+      .run();
+
+    const sandboxPrefix = env.ZARINPAL_SANDBOX === "true" ? "sandbox" : "www";
+    const paymentUrl = `https://${sandboxPrefix}.zarinpal.com/pg/StartPay/${authority}`;
+
+    return json({ success: true, payment_url: paymentUrl });
+  } catch (err) {
+    return json(
+      { error: "خطا در ساخت پرداخت: " + (err?.message || String(err)) },
+      500
+    );
+  }
+}
+
+// ---------------- تایید پرداخت (callback) ----------------
+// زرین‌پال کاربر رو با GET به این آدرس برمی‌گردونه، همراه با
+// Authority و Status توی query string
+
+async function handleVerifyPayment(request, env) {
+  const url = new URL(request.url);
+  const authority = url.searchParams.get("Authority");
+  const status = url.searchParams.get("Status");
+  const paymentId = url.searchParams.get("pid");
+  const baseUrl = env.PUBLIC_BASE_URL || url.origin;
+
+  if (!authority || !paymentId) {
+    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+  }
+
+  const payment = await env.DB
+    .prepare("SELECT * FROM payments WHERE id = ? AND zarinpal_authority = ?")
+    .bind(paymentId, authority)
+    .first();
+
+  if (!payment) {
+    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+  }
+
+  // جلوگیری از پردازش تکراری (مثلاً اگه کاربر صفحه رو رفرش کنه)
+  if (payment.status === "paid") {
+    return Response.redirect(`${baseUrl}/?payment=success`, 302);
+  }
+
+  // کاربر پرداخت رو لغو کرده
+  if (status !== "OK") {
+    await env.DB
+      .prepare("UPDATE payments SET status = 'cancelled' WHERE id = ?")
+      .bind(paymentId)
+      .run();
+    return Response.redirect(`${baseUrl}/?payment=cancel`, 302);
+  }
+
+  // مرحله حیاتی: تایید واقعی بودن پرداخت از سمت زرین‌پال
+  // (هرگز صرفاً به Status=OK توی URL اعتماد نکن، چون کاربر می‌تونه
+  // این مقدار رو دستی توی URL بذاره بدون این‌که واقعاً پرداخت کرده باشه)
+  try {
+    const verifyRes = await fetch(
+      `${ZARINPAL_BASE(env)}/pg/v4/payment/verify.json`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant_id: env.ZARINPAL_MERCHANT_ID,
+          amount: payment.amount,
+          authority: authority,
+        }),
+      }
+    );
+
+    const verifyData = await verifyRes.json();
+    const code = verifyData?.data?.code;
+
+    // کد ۱۰۰ یعنی پرداخت با موفقیت تایید شد
+    // کد ۱۰۱ یعنی قبلاً هم verify شده (idempotent - مشکلی نیست)
+    if (code === 100 || code === 101) {
+      const refId = verifyData?.data?.ref_id || "";
+
+      await env.DB
+        .prepare(
+          "UPDATE payments SET status = 'paid', ref_id = ? WHERE id = ?"
+        )
+        .bind(String(refId), paymentId)
+        .run();
+
+      // جلوگیری از ساخت subscription تکراری
+      const existingSub = await env.DB
+        .prepare(
+          "SELECT id FROM subscriptions WHERE user_id = ? AND plan_id = ? AND status = 'active' AND started_at > ?"
+        )
+        .bind(
+          payment.user_id,
+          payment.plan_id,
+          new Date(Date.now() - 60000).toISOString()
+        )
         .first();
 
-      if (existingPayment && existingPayment.status === "paid") {
-        // قبلاً پردازش شده، دوباره subscription نسازیم
-        return json({ received: true, note: "already processed" });
+      if (!existingSub) {
+        await env.DB
+          .prepare(
+            "INSERT INTO subscriptions (id, user_id, plan_id, status, started_at) VALUES (?, ?, ?, 'active', ?)"
+          )
+          .bind(uuid(), payment.user_id, payment.plan_id, new Date().toISOString())
+          .run();
       }
 
+      return Response.redirect(`${baseUrl}/?payment=success&ref=${refId}`, 302);
+    } else {
       await env.DB
-        .prepare(
-          "UPDATE payments SET status = 'paid', ref_id = ? WHERE stripe_session_id = ?"
-        )
-        .bind(session.payment_intent || "", session.id)
+        .prepare("UPDATE payments SET status = 'failed' WHERE id = ?")
+        .bind(paymentId)
         .run();
 
-      await env.DB
-        .prepare(
-          "INSERT INTO subscriptions (id, user_id, plan_id, status, started_at) VALUES (?, ?, ?, 'active', ?)"
-        )
-        .bind(uuid(), userId, planId, new Date().toISOString())
-        .run();
+      return Response.redirect(`${baseUrl}/?payment=failed`, 302);
     }
+  } catch (err) {
+    console.error("ZarinPal verify error:", err);
+    return Response.redirect(`${baseUrl}/?payment=error`, 302);
+  }
+}
+
+// =============================================================
+// ADMIN PANEL
+// =============================================================
+
+async function handleAdminLogin(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
   }
 
-  return json({ received: true });
+  const { password } = body;
+
+  if (!env.ADMIN_PASSWORD) {
+    return json({ error: "رمز مدیریت تنظیم نشده است" }, 503);
+  }
+
+  if (password !== env.ADMIN_PASSWORD) {
+    return json({ error: "رمز اشتباه است" }, 401);
+  }
+
+  const token = uuid() + uuid();
+
+  await env.DB
+    .prepare(
+      "INSERT INTO admin_sessions (id, token, created_at) VALUES (?, ?, ?)"
+    )
+    .bind(uuid(), token, new Date().toISOString())
+    .run();
+
+  return json({ success: true, token });
 }
+
+async function handleAdminUsers(request, env) {
+  const isAdmin = await requireAdmin(request, env);
+  if (!isAdmin) return json({ error: "دسترسی غیرمجاز" }, 401);
+
+  const { results } = await env.DB
+    .prepare(
+      "SELECT id, name, email, balance, created_at FROM users ORDER BY created_at DESC LIMIT 200"
+    )
+    .all();
+
+  return json({ users: results });
+}
+
+async function handleAdminPayments(request, env) {
+  const isAdmin = await requireAdmin(request, env);
+  if (!isAdmin) return json({ error: "دسترسی غیرمجاز" }, 401);
+
+  const { results } = await env.DB
+    .prepare(
+      `SELECT payments.id, payments.plan_id, payments.amount, payments.currency,
+              payments.status, payments.created_at, users.email
+       FROM payments
+       JOIN users ON users.id = payments.user_id
+       ORDER BY payments.created_at DESC LIMIT 200`
+    )
+    .all();
+
+  // amount به ریال ذخیره شده؛ برای نمایش به تومان تبدیل می‌کنیم
+  const paymentsToman = results.map((p) => ({
+    ...p,
+    amount_toman: p.currency === "irt" ? Math.round(p.amount / 10) : p.amount,
+  }));
+
+  return json({ payments: paymentsToman });
+}
+
+// ---------------- Homepage HTML ----------------
+
+function renderHomepage() {
+  return `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="enamad" content="20274647" />
+<title>دستیار هوشمند 🤖</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Tahoma, sans-serif; margin: 0; background: #f4f6fb; color: #1a1a2e; }
+header { background: #12163a; color: white; padding: 20px; }
+header h1 { margin: 0; font-size: 1.4rem; }
+header p { margin: 6px 0 0; opacity: 0.8; font-size: 0.85rem; }
+nav { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; background: white; }
+nav button { background: #2952e3; color: white; border: none; border-radius: 10px; padding: 12px 18px; font-size: 0.95rem; cursor: pointer; }
+main { padding: 20px; max-width: 480px; margin: 0 auto; }
+.card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.card h2 { margin-top: 0; text-align: right; }
+input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #dcdfe8; background: #f0f2fa; font-size: 1rem; }
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
+.actions button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.95rem; }
+.btn-primary { background: #2952e3; color: white; }
+.btn-secondary { background: #6b7280; color: white; }
+.link-btn { background: none; color: #2952e3; text-decoration: underline; padding: 4px; font-size: 0.85rem; }
+.msg { padding: 12px; border-radius: 10px; margin-top: 10px; }
+.msg.error { background: #fdeaea; color: #b91c1c; }
+.msg.success { background: #eafaf0; color: #15803d; }
+.hidden { display: none; }
+.chat-box { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.bubble { padding: 10px 14px; border-radius: 12px; max-width: 85%; white-space: pre-wrap; word-break: break-word; }
+.bubble.user { background: #2952e3; color: white; align-self: flex-start; }
+.bubble.ai { background: #eef0f7; align-self: flex-end; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+table th, table td { border: 1px solid #e5e7eb; padding: 6px; text-align: right; }
+table th { background: #f0f2fa; }
+.plan-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.plan-price { color: #2952e3; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 دستیار هوش مصنوعی</h1>
+  <p>دستیار هوشمند • حساب کاربری</p>
+</header>
+
+<nav>
+  <button onclick="showView('account')">🏠 حساب</button>
+  <button onclick="showView('ai')">🤖 هوش مصنوعی</button>
+  <button onclick="showView('plans')">💰 پلن‌ها</button>
+  <button onclick="showView('admin-login')">🛠️ مدیریت</button>
+</nav>
+
+<main>
+
+  <div id="view-login" class="card">
+    <h2>🔑 ورود به حساب</h2>
+    <input id="login-email" type="email" placeholder="ایمیل">
+    <input id="login-password" type="password" placeholder="رمز عبور">
+    <div class="actions">
+      <button class="link-btn" onclick="showView('forgot')">فراموشی رمز عبور؟</button>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="showView('signup')">ثبت‌نام</button>
+      <button class="btn-primary" onclick="doLogin()">ورود</button>
+    </div>
+    <div id="login-msg"></div>
+  </div>
+
+  <div id="view-signup" class="card hidden">
+    <h2>📝 ثبت‌نام</h2>
+    <input id="signup-name" type="text" placeholder="نام">
+    <input id="signup-email" type="email" placeholder="ایمیل">
+    <input id="signup-password" type="password" placeholder="رمز عبور (حداقل ۶ کاراکتر)">
+    <div class="actions">
+      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
+      <button class="btn-primary" onclick="doSignup()">ثبت‌نام</button>
+    </div>
+    <div id="signup-msg"></div>
+  </div>
+
+  <div id="view-forgot" class="card hidden">
+    <h2>🔐 فراموشی رمز عبور</h2>
+    <p style="font-size:0.85rem;color:#555;">ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.</p>
+    <input id="forgot-email" type="email" placeholder="ایمیل">
+    <div class="actions">
+      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
+      <button class="btn-primary" onclick="doForgotPassword()">ارسال کد</button>
+    </div>
+    <div id="forgot-msg"></div>
+
+    <hr style="margin:16px 0;border:none;border-top:1px solid #eee;">
+
+    <p style="font-size:0.85rem;color:#555;">کد دریافتی و رمز جدید را وارد کنید:</p>
+    <input id="reset-code" type="text" placeholder="کد ۶ رقمی">
+    <input id="reset-password" type="password" placeholder="رمز عبور جدید">
+    <div class="actions">
+      <button class="btn-primary" onclick="doResetPassword()">تغییر رمز عبور</button>
+    </div>
+    <div id="reset-msg"></div>
+  </div>
+
+  <div id="view-account" class="card hidden">
+    <h2>🏠 حساب من</h2>
+    <div id="account-info">در حال بارگذاری...</div>
+    <div class="actions">
+      <button class="btn-secondary" onclick="logout()">خروج</button>
+    </div>
+  </div>
+
+  <div id="view-ai" class="card hidden">
+    <h2>🤖 گفتگو با هوش مصنوعی</h2>
+    <div class="chat-box" id="chat-box"></div>
+    <input id="ai-input" type="text" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key === 'Enter') sendAiMessage()">
+    <div class="actions">
+      <button class="btn-primary" onclick="sendAiMessage()">ارسال</button>
+    </div>
+    <div id="ai-msg"></div>
+  </div>
+
+  <div id="view-plans" class="card hidden">
+    <h2>💰 پلن‌ها (قیمت به تومان)</h2>
+    <div id="plans-list">در حال بارگذاری...</div>
+  </div>
+
+  <div id="view-admin-login" class="card hidden">
+    <h2>🛠️ ورود به پنل مدیریت</h2>
+    <input id="admin-password" type="password" placeholder="رمز مدیریت">
+    <div class="actions">
+      <button class="btn-secondary" onclick="showView('login')">بازگشت</button>
+      <button class="btn-primary" onclick="doAdminLogin()">ورود</button>
+    </div>
+    <div id="admin-login-msg"></div>
+  </div>
+
+  <div id="view-admin-panel" class="card hidden">
+    <h2>🛠️ پنل مدیریت</h2>
+    <div class="actions">
+      <button class="btn-secondary" onclick="loadAdminUsers()">کاربران</button>
+      <button class="btn-secondary" onclick="loadAdminPayments()">تراکنش‌ها</button>
+      <button class="btn-secondary" onclick="adminLogout()">خروج از مدیریت</button>
+    </div>
+    <div id="admin-content" style="margin-top:14px;overflow-x:auto;"></div>
+  </div>
+
+</main>
+
+<script>
+
+let token = localStorage.getItem('token') || null;
+let adminToken = localStorage.getItem('adminToken') || null;
+
+function showMsg(elId, text, type) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '<div class="msg ' + type + '">' + escapeHtml(text) + '</div>';
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function showView(name) {
+  const views = ['login', 'signup', 'forgot', 'account', 'ai', 'plans', 'admin-login', 'admin-panel'];
+  views.forEach(v => {
+    document.getElementById('view-' + v).classList.add('hidden');
+  });
+
+  if ((name === 'account' || name === 'ai') && !token) {
+    name = 'login';
+  }
+
+  if (name === 'admin-panel' && !adminToken) {
+    name = 'admin-login';
+  }
+
+  document.getElementById('view-' + name).classList.remove('hidden');
+
+  if (name === 'account') loadAccount();
+  if (name === 'plans') loadPlans();
+  if (name === 'admin-panel') loadAdminUsers();
+}
+
+async function doSignup() {
+  const name = document.getElementById('signup-name').value;
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('signup-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      return;
+    }
+
+    token = data.token;
+    localStorage.setItem('token', token);
+    showView('account');
+  } catch (err) {
+    showMsg('signup-msg', 'خطای فنی: ' + err.message, 'error');
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('login-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      return;
+    }
+
+    token = data.token;
+    localStorage.setItem('token', token);
+    showView('account');
+  } catch (err) {
+    showMsg('login-msg', 'خطای فنی: ' + err.message, 'error');
+  }
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value;
+
+  try {
+    const res = await fetch('/api/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('forgot-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      return;
+    }
+
+    showMsg('forgot-msg', data.message || 'کد ارسال شد.', 'success');
+  } catch (err) {
+    showMsg('forgot-msg', 'خطای فنی: ' + err.message, 'error');
+  }
+}
+
+async function doResetPassword() {
+  const email = document.getElementById('forgot-email').value;
+  const code = document.getElementById('reset-code').value;
+  const newPassword = document.getElementById('reset-password').value;
+
+  try {
+    const res = await fetch('/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, newPassword })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('reset-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      return;
+    }
+
+    showMsg('reset-msg', data.message || 'رمز تغییر کرد.', 'success');
+    setTimeout(() => showView('login'), 1500);
+  } catch (err) {
+    showMsg('reset-msg', 'خطای فنی: ' + err.message, 'error');
+  }
+}
+
+function logout() {
+  token = null;
+  localStorage.removeItem('token');
+  showView('login');
+}
+
+async function loadAccount() {
+  try {
+    const res = await fetch('/api/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      logout();
+      return;
+    }
+
+    document.getElementById('account-info').innerHTML =
+      '<p><b>نام:</b> ' + escapeHtml(data.user.name || '-') + '</p>' +
+      '<p><b>ایمیل:</b> ' + escapeHtml(data.user.email) + '</p>' +
+      '<p><b>موجودی:</b> ' + escapeHtml(data.user.balance) + '</p>';
+  } catch (err) {
+    document.getElementById('account-info').innerHTML =
+      '<div class="msg error">خطا در دریافت حساب: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+async function loadPlans() {
+  try {
+    const res = await fetch('/api/plans');
+    const data = await res.json();
+
+    document.getElementById('plans-list').innerHTML = data.plans.map(p =>
+      '<div class="plan-card">' +
+        '<b>' + escapeHtml(p.name) + '</b><br>' +
+        '<span class="plan-price">' +
+          (p.price_toman > 0 ? Number(p.price_toman).toLocaleString('fa-IR') + ' تومان / ماهانه' : 'رایگان') +
+        '</span><br>' +
+        '<ul style="margin:6px 0 0;padding-right:18px;">' +
+          p.features.map(f => '<li>' + escapeHtml(f) + '</li>').join('') +
+        '</ul>' +
+        (p.price_toman > 0
+          ? '<div class="actions"><button class="btn-primary" onclick="buyPlan(\\'' + p.id + '\\')">خرید این پلن</button></div>'
+          : '') +
+      '</div>'
+    ).join('');
+  } catch (err) {
+    document.getElementById('plans-list').innerHTML =
+      '<div class="msg error">خطا در دریافت پلن‌ها: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+async function buyPlan(planId) {
+  if (!token) {
+    showView('login');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/payment/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ planId })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'خطا در ساخت پرداخت');
+      return;
+    }
+
+    window.location.href = data.payment_url;
+  } catch (err) {
+    alert('خطای فنی: ' + err.message);
+  }
+}
+
+async function sendAiMessage() {
+  if (!token) {
+    showView('login');
+    return;
+  }
+
+  const input = document.getElementById('ai-input');
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatBox = document.getElementById('chat-box');
+  chatBox.innerHTML += '<div class="bubble user">' + escapeHtml(message) + '</div>';
+  input.value = '';
+  document.getElementById('ai-msg').innerHTML = '';
+
+  const sendButton = document.querySelector('#view-ai .btn-primary');
+  if (sendButton) {
+    sendButton.disabled = true;
+    sendButton.textContent = 'در حال پاسخ...';
+  }
+
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('ai-msg', data.error || ('خطای ناشناخته (کد ' + res.status + ')'), 'error');
+      return;
+    }
+
+    chatBox.innerHTML += '<div class="bubble ai">' + escapeHtml(data.reply || 'پاسخی دریافت نشد.') + '</div>';
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } catch (err) {
+    showMsg('ai-msg', 'خطای فنی: ' + err.message, 'error');
+  } finally {
+    if (sendButton) {
+      sendButton.disabled = false;
+      sendButton.textContent = 'ارسال';
+    }
+  }
+}
+
+async function doAdminLogin() {
+  const password = document.getElementById('admin-password').value;
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('admin-login-msg', data.error || 'خطا', 'error');
+      return;
+    }
+
+    adminToken = data.token;
+    localStorage.setItem('adminToken', adminToken);
+    showView('admin-panel');
+  } catch (err) {
+    showMsg('admin-login-msg', 'خطای فنی: ' + err.message, 'error');
+  }
+}
+
+function adminLogout() {
+  adminToken = null;
+  localStorage.removeItem('adminToken');
+  showView('login');
+}
+
+async function loadAdminUsers() {
+  const content = document.getElementById('admin-content');
+  content.innerHTML = 'در حال بارگذاری...';
+
+  try {
+    const res = await fetch('/api/admin/users', {
+      headers: { 'Authorization': 'Bearer ' + adminToken }
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || 'خطا') + '</div>';
+      return;
+    }
+
+    content.innerHTML = '<table><tr><th>نام</th><th>ایمیل</th><th>موجودی</th><th>تاریخ ثبت‌نام</th></tr>' +
+      data.users.map(u =>
+        '<tr><td>' + escapeHtml(u.name || '-') + '</td><td>' + escapeHtml(u.email) +
+        '</td><td>' + escapeHtml(u.balance) + '</td><td>' + escapeHtml(u.created_at) + '</td></tr>'
+      ).join('') + '</table>';
+  } catch (err) {
+    content.innerHTML = '<div class="msg error">خطای فنی: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+async function loadAdminPayments() {
+  const content = document.getElementById('admin-content');
+  content.innerHTML = 'در حال بارگذاری...';
+
+  try {
+    const res = await fetch('/api/admin/payments', {
+      headers: { 'Authorization': 'Bearer ' + adminToken }
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      content.innerHTML = '<div class="msg error">' + escapeHtml(data.error || 'خطا') + '</div>';
+      return;
+    }
+
+    content.innerHTML = '<table><tr><th>ایمیل</th><th>پلن</th><th>مبلغ (تومان)</th><th>وضعیت</th><th>تاریخ</th></tr>' +
+      data.payments.map(p =>
+        '<tr><td>' + escapeHtml(p.email) + '</td><td>' + escapeHtml(p.plan_id) +
+        '</td><td>' + escapeHtml(p.amount_toman) + '</td><td>' + escapeHtml(p.status) +
+        '</td><td>' + escapeHtml(p.created_at) + '</td></tr>'
+      ).join('') + '</table>';
+  } catch (err) {
+    content.innerHTML = '<div class="msg error">خطای فنی: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+// Initial view
+showView(token ? 'account' : 'login');
+
+</script>
+
+</body>
+</html>`;
+}
+
+// ---------------- Router ----------------
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (request.method === "OPTIONS") {
+      return json({}, 204);
+    }
+
+    if (url.pathname === "/" && request.method === "GET") {
+      return html(renderHomepage());
+    }
+
+    // مسیر تایید مالکیت دامنه برای eNamad (روش بارگذاری فایل)
+    if (url.pathname === "/20274647.txt" && request.method === "GET") {
+      return new Response("", {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    if (url.pathname === "/api/signup" && request.method === "POST") {
+      return handleSignup(request, env);
+    }
+
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      return handleLogin(request, env);
+    }
+
+    if (url.pathname === "/api/me" && request.method === "GET") {
+      return handleMe(request, env);
+    }
+
+    if (url.pathname === "/api/forgot-password" && request.method === "POST") {
+      return handleForgotPassword(request, env);
+    }
+
+    if (url.pathname === "/api/reset-password" && request.method === "POST") {
+      return handleResetPassword(request, env);
+    }
+
+    if (url.pathname === "/api/plans" && request.method === "GET") {
+      return handlePlans(request, env);
+    }
+
+    if (url.pathname === "/api/ai/chat" && request.method === "POST") {
+      return handleAiChat(request, env);
+    }
+
+    if (url.pathname === "/api/payment/request" && request.method === "POST") {
+      return handleCreatePayment(request, env);
+    }
+
+    if (url.pathname === "/api/payment/verify" && request.method === "GET") {
+      return handleVerifyPayment(request, env);
+    }
+
+    if (url.pathname === "/api/admin/login" && request.method === "POST") {
+      return handleAdminLogin(request, env);
+    }
+
+    if (url.pathname === "/api/admin/users" && request.method === "GET") {
+      return handleAdminUsers(request, env);
+    }
+
+    if (url.pathname === "/api/admin/payments" && request.method === "GET") {
+      return handleAdminPayments(request, env);
+    }
+
+    return json({ error: "مسیر یافت نشد" }, 404);
+  },
+};
