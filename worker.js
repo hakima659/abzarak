@@ -1359,6 +1359,14 @@ export default {
       return html(renderHomepage());
     }
 
+    // مسیر تایید مالکیت دامنه برای eNamad (روش بارگذاری فایل)
+    if (url.pathname === "/20274647.txt" && request.method === "GET") {
+      return new Response("", {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
     if (url.pathname === "/api/signup" && request.method === "POST") {
       return handleSignup(request, env);
     }
