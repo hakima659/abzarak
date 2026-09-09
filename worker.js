@@ -926,7 +926,7 @@ function renderHomepage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="enamad" content="20274647" />
+<meta name="enamad" content="36032134" />
 <title data-i18n="page_title">دستیار هوشمند 🤖</title>
 <style>
 * { box-sizing: border-box; }
@@ -1627,7 +1627,7 @@ export default {
     }
 
     // مسیر تایید مالکیت دامنه برای eNamad (روش بارگذاری فایل)
-    if (url.pathname === "/20274647.txt" && request.method === "GET") {
+    if (url.pathname === "/36032134.txt" && request.method === "GET") {
       return new Response("", {
         status: 200,
         headers: { "Content-Type": "text/plain; charset=utf-8" },
