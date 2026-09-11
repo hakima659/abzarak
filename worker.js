@@ -17,6 +17,16 @@
 // D1 schema note:
 //   جدول payments باید ستون zarinpal_authority داشته باشه:
 //     ALTER TABLE payments ADD COLUMN zarinpal_authority TEXT;
+//
+//   برای پلن‌های دلاری و تعدیل موجودی توسط ادمین، این ستون‌ها/جدول‌ها هم لازمند:
+//     ALTER TABLE payments ADD COLUMN plan_currency TEXT DEFAULT 'irt';
+//     CREATE TABLE IF NOT EXISTS balance_adjustments (
+//       id TEXT PRIMARY KEY,
+//       user_id TEXT NOT NULL,
+//       amount INTEGER NOT NULL,       -- مثبت = افزایش، منفی = کاهش (تومان)
+//       reason TEXT,
+//       created_at TEXT NOT NULL
+//     );
 // =============================================================
 
 // ---------------- Utilities ----------------
@@ -589,7 +599,8 @@ async function handleAiChat(request, env) {
 }
 
 // ---------------- Plans route ----------------
-// نکته: قیمت‌ها به تومان هستند (نه دلار)، چون پرداخت با زرین‌پال تومانی‌ست
+// نکته: PLANS اصلی (تومانی) دست‌نخورده باقی مانده است.
+// پلن‌های دلاری جهانی در PLANS_USD جداگانه تعریف شده‌اند و صرفاً اضافه شده‌اند.
 
 const PLANS = [
   {
@@ -626,8 +637,50 @@ const PLANS = [
   },
 ];
 
+// نرخ تبدیل دلار به تومان — دستی و ثابت، خودتان به‌روزرسانی کنید
+const USD_TO_TOMAN_RATE = 70000; // مثال: هر ۱ دلار = ۷۰,۰۰۰ تومان — این عدد را با نرخ واقعی روز جایگزین کنید
+
+// پلن‌های دلاری جهانی (۵ تا ۲۰ دلار) — کاملاً جدا از PLANS تومانی بالا
+// پرداخت این پلن‌ها هم فعلاً از طریق همان درگاه ZarinPal انجام می‌شود:
+// مبلغ دلاری با نرخ USD_TO_TOMAN_RATE به تومان تبدیل و در ZarinPal پرداخت می‌شود.
+const PLANS_USD = [
+  {
+    id: "usd_basic",
+    name: "Basic",
+    price_usd: 5,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["Unlimited messages", "Basic features"],
+  },
+  {
+    id: "usd_plus",
+    name: "Plus",
+    price_usd: 10,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["Unlimited messages", "Faster responses"],
+  },
+  {
+    id: "usd_pro",
+    name: "Pro",
+    price_usd: 15,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["Unlimited messages", "Priority queue", "Dedicated support"],
+  },
+  {
+    id: "usd_premium",
+    name: "Premium",
+    price_usd: 20,
+    period: "monthly",
+    messages_per_day: null,
+    features: ["Unlimited messages", "Priority queue", "Dedicated support", "Early access to new features"],
+  },
+];
+
 async function handlePlans(request, env) {
-  return json({ plans: PLANS });
+  // خروجی هر دو دسته پلن؛ فرانت‌اند می‌تواند بر اساس زبان/ارز انتخابی کاربر نمایش دهد
+  return json({ plans: PLANS, plans_usd: PLANS_USD, usd_to_toman_rate: USD_TO_TOMAN_RATE });
 }
 
 // =============================================================
@@ -666,9 +719,25 @@ async function handleCreatePayment(request, env) {
   }
 
   const { planId } = body;
-  const plan = PLANS.find((p) => p.id === planId);
 
-  if (!plan || !plan.price_toman || plan.price_toman <= 0) {
+  // ابتدا در پلن‌های تومانی می‌گردیم، سپس در پلن‌های دلاری
+  let plan = PLANS.find((p) => p.id === planId);
+  let planCurrency = "irt";
+  let priceToman = plan ? plan.price_toman : null;
+  let planName = plan ? plan.name : null;
+
+  if (!plan) {
+    const usdPlan = PLANS_USD.find((p) => p.id === planId);
+    if (usdPlan) {
+      plan = usdPlan;
+      planCurrency = "usd";
+      // تبدیل مبلغ دلاری به تومان با نرخ ثابت، چون پرداخت واقعی از طریق ZarinPal (تومانی) انجام می‌شود
+      priceToman = Math.round(usdPlan.price_usd * USD_TO_TOMAN_RATE);
+      planName = usdPlan.name;
+    }
+  }
+
+  if (!plan || !priceToman || priceToman <= 0) {
     return json({ error: "پلن نامعتبر است" }, 400);
   }
 
@@ -676,7 +745,7 @@ async function handleCreatePayment(request, env) {
   const paymentId = uuid();
 
   // زرین‌پال مبلغ رو به ریال می‌گیره (۱ تومان = ۱۰ ریال)
-  const amountRial = plan.price_toman * 10;
+  const amountRial = priceToman * 10;
 
   try {
     const res = await fetch(`${ZARINPAL_BASE(env)}/pg/v4/payment/request.json`, {
@@ -686,7 +755,7 @@ async function handleCreatePayment(request, env) {
         merchant_id: env.ZARINPAL_MERCHANT_ID,
         amount: amountRial,
         callback_url: `${baseUrl}/api/payment/verify?pid=${paymentId}`,
-        description: `اشتراک ${plan.name}`,
+        description: `اشتراک ${planName}`,
         metadata: {
           email: user.email,
         },
@@ -728,6 +797,19 @@ async function handleCreatePayment(request, env) {
         new Date().toISOString()
       )
       .run();
+
+    // اگر پلن دلاری بود، ارز اصلی پلن را هم برای گزارش‌گیری بعدی ثبت می‌کنیم (در صورت وجود ستون plan_currency)
+    if (planCurrency === "usd") {
+      try {
+        await env.DB
+          .prepare("UPDATE payments SET plan_currency = 'usd' WHERE id = ?")
+          .bind(paymentId)
+          .run();
+      } catch (e) {
+        // اگر ستون plan_currency هنوز به جدول اضافه نشده باشد، این خطا را نادیده می‌گیریم
+        console.error("plan_currency column missing? ", e?.message || e);
+      }
+    }
 
     const sandboxPrefix = env.ZARINPAL_SANDBOX === "true" ? "sandbox" : "www";
     const paymentUrl = `https://${sandboxPrefix}.zarinpal.com/pg/StartPay/${authority}`;
@@ -918,6 +1000,68 @@ async function handleAdminPayments(request, env) {
   return json({ payments: paymentsToman });
 }
 
+// ---------------- تعدیل دستی موجودی کاربر (فقط ادمین) ----------------
+// این قابلیت فقط برای مدیر قابل مشاهده و استفاده است.
+// کاربر عادی هیچ گزینه‌ای برای برداشت/درخواست وجه نمی‌بیند —
+// این صرفاً یک ابزار داخلی برای ادمین است تا موجودی کاربر را
+// دستی افزایش یا کاهش دهد (مثلاً پس از تسویه دستی، اصلاح خطا، و غیره).
+
+async function handleAdminAdjustBalance(request, env) {
+  const isAdmin = await requireAdmin(request, env);
+  if (!isAdmin) return json({ error: "دسترسی غیرمجاز" }, 401);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "بدنه درخواست نامعتبر است" }, 400);
+  }
+
+  const { userId, amount, reason } = body;
+
+  if (!userId || typeof amount !== "number" || amount === 0) {
+    return json(
+      { error: "شناسه کاربر و مبلغ (غیر صفر، به تومان) الزامی است" },
+      400
+    );
+  }
+
+  const user = await env.DB
+    .prepare("SELECT id, balance FROM users WHERE id = ?")
+    .bind(userId)
+    .first();
+
+  if (!user) {
+    return json({ error: "کاربر یافت نشد" }, 404);
+  }
+
+  const newBalance = (user.balance || 0) + amount;
+
+  if (newBalance < 0) {
+    return json({ error: "موجودی نمی‌تواند منفی شود" }, 400);
+  }
+
+  await env.DB
+    .prepare("UPDATE users SET balance = ? WHERE id = ?")
+    .bind(newBalance, userId)
+    .run();
+
+  try {
+    await env.DB
+      .prepare(
+        "INSERT INTO balance_adjustments (id, user_id, amount, reason, created_at) VALUES (?, ?, ?, ?, ?)"
+      )
+      .bind(uuid(), userId, amount, reason || "", new Date().toISOString())
+      .run();
+  } catch (e) {
+    // اگر جدول balance_adjustments هنوز ساخته نشده باشد، فقط لاگ می‌کنیم؛
+    // خود تعدیل موجودی همچنان با موفقیت انجام شده است.
+    console.error("balance_adjustments table missing? ", e?.message || e);
+  }
+
+  return json({ success: true, user_id: userId, new_balance: newBalance });
+}
+
 // ---------------- Homepage HTML ----------------
 
 function renderHomepage() {
@@ -940,7 +1084,7 @@ nav button { background: #2952e3; color: white; border: none; border-radius: 10p
 main { padding: 20px; max-width: 480px; margin: 0 auto; }
 .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .card h2 { margin-top: 0; text-align: start; }
-input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #dcdfe8; background: #f0f2fa; font-size: 1rem; }
+input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #dcdfe8; background: #f0f2fa; font-size: 1rem; }
 .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
 .actions button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.95rem; }
 .btn-primary { background: #2952e3; color: white; }
@@ -960,6 +1104,9 @@ table th { background: #f0f2fa; }
 .plan-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
 .plan-price { color: #2952e3; font-size: 1.1rem; }
 .note { font-size: 0.85rem; color: #555; }
+.currency-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.currency-toggle button { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #dcdfe8; background: #f0f2fa; cursor: pointer; font-size: 0.9rem; }
+.currency-toggle button.active { background: #2952e3; color: white; border-color: #2952e3; }
 </style>
 </head>
 <body>
@@ -1047,7 +1194,11 @@ table th { background: #f0f2fa; }
   </div>
 
   <div id="view-plans" class="card hidden">
-    <h2 data-i18n="plans_title">💰 پلن‌ها (قیمت به تومان)</h2>
+    <h2 data-i18n="plans_title">💰 پلن‌ها</h2>
+    <div class="currency-toggle">
+      <button id="currency-btn-irt" class="active" onclick="setPlanCurrency('irt')" data-i18n="currency_toman">تومان (ایران)</button>
+      <button id="currency-btn-usd" onclick="setPlanCurrency('usd')" data-i18n="currency_usd">USD (Worldwide)</button>
+    </div>
     <div id="plans-list" data-i18n="loading">در حال بارگذاری...</div>
   </div>
 
@@ -1066,6 +1217,7 @@ table th { background: #f0f2fa; }
     <div class="actions">
       <button class="btn-secondary" onclick="loadAdminUsers()" data-i18n="admin_users_button">کاربران</button>
       <button class="btn-secondary" onclick="loadAdminPayments()" data-i18n="admin_payments_button">تراکنش‌ها</button>
+      <button class="btn-secondary" onclick="showAdjustBalanceForm()" data-i18n="admin_adjust_balance_button">تعدیل موجودی</button>
       <button class="btn-secondary" onclick="adminLogout()" data-i18n="admin_logout_button">خروج از مدیریت</button>
     </div>
     <div id="admin-content" style="margin-top:14px;overflow-x:auto;"></div>
@@ -1113,12 +1265,15 @@ const translations = {
     ai_input_placeholder: 'پیام خود را بنویسید...',
     send_button: 'ارسال',
     sending_button: 'در حال پاسخ...',
-    plans_title: '💰 پلن‌ها (قیمت به تومان)',
+    plans_title: '💰 پلن‌ها',
+    currency_toman: 'تومان (ایران)',
+    currency_usd: 'دلار (جهانی)',
     admin_login_title: '🛠️ ورود به پنل مدیریت',
     admin_password_placeholder: 'رمز مدیریت',
     admin_panel_title: '🛠️ پنل مدیریت',
     admin_users_button: 'کاربران',
     admin_payments_button: 'تراکنش‌ها',
+    admin_adjust_balance_button: 'تعدیل موجودی',
     admin_logout_button: 'خروج از مدیریت',
     label_name: 'نام',
     label_email: 'ایمیل',
@@ -1129,6 +1284,7 @@ const translations = {
     label_status: 'وضعیت',
     label_date: 'تاریخ',
     monthly_suffix: 'تومان / ماهانه',
+    monthly_suffix_usd: '$ / ماهانه',
     free_label: 'رایگان',
     buy_plan_button: 'خرید این پلن',
     unknown_error: 'خطای ناشناخته (کد {status})',
@@ -1140,6 +1296,13 @@ const translations = {
     error_creating_payment: 'خطا در ساخت پرداخت',
     no_reply: 'پاسخی دریافت نشد.',
     generic_error: 'خطا',
+    adjust_balance_title: 'تعدیل موجودی کاربر',
+    adjust_balance_user_id_placeholder: 'شناسه کاربر (User ID)',
+    adjust_balance_amount_placeholder: 'مبلغ به تومان (منفی برای کسر)',
+    adjust_balance_reason_placeholder: 'دلیل (اختیاری)',
+    adjust_balance_submit: 'اعمال تغییر',
+    adjust_balance_success: 'موجودی با موفقیت به‌روزرسانی شد. موجودی جدید: {balance}',
+    adjust_balance_hint: 'شناسه کاربر را از جدول «کاربران» کپی کنید.',
   },
   en: {
     page_title: 'AI Assistant 🤖',
@@ -1174,12 +1337,15 @@ const translations = {
     ai_input_placeholder: 'Type your message...',
     send_button: 'Send',
     sending_button: 'Sending...',
-    plans_title: '💰 Plans (prices in Toman)',
+    plans_title: '💰 Plans',
+    currency_toman: 'Toman (Iran)',
+    currency_usd: 'USD (Worldwide)',
     admin_login_title: '🛠️ Admin Login',
     admin_password_placeholder: 'Admin password',
     admin_panel_title: '🛠️ Admin Panel',
     admin_users_button: 'Users',
     admin_payments_button: 'Payments',
+    admin_adjust_balance_button: 'Adjust Balance',
     admin_logout_button: 'Log Out of Admin',
     label_name: 'Name',
     label_email: 'Email',
@@ -1190,6 +1356,7 @@ const translations = {
     label_status: 'Status',
     label_date: 'Date',
     monthly_suffix: 'Toman / month',
+    monthly_suffix_usd: '$ / month',
     free_label: 'Free',
     buy_plan_button: 'Buy this plan',
     unknown_error: 'Unknown error (code {status})',
@@ -1201,10 +1368,18 @@ const translations = {
     error_creating_payment: 'Error creating payment',
     no_reply: 'No reply received.',
     generic_error: 'Error',
+    adjust_balance_title: 'Adjust User Balance',
+    adjust_balance_user_id_placeholder: 'User ID',
+    adjust_balance_amount_placeholder: 'Amount in Toman (negative to deduct)',
+    adjust_balance_reason_placeholder: 'Reason (optional)',
+    adjust_balance_submit: 'Apply',
+    adjust_balance_success: 'Balance updated successfully. New balance: {balance}',
+    adjust_balance_hint: 'Copy the user ID from the "Users" table.',
   }
 };
 
 let currentLang = localStorage.getItem('lang') || 'fa';
+let currentPlanCurrency = 'irt';
 
 function t(key, vars) {
   const dict = translations[currentLang] || translations.fa;
@@ -1257,6 +1432,7 @@ function toggleLang() {
 
 let token = localStorage.getItem('token') || null;
 let adminToken = localStorage.getItem('adminToken') || null;
+let cachedPlansData = null;
 
 function showMsg(elId, text, type) {
   const el = document.getElementById(elId);
@@ -1419,25 +1595,44 @@ async function loadAccount() {
   }
 }
 
+function setPlanCurrency(currency) {
+  currentPlanCurrency = currency;
+  document.getElementById('currency-btn-irt').classList.toggle('active', currency === 'irt');
+  document.getElementById('currency-btn-usd').classList.toggle('active', currency === 'usd');
+  renderPlansList();
+}
+
+function renderPlansList() {
+  if (!cachedPlansData) return;
+
+  const list = currentPlanCurrency === 'usd' ? cachedPlansData.plans_usd : cachedPlansData.plans;
+  const isUsd = currentPlanCurrency === 'usd';
+
+  document.getElementById('plans-list').innerHTML = list.map(p => {
+    const priceLine = isUsd
+      ? (p.price_usd > 0 ? '$' + Number(p.price_usd).toLocaleString('en-US') + ' ' + t('monthly_suffix_usd') : t('free_label'))
+      : (p.price_toman > 0 ? Number(p.price_toman).toLocaleString(currentLang === 'fa' ? 'fa-IR' : 'en-US') + ' ' + t('monthly_suffix') : t('free_label'));
+    const hasPrice = isUsd ? p.price_usd > 0 : p.price_toman > 0;
+
+    return '<div class="plan-card">' +
+        '<b>' + escapeHtml(p.name) + '</b><br>' +
+        '<span class="plan-price">' + priceLine + '</span><br>' +
+        '<ul style="margin:6px 0 0;padding-inline-start:18px;">' +
+          p.features.map(f => '<li>' + escapeHtml(f) + '</li>').join('') +
+        '</ul>' +
+        (hasPrice
+          ? '<div class="actions"><button class="btn-primary" onclick="buyPlan(\\'' + p.id + '\\')">' + t('buy_plan_button') + '</button></div>'
+          : '') +
+      '</div>';
+  }).join('');
+}
+
 async function loadPlans() {
   try {
     const res = await fetch('/api/plans');
     const data = await res.json();
-
-    document.getElementById('plans-list').innerHTML = data.plans.map(p =>
-      '<div class="plan-card">' +
-        '<b>' + escapeHtml(p.name) + '</b><br>' +
-        '<span class="plan-price">' +
-          (p.price_toman > 0 ? Number(p.price_toman).toLocaleString(currentLang === 'fa' ? 'fa-IR' : 'en-US') + ' ' + t('monthly_suffix') : t('free_label')) +
-        '</span><br>' +
-        '<ul style="margin:6px 0 0;padding-inline-start:18px;">' +
-          p.features.map(f => '<li>' + escapeHtml(f) + '</li>').join('') +
-        '</ul>' +
-        (p.price_toman > 0
-          ? '<div class="actions"><button class="btn-primary" onclick="buyPlan(\\'' + p.id + '\\')">' + t('buy_plan_button') + '</button></div>'
-          : '') +
-      '</div>'
-    ).join('');
+    cachedPlansData = data;
+    renderPlansList();
   } catch (err) {
     document.getElementById('plans-list').innerHTML =
       '<div class="msg error">' + t('error_fetching_plans', { message: err.message }) + '</div>';
@@ -1566,10 +1761,11 @@ async function loadAdminUsers() {
       return;
     }
 
-    content.innerHTML = '<table><tr><th>' + t('label_name') + '</th><th>' + t('label_email') + '</th><th>' + t('label_balance') + '</th><th>' + t('label_signup_date') + '</th></tr>' +
+    content.innerHTML = '<table><tr><th>' + t('label_name') + '</th><th>' + t('label_email') + '</th><th>' + t('label_balance') + '</th><th>' + t('label_signup_date') + '</th><th>ID</th></tr>' +
       data.users.map(u =>
         '<tr><td>' + escapeHtml(u.name || '-') + '</td><td>' + escapeHtml(u.email) +
-        '</td><td>' + escapeHtml(u.balance) + '</td><td>' + escapeHtml(u.created_at) + '</td></tr>'
+        '</td><td>' + escapeHtml(u.balance) + '</td><td>' + escapeHtml(u.created_at) + '</td>' +
+        '<td style="font-size:0.7rem;">' + escapeHtml(u.id) + '</td></tr>'
       ).join('') + '</table>';
   } catch (err) {
     content.innerHTML = '<div class="msg error">' + t('technical_error', { message: err.message }) + '</div>';
@@ -1599,6 +1795,54 @@ async function loadAdminPayments() {
       ).join('') + '</table>';
   } catch (err) {
     content.innerHTML = '<div class="msg error">' + t('technical_error', { message: err.message }) + '</div>';
+  }
+}
+
+// ---------------- تعدیل موجودی (فقط ادمین) ----------------
+// این فرم و تابع فقط داخل پنل مدیریت در دسترس است.
+// هیچ دکمه یا مسیری برای کاربر عادی برای درخواست/مشاهده برداشت وجود ندارد.
+
+function showAdjustBalanceForm() {
+  const content = document.getElementById('admin-content');
+  content.innerHTML =
+    '<h3>' + t('adjust_balance_title') + '</h3>' +
+    '<p class="note">' + t('adjust_balance_hint') + '</p>' +
+    '<input id="adjust-user-id" type="text" placeholder="' + t('adjust_balance_user_id_placeholder') + '">' +
+    '<input id="adjust-amount" type="number" placeholder="' + t('adjust_balance_amount_placeholder') + '">' +
+    '<input id="adjust-reason" type="text" placeholder="' + t('adjust_balance_reason_placeholder') + '">' +
+    '<div class="actions"><button class="btn-primary" onclick="submitAdjustBalance()">' + t('adjust_balance_submit') + '</button></div>' +
+    '<div id="adjust-balance-msg"></div>';
+}
+
+async function submitAdjustBalance() {
+  const userId = document.getElementById('adjust-user-id').value.trim();
+  const amount = Number(document.getElementById('adjust-amount').value);
+  const reason = document.getElementById('adjust-reason').value.trim();
+
+  if (!userId || !amount) {
+    showMsg('adjust-balance-msg', t('generic_error'), 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/adjust-balance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      },
+      body: JSON.stringify({ userId, amount, reason })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('adjust-balance-msg', data.error || t('generic_error'), 'error');
+      return;
+    }
+
+    showMsg('adjust-balance-msg', t('adjust_balance_success', { balance: data.new_balance }), 'success');
+  } catch (err) {
+    showMsg('adjust-balance-msg', t('technical_error', { message: err.message }), 'error');
   }
 }
 
@@ -1680,6 +1924,10 @@ export default {
 
     if (url.pathname === "/api/admin/payments" && request.method === "GET") {
       return handleAdminPayments(request, env);
+    }
+
+    if (url.pathname === "/api/admin/adjust-balance" && request.method === "POST") {
+      return handleAdminAdjustBalance(request, env);
     }
 
     return json({ error: "مسیر یافت نشد" }, 404);
