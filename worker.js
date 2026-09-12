@@ -7,7 +7,7 @@ const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
 const USD_TO_TOMAN_RATE = 70000;
 
 // =============================================================
-// BASIC RESPONSE HELPERS
+// BASIC HELPERS
 // =============================================================
 
 function json(data, status = 200) {
@@ -35,12 +35,12 @@ function uuid() {
   return crypto.randomUUID();
 }
 
-function randomCode(len = 6) {
+function randomCode(length = 6) {
   const digits = "0123456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
   let result = "";
 
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < length; i++) {
     result += digits[bytes[i] % 10];
   }
 
@@ -57,13 +57,15 @@ function getBaseUrl(request, env) {
 }
 
 // =============================================================
-// PASSWORD HASH
+// PASSWORD
 // =============================================================
 
 async function hashPassword(password) {
   const iterations = 100000;
 
-  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const saltBytes = crypto.getRandomValues(
+    new Uint8Array(16)
+  );
 
   const saltHex = [...saltBytes]
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -99,7 +101,10 @@ async function verifyPassword(password, stored) {
   try {
     const parts = String(stored || "").split(":");
 
-    if (parts.length !== 4 || parts[0] !== "pbkdf2") {
+    if (
+      parts.length !== 4 ||
+      parts[0] !== "pbkdf2"
+    ) {
       return false;
     }
 
@@ -149,7 +154,9 @@ async function verifyPassword(password, stored) {
     let diff = 0;
 
     for (let i = 0; i < hashHex.length; i++) {
-      diff |= hashHex.charCodeAt(i) ^ parts[3].charCodeAt(i);
+      diff |=
+        hashHex.charCodeAt(i) ^
+        parts[3].charCodeAt(i);
     }
 
     return diff === 0;
@@ -209,104 +216,70 @@ function renderManifest(baseUrl) {
 function renderIconSvg() {
   return `
 <svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 512 512"
      width="512"
-     height="512"
-     viewBox="0 0 512 512">
-
+     height="512">
   <defs>
     <linearGradient id="bg"
-      x1="0"
-      y1="0"
-      x2="1"
-      y2="1">
-      <stop offset="0%" stop-color="#12163a"/>
-      <stop offset="55%" stop-color="#3446c7"/>
-      <stop offset="100%" stop-color="#6d5dfc"/>
+      x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6d5dfc"/>
+      <stop offset="55%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#111936"/>
     </linearGradient>
 
     <linearGradient id="orb"
-      x1="0"
-      y1="0"
-      x2="1"
-      y2="1">
+      x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#aab8ff"/>
+      <stop offset="100%" stop-color="#b9c7ff"/>
     </linearGradient>
   </defs>
 
-  <rect
-    width="512"
-    height="512"
-    rx="120"
-    fill="url(#bg)"
-  />
+  <rect width="512" height="512"
+        rx="120" fill="url(#bg)"/>
 
-  <circle
-    cx="256"
-    cy="220"
-    r="112"
-    fill="url(#orb)"
-    opacity="0.98"
-  />
+  <circle cx="256" cy="238"
+          r="145"
+          fill="rgba(255,255,255,.12)"/>
 
-  <path
-    d="M185 220
-       C185 178 216 146 256 146
-       C296 146 327 178 327 220
-       C327 262 296 294 256 294
-       C216 294 185 262 185 220Z"
-    fill="#12163a"
-  />
+  <circle cx="256" cy="238"
+          r="112"
+          fill="url(#orb)"/>
 
-  <circle cx="225" cy="218" r="13" fill="#ffffff"/>
-  <circle cx="287" cy="218" r="13" fill="#ffffff"/>
+  <path d="M190 250
+           C190 210 220 180 256 180
+           C292 180 322 210 322 250
+           C322 290 292 320 256 320
+           C220 320 190 290 190 250Z"
+        fill="#1b2450"/>
 
-  <path
-    d="M220 255
-       C239 270 273 270 292 255"
-    fill="none"
-    stroke="#ffffff"
-    stroke-width="10"
-    stroke-linecap="round"
-  />
+  <circle cx="230" cy="245"
+          r="11"
+          fill="#ffffff"/>
 
-  <path
-    d="M256 106 V75
-       M150 145 L128 123
-       M362 145 L384 123"
-    stroke="#ffffff"
-    stroke-width="10"
-    stroke-linecap="round"
-    opacity="0.9"
-  />
+  <circle cx="282" cy="245"
+          r="11"
+          fill="#ffffff"/>
 
-  <text
-    x="256"
-    y="390"
-    text-anchor="middle"
-    font-family="Arial, sans-serif"
-    font-size="55"
-    font-weight="bold"
-    fill="#ffffff">
-    ابزارک
-  </text>
+  <path d="M220 278
+           Q256 302 292 278"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="10"
+        stroke-linecap="round"/>
 
-  <text
-    x="256"
-    y="435"
-    text-anchor="middle"
-    font-family="Arial, sans-serif"
-    font-size="25"
-    fill="#dce2ff">
-    AI Assistant
-  </text>
-</svg>
-`;
+  <text x="256"
+        y="430"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="55"
+        font-weight="700"
+        fill="#ffffff">AI</text>
+</svg>`;
 }
 
 function renderServiceWorker() {
   return `
-const CACHE_NAME = "abzarak-pwa-v2";
+const CACHE_NAME = "abzarak-pwa-v3";
 
 const APP_SHELL = [
   "/",
@@ -350,7 +323,6 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(request)
       .then(response => {
-
         if (
           response &&
           response.status === 200 &&
@@ -384,8 +356,9 @@ async function getUserFromToken(request, env) {
   const auth =
     request.headers.get("Authorization") || "";
 
-  const token =
-    auth.replace(/^Bearer\s+/i, "").trim();
+  const token = auth
+    .replace(/^Bearer\s+/i, "")
+    .trim();
 
   if (!token) {
     return null;
@@ -394,7 +367,9 @@ async function getUserFromToken(request, env) {
   try {
     const session = await env.DB
       .prepare(
-        "SELECT user_id FROM sessions WHERE token = ?"
+        `SELECT user_id
+         FROM sessions
+         WHERE token = ?`
       )
       .bind(token)
       .first();
@@ -414,7 +389,11 @@ async function getUserFromToken(request, env) {
 
     return user || null;
   } catch (error) {
-    console.error("getUserFromToken:", error);
+    console.error(
+      "getUserFromToken:",
+      error
+    );
+
     return null;
   }
 }
@@ -438,7 +417,9 @@ async function requireAdmin(request, env) {
   try {
     const session = await env.DB
       .prepare(
-        "SELECT id FROM admin_sessions WHERE token = ?"
+        `SELECT id
+         FROM admin_sessions
+         WHERE token = ?`
       )
       .bind(token)
       .first();
@@ -498,7 +479,9 @@ async function sendEmail(
       };
     }
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   } catch (error) {
     return {
       ok: false,
@@ -520,7 +503,10 @@ async function handleSignup(request, env) {
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -529,7 +515,9 @@ async function handleSignup(request, env) {
     String(body.name || "").trim();
 
   const email =
-    String(body.email || "").trim().toLowerCase();
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
 
   const password =
     String(body.password || "");
@@ -565,13 +553,14 @@ async function handleSignup(request, env) {
   }
 
   try {
-    const existing =
-      await env.DB
-        .prepare(
-          "SELECT id FROM users WHERE email = ?"
-        )
-        .bind(email)
-        .first();
+    const existing = await env.DB
+      .prepare(
+        `SELECT id
+         FROM users
+         WHERE email = ?`
+      )
+      .bind(email)
+      .first();
 
     if (existing) {
       return json(
@@ -594,12 +583,12 @@ async function handleSignup(request, env) {
     await env.DB
       .prepare(
         `INSERT INTO users
-        (id, name, email, password_hash, balance, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)`
+         (id, name, email, password_hash, balance, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
       .bind(
         userId,
-        name,
+        name || "کاربر",
         email,
         passwordHash,
         0,
@@ -613,8 +602,8 @@ async function handleSignup(request, env) {
     await env.DB
       .prepare(
         `INSERT INTO sessions
-        (id, user_id, token, created_at)
-        VALUES (?, ?, ?, ?)`
+         (id, user_id, token, created_at)
+         VALUES (?, ?, ?, ?)`
       )
       .bind(
         uuid(),
@@ -629,19 +618,23 @@ async function handleSignup(request, env) {
       token,
       user: {
         id: userId,
-        name,
+        name: name || "کاربر",
         email,
         balance: 0,
       },
     });
   } catch (error) {
-    console.error("Signup:", error);
+    console.error(
+      "Signup:",
+      error
+    );
 
     return json(
       {
         error:
           "خطا در ثبت‌نام: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -659,7 +652,10 @@ async function handleLogin(request, env) {
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -683,20 +679,19 @@ async function handleLogin(request, env) {
   }
 
   try {
-    const user =
-      await env.DB
-        .prepare(
-          `SELECT
-             id,
-             name,
-             email,
-             password_hash,
-             balance
-           FROM users
-           WHERE email = ?`
-        )
-        .bind(email)
-        .first();
+    const user = await env.DB
+      .prepare(
+        `SELECT
+           id,
+           name,
+           email,
+           password_hash,
+           balance
+         FROM users
+         WHERE email = ?`
+      )
+      .bind(email)
+      .first();
 
     if (!user) {
       return json(
@@ -730,8 +725,8 @@ async function handleLogin(request, env) {
     await env.DB
       .prepare(
         `INSERT INTO sessions
-        (id, user_id, token, created_at)
-        VALUES (?, ?, ?, ?)`
+         (id, user_id, token, created_at)
+         VALUES (?, ?, ?, ?)`
       )
       .bind(
         uuid(),
@@ -748,17 +743,22 @@ async function handleLogin(request, env) {
         id: user.id,
         name: user.name,
         email: user.email,
-        balance: user.balance || 0,
+        balance:
+          Number(user.balance || 0),
       },
     });
   } catch (error) {
-    console.error("Login:", error);
+    console.error(
+      "Login:",
+      error
+    );
 
     return json(
       {
         error:
           "خطا در ورود: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -786,7 +786,13 @@ async function handleMe(request, env) {
     );
   }
 
-  return json({ user });
+  return json({
+    user: {
+      ...user,
+      balance:
+        Number(user.balance || 0),
+    },
+  });
 }
 
 // =============================================================
@@ -803,7 +809,10 @@ async function handleForgotPassword(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -824,13 +833,14 @@ async function handleForgotPassword(
   }
 
   try {
-    const user =
-      await env.DB
-        .prepare(
-          "SELECT id FROM users WHERE email = ?"
-        )
-        .bind(email)
-        .first();
+    const user = await env.DB
+      .prepare(
+        `SELECT id
+         FROM users
+         WHERE email = ?`
+      )
+      .bind(email)
+      .first();
 
     if (!user) {
       return json({
@@ -845,14 +855,15 @@ async function handleForgotPassword(
 
     const expiresAt =
       new Date(
-        Date.now() + 15 * 60 * 1000
+        Date.now() +
+        15 * 60 * 1000
       ).toISOString();
 
     await env.DB
       .prepare(
         `INSERT INTO reset_codes
-        (id, user_id, code, expires_at, used, created_at)
-        VALUES (?, ?, ?, ?, 0, ?)`
+         (id, user_id, code, expires_at, used, created_at)
+         VALUES (?, ?, ?, ?, 0, ?)`
       )
       .bind(
         uuid(),
@@ -869,20 +880,22 @@ async function handleForgotPassword(
         email,
         "کد بازیابی رمز عبور ابزارک",
         `
-<!doctype html>
-<html lang="fa" dir="rtl">
-<body style="font-family:Arial,sans-serif;background:#f5f7fb;padding:30px;">
-<div style="max-width:520px;margin:auto;background:white;padding:30px;border-radius:20px;">
-<h2>🤖 ابزارک</h2>
-<p>کد بازیابی رمز عبور شما:</p>
-<h1 style="letter-spacing:8px;text-align:center;">
-${code}
-</h1>
-<p>این کد تا ۱۵ دقیقه معتبر است.</p>
-</div>
-</body>
-</html>
-`
+        <div dir="rtl"
+             style="font-family:Arial,sans-serif">
+          <h2>🤖 ابزارک</h2>
+          <p>کد بازیابی رمز عبور شما:</p>
+          <div style="
+            font-size:32px;
+            font-weight:bold;
+            letter-spacing:8px;
+            padding:20px;
+            background:#f1f5f9;
+            border-radius:15px;
+            text-align:center;
+          ">${code}</div>
+          <p>این کد تا ۱۵ دقیقه معتبر است.</p>
+        </div>
+        `
       );
 
     if (!emailResult.ok) {
@@ -911,7 +924,8 @@ ${code}
       {
         error:
           "خطا در ارسال کد: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -932,7 +946,10 @@ async function handleResetPassword(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -973,13 +990,14 @@ async function handleResetPassword(
   }
 
   try {
-    const user =
-      await env.DB
-        .prepare(
-          "SELECT id FROM users WHERE email = ?"
-        )
-        .bind(email)
-        .first();
+    const user = await env.DB
+      .prepare(
+        `SELECT id
+         FROM users
+         WHERE email = ?`
+      )
+      .bind(email)
+      .first();
 
     if (!user) {
       return json(
@@ -1000,7 +1018,7 @@ async function handleResetPassword(
              used
            FROM reset_codes
            WHERE user_id = ?
-           AND code = ?
+             AND code = ?
            ORDER BY created_at DESC
            LIMIT 1`
         )
@@ -1051,7 +1069,9 @@ async function handleResetPassword(
 
     await env.DB
       .prepare(
-        "UPDATE users SET password_hash = ? WHERE id = ?"
+        `UPDATE users
+         SET password_hash = ?
+         WHERE id = ?`
       )
       .bind(
         passwordHash,
@@ -1061,14 +1081,17 @@ async function handleResetPassword(
 
     await env.DB
       .prepare(
-        "UPDATE reset_codes SET used = 1 WHERE id = ?"
+        `UPDATE reset_codes
+         SET used = 1
+         WHERE id = ?`
       )
       .bind(resetRow.id)
       .run();
 
     await env.DB
       .prepare(
-        "DELETE FROM sessions WHERE user_id = ?"
+        `DELETE FROM sessions
+         WHERE user_id = ?`
       )
       .bind(user.id)
       .run();
@@ -1088,7 +1111,8 @@ async function handleResetPassword(
       {
         error:
           "خطا در تغییر رمز: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -1135,13 +1159,17 @@ async function handleAiChat(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
 
   const message =
-    String(body.message || "").trim();
+    String(body.message || "")
+      .trim();
 
   if (!message) {
     return json(
@@ -1179,9 +1207,14 @@ LANGUAGE:
 - Reply in the same language by default.
 - Do not force Persian.
 - Do not force English.
-- Support Persian, English, Arabic, Turkish, Azerbaijani, Kurdish, French, German, Spanish, Italian, Russian, Urdu, Hindi, Chinese, Japanese and other languages when possible.
-- If the user requests translation, follow the requested target language.
-- If the user mixes languages, respond naturally using the dominant language.
+- Support Persian, English, Arabic, Turkish,
+  Azerbaijani, Kurdish, French, German,
+  Spanish, Italian, Russian, Urdu, Hindi,
+  Chinese, Japanese and other languages when possible.
+- If the user requests translation,
+  follow the requested target language.
+- If the user mixes languages,
+  respond naturally using the dominant language.
 
 STYLE:
 - Be helpful.
@@ -1223,7 +1256,8 @@ STYLE:
       {
         error:
           "خطا در ارتباط با هوش مصنوعی: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -1231,7 +1265,7 @@ STYLE:
 }
 
 // =============================================================
-// PLANS
+// PLANS — 400,000 TO 2,000,000 TOMAN
 // =============================================================
 
 const PLANS = [
@@ -1247,40 +1281,75 @@ const PLANS = [
       "پشتیبانی چندزبانه",
     ],
   },
+
   {
     id: "basic",
     name: "پایه",
-    price_toman: 250000,
+    price_toman: 400000,
     period: "monthly",
     messages_per_day: null,
     features: [
       "پیام نامحدود",
-      "امکانات پایه",
+      "دستیار هوش مصنوعی",
       "پشتیبانی چندزبانه",
+      "مناسب استفاده روزمره",
     ],
   },
+
   {
     id: "plus",
     name: "پیشرفته",
-    price_toman: 490000,
+    price_toman: 700000,
     period: "monthly",
     messages_per_day: null,
     features: [
       "پیام نامحدود",
       "پاسخ سریع‌تر",
       "امکانات بیشتر",
+      "پشتیبانی چندزبانه",
     ],
   },
+
   {
     id: "pro",
-    name: "ویژه",
-    price_toman: 990000,
+    name: "حرفه‌ای",
+    price_toman: 1000000,
     period: "monthly",
     messages_per_day: null,
     features: [
       "پیام نامحدود",
       "اولویت پاسخ‌دهی",
+      "امکانات حرفه‌ای",
       "پشتیبانی اختصاصی",
+    ],
+  },
+
+  {
+    id: "special",
+    name: "ویژه",
+    price_toman: 1500000,
+    period: "monthly",
+    messages_per_day: null,
+    features: [
+      "پیام نامحدود",
+      "اولویت بالا",
+      "امکانات ویژه",
+      "پشتیبانی اختصاصی",
+    ],
+  },
+
+  {
+    id: "vip",
+    name: "VIP",
+    price_toman: 2000000,
+    period: "monthly",
+    messages_per_day: null,
+    features: [
+      "پیام نامحدود",
+      "بالاترین اولویت",
+      "تمام امکانات ویژه",
+      "پشتیبانی VIP",
+      "دسترسی زودهنگام به امکانات جدید",
     ],
   },
 ];
@@ -1294,8 +1363,10 @@ const PLANS_USD = [
     features: [
       "Unlimited messages",
       "Basic features",
+      "Multilingual AI",
     ],
   },
+
   {
     id: "usd_plus",
     name: "Plus",
@@ -1304,8 +1375,10 @@ const PLANS_USD = [
     features: [
       "Unlimited messages",
       "Faster responses",
+      "More features",
     ],
   },
+
   {
     id: "usd_pro",
     name: "Pro",
@@ -1313,10 +1386,11 @@ const PLANS_USD = [
     period: "monthly",
     features: [
       "Unlimited messages",
-      "Priority queue",
+      "Priority responses",
       "Dedicated support",
     ],
   },
+
   {
     id: "usd_premium",
     name: "Premium",
@@ -1390,7 +1464,10 @@ async function handleCreatePayment(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -1410,6 +1487,7 @@ async function handleCreatePayment(
   if (plan) {
     priceToman =
       plan.price_toman;
+
     planName =
       plan.name;
   } else {
@@ -1453,9 +1531,10 @@ async function handleCreatePayment(
       new URL(request.url).origin
     ).replace(/\/+$/, "");
 
-  const paymentId = uuid();
+  const paymentId =
+    uuid();
 
-  // ZarinPal expects Rial.
+  // تومان -> ریال
   const amountRial =
     Math.round(
       priceToman * 10
@@ -1492,7 +1571,9 @@ async function handleCreatePayment(
 
     if (
       data?.errors &&
-      Object.keys(data.errors).length
+      Object.keys(
+        data.errors
+      ).length
     ) {
       return json(
         {
@@ -1500,7 +1581,9 @@ async function handleCreatePayment(
             "خطای زرین‌پال: " +
             (
               data.errors.message ||
-              JSON.stringify(data.errors)
+              JSON.stringify(
+                data.errors
+              )
             ),
         },
         502
@@ -1524,17 +1607,17 @@ async function handleCreatePayment(
     await env.DB
       .prepare(
         `INSERT INTO payments
-        (
-          id,
-          user_id,
-          plan_id,
-          currency,
-          amount,
-          status,
-          zarinpal_authority,
-          created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+         (
+           id,
+           user_id,
+           plan_id,
+           currency,
+           amount,
+           status,
+           zarinpal_authority,
+           created_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         paymentId,
@@ -1560,11 +1643,8 @@ async function handleCreatePayment(
           paymentId
         )
         .run();
-    } catch (error) {
-      console.log(
-        "plan_currency column not available:",
-        error?.message
-      );
+    } catch {
+      // Optional column
     }
 
     const paymentUrl =
@@ -1574,7 +1654,8 @@ async function handleCreatePayment(
 
     return json({
       success: true,
-      payment_url: paymentUrl,
+      payment_url:
+        paymentUrl,
     });
   } catch (error) {
     console.error(
@@ -1586,7 +1667,8 @@ async function handleCreatePayment(
       {
         error:
           "خطا در ساخت پرداخت: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -1642,7 +1724,7 @@ async function handleVerifyPayment(
           `SELECT *
            FROM payments
            WHERE id = ?
-           AND zarinpal_authority = ?`
+             AND zarinpal_authority = ?`
         )
         .bind(
           paymentId,
@@ -1658,7 +1740,8 @@ async function handleVerifyPayment(
     }
 
     if (
-      payment.status === "paid"
+      payment.status ===
+      "paid"
     ) {
       return Response.redirect(
         `${baseUrl}/?payment=success`,
@@ -1666,7 +1749,9 @@ async function handleVerifyPayment(
       );
     }
 
-    if (status !== "OK") {
+    if (
+      status !== "OK"
+    ) {
       await env.DB
         .prepare(
           `UPDATE payments
@@ -1734,9 +1819,9 @@ async function handleVerifyPayment(
             `SELECT id
              FROM subscriptions
              WHERE user_id = ?
-             AND plan_id = ?
-             AND status = 'active'
-             AND started_at > ?`
+               AND plan_id = ?
+               AND status = 'active'
+               AND started_at > ?`
           )
           .bind(
             payment.user_id,
@@ -1752,14 +1837,14 @@ async function handleVerifyPayment(
         await env.DB
           .prepare(
             `INSERT INTO subscriptions
-            (
-              id,
-              user_id,
-              plan_id,
-              status,
-              started_at
-            )
-            VALUES (?, ?, ?, 'active', ?)`
+             (
+               id,
+               user_id,
+               plan_id,
+               status,
+               started_at
+             )
+             VALUES (?, ?, ?, 'active', ?)`
           )
           .bind(
             uuid(),
@@ -1826,7 +1911,10 @@ async function handleAdminLogin(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -1864,8 +1952,8 @@ async function handleAdminLogin(
     await env.DB
       .prepare(
         `INSERT INTO admin_sessions
-        (id, token, created_at)
-        VALUES (?, ?, ?)`
+         (id, token, created_at)
+         VALUES (?, ?, ?)`
       )
       .bind(
         uuid(),
@@ -1883,7 +1971,8 @@ async function handleAdminLogin(
       {
         error:
           "خطا در ورود مدیریت: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -1905,7 +1994,10 @@ async function handleAdminUsers(
     ))
   ) {
     return json(
-      { error: "دسترسی غیرمجاز." },
+      {
+        error:
+          "دسترسی غیرمجاز.",
+      },
       401
     );
   }
@@ -1934,7 +2026,8 @@ async function handleAdminUsers(
       {
         error:
           "خطا در دریافت کاربران: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -1956,7 +2049,10 @@ async function handleAdminPayments(
     ))
   ) {
     return json(
-      { error: "دسترسی غیرمجاز." },
+      {
+        error:
+          "دسترسی غیرمجاز.",
+      },
       401
     );
   }
@@ -1975,7 +2071,8 @@ async function handleAdminPayments(
              users.email
            FROM payments
            JOIN users
-           ON users.id = payments.user_id
+             ON users.id =
+                payments.user_id
            ORDER BY payments.created_at DESC
            LIMIT 200`
         )
@@ -1988,8 +2085,9 @@ async function handleAdminPayments(
           amount_toman:
             payment.currency === "irt"
               ? Math.round(
-                  Number(payment.amount || 0) /
-                  10
+                  Number(
+                    payment.amount || 0
+                  ) / 10
                 )
               : payment.amount,
         })
@@ -2003,7 +2101,8 @@ async function handleAdminPayments(
       {
         error:
           "خطا در دریافت تراکنش‌ها: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -2025,7 +2124,10 @@ async function handleAdminAdjustBalance(
     ))
   ) {
     return json(
-      { error: "دسترسی غیرمجاز." },
+      {
+        error:
+          "دسترسی غیرمجاز.",
+      },
       401
     );
   }
@@ -2036,7 +2138,10 @@ async function handleAdminAdjustBalance(
     body = await request.json();
   } catch {
     return json(
-      { error: "بدنه درخواست نامعتبر است." },
+      {
+        error:
+          "بدنه درخواست نامعتبر است.",
+      },
       400
     );
   }
@@ -2068,7 +2173,9 @@ async function handleAdminAdjustBalance(
     const user =
       await env.DB
         .prepare(
-          `SELECT id, balance
+          `SELECT
+             id,
+             balance
            FROM users
            WHERE id = ?`
         )
@@ -2115,8 +2222,8 @@ async function handleAdminAdjustBalance(
       await env.DB
         .prepare(
           `INSERT INTO balance_adjustments
-          (id, user_id, amount, reason, created_at)
-          VALUES (?, ?, ?, ?, ?)`
+           (id, user_id, amount, reason, created_at)
+           VALUES (?, ?, ?, ?, ?)`
         )
         .bind(
           uuid(),
@@ -2126,24 +2233,23 @@ async function handleAdminAdjustBalance(
           new Date().toISOString()
         )
         .run();
-    } catch (error) {
-      console.log(
-        "balance_adjustments unavailable:",
-        error?.message
-      );
+    } catch {
+      // Optional table
     }
 
     return json({
       success: true,
       user_id: userId,
-      new_balance: newBalance,
+      new_balance:
+        newBalance,
     });
   } catch (error) {
     return json(
       {
         error:
           "خطا در تعدیل موجودی: " +
-          (error?.message || String(error)),
+          (error?.message ||
+            String(error)),
       },
       500
     );
@@ -2155,848 +2261,744 @@ async function handleAdminAdjustBalance(
 // =============================================================
 
 function renderHomepage() {
-  return `
-<!doctype html>
+  return `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-
 <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
->
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<meta
-  name="theme-color"
-  content="#12163a"
->
+<meta name="theme-color"
+      content="#12163a">
 
-<meta
-  name="mobile-web-app-capable"
-  content="yes"
->
+<meta name="mobile-web-app-capable"
+      content="yes">
 
-<meta
-  name="apple-mobile-web-app-capable"
-  content="yes"
->
+<meta name="apple-mobile-web-app-capable"
+      content="yes">
 
-<meta
-  name="apple-mobile-web-app-status-bar-style"
-  content="default"
->
+<meta name="apple-mobile-web-app-status-bar-style"
+      content="default">
 
-<meta
-  name="apple-mobile-web-app-title"
-  content="ابزارک"
->
+<meta name="apple-mobile-web-app-title"
+      content="ابزارک">
 
-<title>
-ابزارک | دستیار هوش مصنوعی چندزبانه
-</title>
+<title>ابزارک | دستیار هوش مصنوعی چندزبانه</title>
 
-<meta
-  name="description"
-  content="ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است."
->
+<meta name="description"
+      content="ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است.">
 
-<meta
-  name="keywords"
-  content="ابزارک, هوش مصنوعی, AI, AI Assistant, دستیار هوش مصنوعی, چت هوش مصنوعی, multilingual AI"
->
+<meta name="keywords"
+      content="ابزارک, هوش مصنوعی, AI, AI Assistant, دستیار هوش مصنوعی, چت هوش مصنوعی, multilingual AI">
 
-<meta
-  name="robots"
-  content="index, follow"
->
+<meta name="robots"
+      content="index, follow">
 
-<meta
-  property="og:type"
-  content="website"
->
+<link rel="manifest"
+      href="/manifest.json">
 
-<meta
-  property="og:site_name"
-  content="ابزارک"
->
+<link rel="icon"
+      href="/icon.svg"
+      type="image/svg+xml">
 
-<meta
-  property="og:title"
-  content="ابزارک | دستیار هوش مصنوعی"
->
+<meta property="og:type"
+      content="website">
 
-<meta
-  property="og:description"
-  content="دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان."
->
+<meta property="og:site_name"
+      content="ابزارک">
 
-<meta
-  property="og:url"
-  content="https://abzarakai.ir/"
->
+<meta property="og:title"
+      content="ابزارک | دستیار هوش مصنوعی">
 
-<meta
-  property="og:locale"
-  content="fa_IR"
->
+<meta property="og:description"
+      content="دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان.">
 
-<meta
-  property="og:locale:alternate"
-  content="en_US"
->
+<meta property="og:url"
+      content="https://abzarakai.ir/">
 
-<meta
-  name="twitter:card"
-  content="summary"
->
+<meta property="og:locale"
+      content="fa_IR">
 
-<meta
-  name="twitter:title"
-  content="ابزارک | AI Assistant"
->
+<meta property="og:locale:alternate"
+      content="en_US">
 
-<meta
-  name="twitter:description"
-  content="A multilingual AI assistant for users worldwide."
->
+<meta name="twitter:card"
+      content="summary">
 
-<link
-  rel="manifest"
-  href="/manifest.json"
->
+<meta name="twitter:title"
+      content="ابزارک | AI Assistant">
 
-<link
-  rel="icon"
-  href="/icon.svg"
-  type="image/svg+xml"
->
+<meta name="twitter:description"
+      content="A multilingual AI assistant for users worldwide.">
 
 <style>
 
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html{
+  scroll-behavior:smooth;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
+body{
+  margin:0;
   font-family:
     Tahoma,
     Arial,
     sans-serif;
   background:
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(104, 87, 255, .20),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 90% 10%,
-      rgba(25, 190, 255, .18),
-      transparent 28%
-    ),
     linear-gradient(
-      135deg,
-      #f5f7ff,
-      #eef1ff 45%,
-      #f9fbff
+      180deg,
+      #f6f8ff 0%,
+      #eef2ff 100%
     );
-  color: #171a35;
+  color:#17203a;
 }
 
 button,
-input,
-textarea {
-  font: inherit;
+input{
+  font:inherit;
 }
 
-button {
-  cursor: pointer;
+button{
+  cursor:pointer;
 }
 
-.hidden {
-  display: none !important;
+a{
+  text-decoration:none;
 }
 
-.app {
-  width: 100%;
-  min-height: 100vh;
+.hidden{
+  display:none !important;
 }
 
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  backdrop-filter: blur(18px);
+.container{
+  width:min(1180px,92%);
+  margin:auto;
+}
+
+header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  backdrop-filter:blur(18px);
   background:
     rgba(255,255,255,.88);
   border-bottom:
-    1px solid rgba(20,25,70,.08);
+    1px solid #e5e7eb;
 }
 
-.topbar-inner {
-  max-width: 1180px;
-  margin: auto;
-  padding:
-    14px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
+.nav{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:10px 0;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 900;
-  color: #171a35;
-  text-decoration: none;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#12163a;
+  font-size:20px;
+  font-weight:900;
+  margin-left:auto;
 }
 
-.brand-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+.brand-icon{
+  width:42px;
+  height:42px;
+  border-radius:13px;
   box-shadow:
-    0 10px 25px
-    rgba(50,60,180,.25);
+    0 8px 25px
+    rgba(79,70,229,.25);
 }
 
-.brand-text {
-  font-size: 19px;
+.nav-links{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  flex-wrap:wrap;
 }
 
-.nav {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  justify-content: center;
+.nav-links button{
+  border:0;
+  background:transparent;
+  color:#4b5563;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:700;
 }
 
-.nav button {
-  border: 0;
-  background: transparent;
-  color: #343853;
-  padding: 10px 12px;
-  border-radius: 12px;
+.nav-links button:hover{
+  background:#eef2ff;
+  color:#3730a3;
 }
 
-.nav button:hover {
-  background: #eef0ff;
+.install-btn,
+.lang-switch{
+  border:0;
+  border-radius:12px;
+  padding:10px 13px;
+  font-weight:800;
 }
 
-.hero {
-  max-width: 1180px;
-  margin: auto;
-  padding:
-    55px 18px
-    25px;
+.install-btn{
+  background:#111936;
+  color:white;
 }
 
-.hero-box {
-  position: relative;
-  overflow: hidden;
-  border-radius: 32px;
-  padding:
-    55px 45px;
-  color: white;
+.lang-switch{
+  background:#eef2ff;
+  color:#312e81;
+}
+
+.hero{
+  margin-top:25px;
+  border-radius:32px;
+  overflow:hidden;
+  padding:70px 35px;
+  color:white;
+  position:relative;
   background:
     radial-gradient(
-      circle at 80% 20%,
-      rgba(117, 135, 255, .65),
+      circle at 80% 15%,
+      rgba(255,255,255,.28),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 15% 85%,
+      rgba(34,211,238,.25),
       transparent 30%
     ),
     linear-gradient(
       135deg,
-      #111638,
-      #2f3fb0 55%,
-      #6957ed
+      #111936,
+      #4338ca 52%,
+      #2563eb
     );
   box-shadow:
-    0 25px 70px
-    rgba(38,48,140,.25);
+    0 25px 80px
+    rgba(37,48,120,.25);
 }
 
-.hero-box::before {
-  content: "";
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
+.hero:after{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  border:1px solid
+    rgba(255,255,255,.22);
+  right:-80px;
+  bottom:-100px;
+}
+
+.hero-content{
+  position:relative;
+  z-index:2;
+  max-width:760px;
+}
+
+.badge{
+  display:inline-flex;
+  padding:9px 14px;
+  border-radius:999px;
   background:
-    rgba(255,255,255,.08);
-  left: -80px;
-  bottom: -100px;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 720px;
-}
-
-.hero-badge {
-  display: inline-flex;
-  padding: 8px 13px;
-  border-radius: 100px;
-  background:
-    rgba(255,255,255,.13);
+    rgba(255,255,255,.12);
   border:
     1px solid
-    rgba(255,255,255,.16);
-  font-size: 13px;
-  margin-bottom: 18px;
+    rgba(255,255,255,.18);
+  font-weight:800;
 }
 
-.hero h1 {
+.hero h1{
   font-size:
-    clamp(34px, 6vw, 64px);
-  line-height: 1.12;
+    clamp(32px,6vw,64px);
   margin:
-    0 0 18px;
+    20px 0 15px;
+  line-height:1.15;
 }
 
-.hero p {
-  font-size: 18px;
-  line-height: 2;
-  color: #e7eaff;
-  margin-bottom: 25px;
+.hero p{
+  font-size:18px;
+  line-height:2;
+  color:#e8ebff;
+  max-width:720px;
 }
 
-.hero-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:25px;
 }
 
-.hero-orb {
-  position: absolute;
-  left: 65px;
-  top: 55px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      #fff,
-      #b9c3ff 45%,
-      #6b62e9
-    );
-  opacity: .16;
-  filter: blur(1px);
-}
-
-.container {
-  max-width: 1050px;
-  margin: auto;
-  padding:
-    20px 18px 60px;
-}
-
-.view {
-  display: none;
-}
-
-.view.active {
-  display: block;
-}
-
-.card {
-  background:
-    rgba(255,255,255,.94);
-  border:
-    1px solid
-    rgba(20,25,70,.08);
-  border-radius: 24px;
-  padding: 25px;
-  box-shadow:
-    0 15px 45px
-    rgba(30,40,100,.08);
-  margin-bottom: 20px;
-}
-
-.card h2,
-.card h3 {
-  margin-top: 0;
-}
-
-.form {
-  max-width: 500px;
-  margin: 25px auto;
-}
-
-.input {
-  width: 100%;
-  padding:
-    14px 16px;
-  border:
-    1px solid #dfe3f3;
-  border-radius: 14px;
-  outline: none;
-  background: #fff;
-  margin-bottom: 12px;
-}
-
-.input:focus {
-  border-color: #6371e9;
-  box-shadow:
-    0 0 0 4px
-    rgba(99,113,233,.10);
-}
-
-.btn {
-  border: 0;
-  border-radius: 14px;
-  padding:
-    13px 18px;
-  min-height: 46px;
-  font-weight: 800;
+.btn{
+  border:0;
+  border-radius:14px;
+  padding:13px 18px;
+  font-weight:900;
   transition:
     transform .15s,
     box-shadow .15s;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
+.btn:hover{
+  transform:translateY(-2px);
 }
 
-.btn-primary {
-  color: white;
+.btn-primary{
   background:
     linear-gradient(
       135deg,
-      #4857d9,
-      #705ce9
+      #4f46e5,
+      #2563eb
     );
+  color:white;
   box-shadow:
     0 10px 25px
-    rgba(80,85,210,.22);
+    rgba(37,99,235,.2);
 }
 
-.btn-secondary {
-  background: #eef0fb;
-  color: #222746;
+.btn-light{
+  background:white;
+  color:#202657;
 }
 
-.btn-light {
-  background: white;
-  color: #222746;
+.btn-secondary{
+  background:#eef2ff;
+  color:#312e81;
 }
 
-.btn-danger {
-  background: #ffe8eb;
-  color: #a32235;
+.btn-danger{
+  background:#fee2e2;
+  color:#991b1b;
 }
 
-.link-btn {
-  border: 0;
-  background: transparent;
-  color: #4b58c9;
-  padding: 10px;
+.section{
+  padding:45px 0;
 }
 
-.install-btn {
-  border: 0;
-  background:
-    linear-gradient(
-      135deg,
-      #21c79a,
-      #159cce
-    );
-  color: white;
-  padding:
-    11px 15px;
-  border-radius: 13px;
-  font-weight: 800;
+.section h2{
+  font-size:30px;
+  margin-bottom:10px;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.muted{
+  color:#64748b;
+  line-height:1.9;
 }
 
-.lang-switch {
-  border: 0;
-  background: #eef0fb;
-  padding: 10px 13px;
-  border-radius: 12px;
-  font-weight: 700;
-}
-
-.notice {
-  padding: 13px 15px;
-  border-radius: 14px;
-  background: #f1f3ff;
-  color: #343a75;
-  margin: 12px 0;
-}
-
-.error {
-  background: #fff0f2;
-  color: #a12539;
-}
-
-.success {
-  background: #eafbf5;
-  color: #146b52;
-}
-
-.account-box {
-  display: grid;
+.features{
+  display:grid;
   grid-template-columns:
-    repeat(3, 1fr);
-  gap: 15px;
+    repeat(3,1fr);
+  gap:18px;
+  margin-top:25px;
 }
 
-.stat {
-  padding: 20px;
-  border-radius: 18px;
-  background:
-    linear-gradient(
-      135deg,
-      #f7f8ff,
-      #edf0ff
-    );
-}
-
-.stat strong {
-  display: block;
-  font-size: 25px;
-  margin-top: 8px;
-}
-
-.ai-box {
-  max-width: 850px;
-  margin: auto;
-}
-
-.chat-messages {
-  min-height: 320px;
-  max-height: 560px;
-  overflow-y: auto;
-  padding: 15px;
-  border-radius: 20px;
-  background:
-    linear-gradient(
-      180deg,
-      #f6f8ff,
-      #eef1ff
-    );
-  margin-bottom: 12px;
-}
-
-.msg {
-  padding:
-    13px 16px;
-  border-radius: 18px;
-  margin-bottom: 10px;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.msg.user {
-  background:
-    linear-gradient(
-      135deg,
-      #5361dc,
-      #705fe8
-    );
-  color: white;
-  margin-right: 20%;
-}
-
-.msg.ai {
-  background: white;
-  color: #20243e;
-  margin-left: 10%;
-  box-shadow:
-    0 5px 18px
-    rgba(20,30,90,.06);
-}
-
-.ai-input-row {
-  display: flex;
-  gap: 8px;
-}
-
-.ai-input {
-  flex: 1;
-  margin: 0;
-}
-
-.plans-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(4, 1fr);
-  gap: 16px;
-}
-
-.plan {
-  position: relative;
-  padding: 24px;
-  border-radius: 23px;
-  background: white;
+.card{
+  background:white;
   border:
-    1px solid #e1e4f5;
+    1px solid #e5e7eb;
+  border-radius:22px;
+  padding:25px;
   box-shadow:
     0 12px 35px
-    rgba(30,40,100,.07);
+    rgba(15,23,42,.06);
 }
 
-.plan.featured {
+.feature-icon{
+  font-size:38px;
+  margin-bottom:10px;
+}
+
+.view{
+  display:none;
+  padding:35px 0 60px;
+}
+
+.view.active{
+  display:block;
+}
+
+.form-card{
+  max-width:520px;
+  margin:auto;
+}
+
+.input{
+  width:100%;
   border:
-    2px solid #6370e9;
-  transform: translateY(-6px);
+    1px solid #d7dce8;
+  background:white;
+  border-radius:14px;
+  padding:14px 15px;
+  outline:none;
+  margin:
+    7px 0;
 }
 
-.plan h3 {
-  font-size: 22px;
+.input:focus{
+  border-color:#6366f1;
+  box-shadow:
+    0 0 0 4px
+    rgba(99,102,241,.1);
 }
 
-.price {
-  font-size: 28px;
-  font-weight: 900;
-  color: #404cc5;
+.link-btn{
+  border:0;
+  background:transparent;
+  color:#4f46e5;
+  font-weight:800;
+  padding:12px 0;
 }
 
-.plan ul {
-  padding-right: 20px;
-  line-height: 2;
-  min-height: 110px;
+.account-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(3,1fr);
+  gap:15px;
+  margin-top:20px;
 }
 
-.currency-switch {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
+.account-value{
+  font-size:24px;
+  font-weight:900;
+  margin-top:8px;
 }
 
-.currency-switch button.active {
-  background:
-    #515fd8;
-  color: white;
+.ai-box{
+  max-width:900px;
+  margin:auto;
 }
 
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
+.chat{
+  min-height:360px;
+  max-height:600px;
+  overflow:auto;
+  background:white;
+  border:
+    1px solid #e5e7eb;
+  border-radius:22px;
+  padding:18px;
+  margin-bottom:12px;
 }
 
-.admin-table th,
-.admin-table td {
+.message{
+  padding:14px 16px;
+  border-radius:17px;
+  margin:
+    8px 0;
+  line-height:1.9;
+  white-space:pre-wrap;
+}
+
+.message.user{
+  background:#eef2ff;
+  margin-right:12%;
+}
+
+.message.ai{
+  background:#f8fafc;
+  border:
+    1px solid #e2e8f0;
+  margin-left:12%;
+}
+
+.ai-row{
+  display:flex;
+  gap:8px;
+}
+
+.ai-row .input{
+  margin:0;
+}
+
+.ai-row .btn{
+  white-space:nowrap;
+}
+
+.currency-switch{
+  display:flex;
+  gap:8px;
+  margin:20px 0;
+}
+
+.plans{
+  display:grid;
+  grid-template-columns:
+    repeat(3,1fr);
+  gap:18px;
+}
+
+.plan{
+  background:white;
+  border:
+    1px solid #e5e7eb;
+  border-radius:24px;
+  padding:25px;
+  position:relative;
+  box-shadow:
+    0 14px 35px
+    rgba(15,23,42,.06);
+}
+
+.plan.popular{
+  border:
+    2px solid #6366f1;
+  transform:translateY(-4px);
+}
+
+.popular-label{
+  position:absolute;
+  top:-13px;
+  right:18px;
+  background:#4f46e5;
+  color:white;
+  padding:6px 11px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.plan h3{
+  font-size:23px;
+  margin:0 0 10px;
+}
+
+.price{
+  font-size:30px;
+  font-weight:950;
+  color:#1e1b4b;
+}
+
+.price small{
+  font-size:13px;
+  color:#64748b;
+}
+
+.plan ul{
+  padding-right:20px;
+  line-height:2;
+  color:#475569;
+  min-height:130px;
+}
+
+.admin-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+
+.table-wrap{
+  overflow:auto;
+  background:white;
+  border-radius:18px;
+  border:1px solid #e5e7eb;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:650px;
+}
+
+th,
+td{
+  padding:12px;
   border-bottom:
-    1px solid #edf0f7;
-  padding: 11px 7px;
-  text-align: right;
+    1px solid #edf0f5;
+  text-align:right;
 }
 
-.seo-section {
-  line-height: 2;
+th{
+  background:#f8fafc;
 }
 
-.footer {
-  max-width: 1050px;
-  margin: auto;
+.status{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.status-paid{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.status-pending{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.status-failed,
+.status-cancelled{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+footer{
+  text-align:center;
+  color:#64748b;
   padding:
-    20px 18px 45px;
-  text-align: center;
-  color: #777d9b;
+    30px 0 50px;
 }
 
-.loading {
-  text-align: center;
-  padding: 25px;
+.notice{
+  background:#eff6ff;
+  border:
+    1px solid #bfdbfe;
+  color:#1e40af;
+  border-radius:16px;
+  padding:14px;
+  margin:15px 0;
+  line-height:1.8;
 }
 
-@media (max-width: 900px) {
-
-  .nav {
-    display: none;
-  }
-
-  .topbar-inner {
-    flex-wrap: wrap;
-  }
-
-  .plans-grid {
+@media(max-width:850px){
+  .features,
+  .plans,
+  .account-grid{
     grid-template-columns:
-      repeat(2, 1fr);
+      repeat(2,1fr);
   }
 
-  .account-box {
-    grid-template-columns:
-      1fr;
+  .brand{
+    width:100%;
+    justify-content:center;
+    margin:0;
   }
 
-  .hero-orb {
-    left: -80px;
-    top: 30px;
+  .nav{
+    justify-content:center;
+  }
+
+  .nav-links{
+    width:100%;
   }
 }
 
-@media (max-width: 600px) {
-
-  .hero {
-    padding-top: 20px;
+@media(max-width:600px){
+  .container{
+    width:94%;
   }
 
-  .hero-box {
-    padding:
-      38px 23px;
-    border-radius: 25px;
+  .hero{
+    padding:45px 22px;
+    border-radius:25px;
   }
 
-  .hero h1 {
-    font-size: 36px;
+  .features,
+  .plans,
+  .account-grid{
+    grid-template-columns:1fr;
   }
 
-  .hero p {
-    font-size: 15px;
+  .hero p{
+    font-size:16px;
   }
 
-  .plans-grid {
-    grid-template-columns:
-      1fr;
+  .ai-row{
+    flex-direction:column;
   }
 
-  .plan.featured {
-    transform: none;
+  .message.user{
+    margin-right:0;
   }
 
-  .ai-input-row {
-    flex-direction: column;
+  .message.ai{
+    margin-left:0;
   }
 
-  .msg.user {
-    margin-right: 5%;
-  }
-
-  .msg.ai {
-    margin-left: 5%;
-  }
-
-  .topbar-inner {
-    padding:
-      10px 12px;
-  }
-
-  .brand-text {
-    font-size: 16px;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .card {
-    padding: 18px;
-    border-radius: 19px;
+  .nav-links button{
+    padding:8px;
+    font-size:13px;
   }
 }
 
 </style>
-
 </head>
 
 <body>
 
-<div class="app">
+<header>
+<div class="container nav">
 
-<header class="topbar">
-
-<div class="topbar-inner">
-
-<a
-  href="/"
-  class="brand"
-  onclick="showView('home');return false;"
->
-
-<img
-  src="/icon.svg"
-  class="brand-icon"
-  alt="ابزارک"
->
-
-<span class="brand-text">
-🤖 ابزارک
-</span>
-
+<a class="brand"
+   href="/"
+   onclick="showView('home');return false;">
+  <img src="/icon.svg"
+       class="brand-icon"
+       alt="ابزارک">
+  🤖 ابزارک
 </a>
 
-<nav class="nav">
+<nav class="nav-links">
+  <button onclick="showView('home')">
+    🏠 خانه
+  </button>
 
-<button onclick="showView('home')">
-🏠 خانه
-</button>
+  <button onclick="showView('account')">
+    👤 حساب
+  </button>
 
-<button onclick="showView('account')">
-👤 حساب
-</button>
+  <button onclick="showView('ai')">
+    🤖 هوش مصنوعی
+  </button>
 
-<button onclick="showView('ai')">
-🤖 هوش مصنوعی
-</button>
+  <button onclick="showView('plans')">
+    💰 پلن‌ها
+  </button>
 
-<button onclick="showView('plans')">
-💰 پلن‌ها
-</button>
-
-<button onclick="showView('admin-login')">
-🛠️ مدیریت
-</button>
-
+  <button onclick="showView('admin')">
+    🛠️ مدیریت
+  </button>
 </nav>
-
-<div class="header-actions">
 
 <button
   id="install-app-btn"
   class="install-btn hidden"
-  onclick="installPwa()"
->
-📲 نصب اپ
+  onclick="installPwa()">
+  📲 نصب اپ
 </button>
 
 <button
   class="lang-switch"
   onclick="toggleLang()"
-  id="lang-button"
->
-English
+  id="lang-button">
+  English
 </button>
 
 </div>
-
-</div>
-
 </header>
 
-<section class="hero">
+<main class="container">
 
-<div class="hero-box">
+<!-- HOME -->
 
-<div class="hero-orb"></div>
+<section id="view-home"
+         class="view active">
+
+<div class="hero">
 
 <div class="hero-content">
 
-<div class="hero-badge">
+<div class="badge">
 ✨ هوش مصنوعی چندزبانه
 </div>
 
 <h1>
-دستیار هوشمند شما، همیشه آماده
+دستیار هوشمند شما،
+همیشه آماده
 </h1>
 
 <p>
@@ -3005,153 +3007,141 @@ English
 روزمره خود را سریع‌تر انجام دهید.
 </p>
 
-<div class="hero-actions">
+<div class="actions">
 
 <button
   class="btn btn-light"
-  onclick="showView('ai')"
->
-🤖 شروع گفتگو
+  onclick="showView('ai')">
+  🤖 شروع گفتگو
 </button>
 
 <button
   class="btn"
   style="background:rgba(255,255,255,.14);color:white;"
-  onclick="showView('plans')"
->
-💎 مشاهده پلن‌ها
+  onclick="showView('plans')">
+  💎 مشاهده پلن‌ها
 </button>
 
 </div>
 
 </div>
-
 </div>
 
-</section>
-
-<main class="container">
-
-<!-- HOME -->
-
-<section
-  id="view-home"
-  class="view active"
->
-
-<div class="card">
+<div class="section">
 
 <h2>
 🌍 دستیار هوش مصنوعی برای همه
 </h2>
 
-<p>
+<p class="muted">
 ابزارک یک دستیار هوش مصنوعی چندزبانه
 است که برای کاربران سراسر جهان طراحی شده است.
 </p>
 
-<div class="account-box">
+<div class="features">
 
-<div class="stat">
-<span>🤖</span>
-<strong>AI</strong>
-دستیار هوشمند
+<div class="card">
+<div class="feature-icon">🤖</div>
+<h3>AI</h3>
+<p class="muted">
+دستیار هوشمند برای پاسخ به پرسش‌ها
+و انجام کارهای روزمره.
+</p>
 </div>
 
-<div class="stat">
-<span>🌍</span>
-<strong>Multi</strong>
-پشتیبانی چندزبانه
+<div class="card">
+<div class="feature-icon">🌍</div>
+<h3>Multi</h3>
+<p class="muted">
+پشتیبانی از زبان‌های مختلف جهان.
+</p>
 </div>
 
-<div class="stat">
-<span>📱</span>
-<strong>PWA</strong>
-قابل نصب روی موبایل
+<div class="card">
+<div class="feature-icon">📱</div>
+<h3>PWA</h3>
+<p class="muted">
+قابل نصب روی موبایل و قابل استفاده
+روی کامپیوتر.
+</p>
 </div>
 
 </div>
-
 </div>
 
-<div class="card seo-section">
+<div class="section">
 
 <h2>
 چرا ابزارک؟
 </h2>
 
-<p>
-ابزارک برای گفتگو با هوش مصنوعی،
-پاسخ به پرسش‌ها، تولید محتوا،
-ترجمه و کمک در کارهای روزمره ساخته شده است.
+<div class="features">
+
+<div class="card">
+<h3>💬 گفتگو</h3>
+<p class="muted">
+گفتگوی متنی با هوش مصنوعی.
 </p>
+</div>
 
-<h3>
-ویژگی‌ها
-</h3>
+<div class="card">
+<h3>🌐 چندزبانه</h3>
+<p class="muted">
+پاسخ در زبان مورد استفاده شما.
+</p>
+</div>
 
-<ul>
-<li>گفتگوی متنی با هوش مصنوعی</li>
-<li>پشتیبانی از زبان‌های مختلف</li>
-<li>حساب کاربری و مدیریت اشتراک</li>
-<li>نسخه قابل نصب روی موبایل</li>
-<li>قابل استفاده در کامپیوتر و موبایل</li>
-</ul>
+<div class="card">
+<h3>📲 همیشه در دسترس</h3>
+<p class="muted">
+قابل استفاده در موبایل و کامپیوتر.
+</p>
+</div>
 
+</div>
 </div>
 
 </section>
 
 <!-- LOGIN -->
 
-<section
-  id="view-login"
-  class="view"
->
+<section id="view-login"
+         class="view">
 
-<div class="card form">
+<div class="card form-card">
 
-<h2>
-🔑 ورود به حساب
-</h2>
+<h2>🔑 ورود به حساب</h2>
 
 <input
   id="login-email"
   class="input"
   type="email"
-  placeholder="ایمیل"
->
+  placeholder="ایمیل">
 
 <input
   id="login-password"
   class="input"
   type="password"
-  placeholder="رمز عبور"
->
-
-<div id="login-message"></div>
+  placeholder="رمز عبور">
 
 <button
   class="btn btn-primary"
   style="width:100%;"
-  onclick="doLogin()"
->
-ورود
+  onclick="doLogin()">
+  ورود
 </button>
 
 <button
   class="link-btn"
-  onclick="showView('forgot')"
->
-فراموشی رمز عبور؟
+  onclick="showView('forgot')">
+  فراموشی رمز عبور؟
 </button>
 
 <button
   class="btn btn-secondary"
   style="width:100%;"
-  onclick="showView('signup')"
->
-ثبت‌نام
+  onclick="showView('signup')">
+  ثبت‌نام
 </button>
 
 </div>
@@ -3160,53 +3150,42 @@ English
 
 <!-- SIGNUP -->
 
-<section
-  id="view-signup"
-  class="view"
->
+<section id="view-signup"
+         class="view">
 
-<div class="card form">
+<div class="card form-card">
 
-<h2>
-📝 ثبت‌نام
-</h2>
+<h2>📝 ثبت‌نام</h2>
 
 <input
   id="signup-name"
   class="input"
-  placeholder="نام"
->
+  placeholder="نام">
 
 <input
   id="signup-email"
   class="input"
   type="email"
-  placeholder="ایمیل"
->
+  placeholder="ایمیل">
 
 <input
   id="signup-password"
   class="input"
   type="password"
-  placeholder="رمز عبور حداقل ۶ کاراکتر"
->
-
-<div id="signup-message"></div>
+  placeholder="رمز عبور حداقل ۶ کاراکتر">
 
 <button
   class="btn btn-primary"
   style="width:100%;"
-  onclick="doSignup()"
->
-ثبت‌نام
+  onclick="doSignup()">
+  ثبت‌نام
 </button>
 
 <button
   class="btn btn-secondary"
   style="width:100%;margin-top:8px;"
-  onclick="showView('login')"
->
-بازگشت
+  onclick="showView('login')">
+  بازگشت
 </button>
 
 </div>
@@ -3215,18 +3194,14 @@ English
 
 <!-- FORGOT -->
 
-<section
-  id="view-forgot"
-  class="view"
->
+<section id="view-forgot"
+         class="view">
 
-<div class="card form">
+<div class="card form-card">
 
-<h2>
-🔐 بازیابی رمز
-</h2>
+<h2>🔐 بازیابی رمز</h2>
 
-<p>
+<p class="muted">
 ایمیل خود را وارد کنید.
 </p>
 
@@ -3234,25 +3209,20 @@ English
   id="forgot-email"
   class="input"
   type="email"
-  placeholder="ایمیل"
->
-
-<div id="forgot-message"></div>
+  placeholder="ایمیل">
 
 <button
   class="btn btn-primary"
   style="width:100%;"
-  onclick="doForgotPassword()"
->
-ارسال کد
+  onclick="doForgotPassword()">
+  ارسال کد
 </button>
 
 <button
   class="btn btn-secondary"
   style="width:100%;margin-top:8px;"
-  onclick="showView('reset')"
->
-کد را دارم
+  onclick="showView('reset')">
+  کد را دارم
 </button>
 
 </div>
@@ -3261,45 +3231,35 @@ English
 
 <!-- RESET -->
 
-<section
-  id="view-reset"
-  class="view"
->
+<section id="view-reset"
+         class="view">
 
-<div class="card form">
+<div class="card form-card">
 
-<h2>
-🔑 تغییر رمز
-</h2>
+<h2>🔑 تغییر رمز</h2>
 
 <input
   id="reset-email"
   class="input"
   type="email"
-  placeholder="ایمیل"
->
+  placeholder="ایمیل">
 
 <input
   id="reset-code"
   class="input"
-  placeholder="کد ۶ رقمی"
->
+  placeholder="کد ۶ رقمی">
 
 <input
   id="reset-password"
   class="input"
   type="password"
-  placeholder="رمز عبور جدید"
->
-
-<div id="reset-message"></div>
+  placeholder="رمز عبور جدید">
 
 <button
   class="btn btn-primary"
   style="width:100%;"
-  onclick="doResetPassword()"
->
-تغییر رمز
+  onclick="doResetPassword()">
+  تغییر رمز
 </button>
 
 </div>
@@ -3308,21 +3268,15 @@ English
 
 <!-- ACCOUNT -->
 
-<section
-  id="view-account"
-  class="view"
->
+<section id="view-account"
+         class="view">
 
 <div class="card">
 
-<h2>
-🏠 حساب من
-</h2>
+<h2>🏠 حساب من</h2>
 
 <div id="account-content">
-<div class="loading">
 در حال بررسی حساب...
-</div>
 </div>
 
 </div>
@@ -3331,42 +3285,39 @@ English
 
 <!-- AI -->
 
-<section
-  id="view-ai"
-  class="view"
->
+<section id="view-ai"
+         class="view">
 
-<div class="card ai-box">
+<div class="ai-box">
 
-<h2>
-🤖 گفتگو با هوش مصنوعی
-</h2>
+<div class="card">
 
-<p>
+<h2>🤖 گفتگو با هوش مصنوعی</h2>
+
+<p class="muted">
 هر زبانی که استفاده کنید،
 ابزارک تلاش می‌کند به همان زبان پاسخ دهد.
 </p>
 
-<div
-  id="chat-messages"
-  class="chat-messages"
-></div>
+<div id="chat"
+     class="chat">
+</div>
 
-<div class="ai-input-row">
+<div class="ai-row">
 
 <input
   id="ai-input"
-  class="input ai-input"
+  class="input"
   placeholder="پیام خود را بنویسید..."
-  onkeydown="if(event.key==='Enter')sendAiMessage()"
->
+  onkeydown="if(event.key==='Enter')sendAiMessage()">
 
 <button
   class="btn btn-primary"
-  onclick="sendAiMessage()"
->
-ارسال
+  onclick="sendAiMessage()">
+  ارسال
 </button>
+
+</div>
 
 </div>
 
@@ -3376,130 +3327,102 @@ English
 
 <!-- PLANS -->
 
-<section
-  id="view-plans"
-  class="view"
->
+<section id="view-plans"
+         class="view">
 
-<div class="card">
+<h2>💰 پلن‌های اشتراک</h2>
 
-<h2>
-💰 پلن‌های اشتراک
-</h2>
+<p class="muted">
+پلن موردنظر خود را انتخاب کنید.
+</p>
 
 <div class="currency-switch">
 
 <button
   id="currency-irt"
   class="btn btn-secondary active"
-  onclick="setPlanCurrency('irt')"
->
-تومان 🇮🇷
+  onclick="setPlanCurrency('irt')">
+  تومان 🇮🇷
 </button>
 
 <button
   id="currency-usd"
   class="btn btn-secondary"
-  onclick="setPlanCurrency('usd')"
->
-USD 🌍
+  onclick="setPlanCurrency('usd')">
+  USD 🌍
 </button>
 
 </div>
 
-<div
-  id="plans-container"
-  class="plans-grid"
->
-<div class="loading">
+<div id="plans-container"
+     class="plans">
 در حال بارگذاری پلن‌ها...
-</div>
-</div>
-
 </div>
 
 </section>
 
 <!-- ADMIN LOGIN -->
 
-<section
-  id="view-admin-login"
-  class="view"
->
+<section id="view-admin"
+         class="view">
 
-<div class="card form">
+<div id="admin-login-box"
+     class="card form-card">
 
-<h2>
-🛠️ ورود مدیریت
-</h2>
+<h2>🛠️ ورود مدیریت</h2>
 
 <input
   id="admin-password"
   class="input"
   type="password"
-  placeholder="رمز مدیریت"
->
-
-<div id="admin-login-message"></div>
+  placeholder="رمز مدیریت">
 
 <button
   class="btn btn-primary"
   style="width:100%;"
-  onclick="doAdminLogin()"
->
-ورود
+  onclick="doAdminLogin()">
+  ورود
 </button>
 
 </div>
 
-</section>
-
-<!-- ADMIN -->
-
-<section
-  id="view-admin"
-  class="view"
->
+<div id="admin-panel"
+     class="hidden">
 
 <div class="card">
 
-<h2>
-🛠️ پنل مدیریت
-</h2>
+<h2>🛠️ پنل مدیریت</h2>
 
-<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<div class="admin-actions">
 
 <button
   class="btn btn-secondary"
-  onclick="loadAdminUsers()"
->
-👥 کاربران
+  onclick="loadAdminUsers()">
+  👥 کاربران
 </button>
 
 <button
   class="btn btn-secondary"
-  onclick="loadAdminPayments()"
->
-💳 تراکنش‌ها
+  onclick="loadAdminPayments()">
+  💳 تراکنش‌ها
 </button>
 
 <button
   class="btn btn-secondary"
-  onclick="showAdjustBalanceForm()"
->
-💰 تعدیل موجودی
+  onclick="showAdjustBalanceForm()">
+  💰 تعدیل موجودی
 </button>
 
 <button
   class="btn btn-danger"
-  onclick="adminLogout()"
->
-خروج
+  onclick="adminLogout()">
+  خروج
 </button>
 
 </div>
 
-<div id="admin-content" style="margin-top:20px;">
+<div id="admin-content"></div>
+
 </div>
 
 </div>
@@ -3508,58 +3431,89 @@ USD 🌍
 
 </main>
 
-<footer class="footer">
-
+<footer>
 © 2026 ابزارک — دستیار هوش مصنوعی چندزبانه
-
 </footer>
-
-</div>
 
 <script>
 
-let authToken =
+const API = "";
+
+let currentPlanCurrency = "irt";
+let plansCache = null;
+
+let pwaPrompt = null;
+
+let userToken =
   localStorage.getItem("abzarak_token") || "";
 
 let adminToken =
   localStorage.getItem("abzarak_admin_token") || "";
 
-let currentCurrency = "irt";
+function api(path, options = {}) {
 
-let deferredInstallPrompt = null;
+  const headers =
+    options.headers || {};
 
-const $ = id =>
-  document.getElementById(id);
+  headers["Content-Type"] =
+    "application/json";
 
-function escapeHtml(value) {
+  if (userToken) {
+    headers["Authorization"] =
+      "Bearer " + userToken;
+  }
 
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return fetch(
+    API + path,
+    {
+      ...options,
+      headers
+    }
+  );
+}
 
+function adminApi(path, options = {}) {
+
+  const headers =
+    options.headers || {};
+
+  headers["Content-Type"] =
+    "application/json";
+
+  if (adminToken) {
+    headers["Authorization"] =
+      "Bearer " + adminToken;
+  }
+
+  return fetch(
+    API + path,
+    {
+      ...options,
+      headers
+    }
+  );
 }
 
 function showView(name) {
 
   document
     .querySelectorAll(".view")
-    .forEach(v =>
-      v.classList.remove("active")
+    .forEach(view =>
+      view.classList.remove("active")
     );
 
   const target =
-    $("view-" + name);
+    document.getElementById(
+      "view-" + name
+    );
 
   if (target) {
     target.classList.add("active");
   }
 
   window.scrollTo({
-    top: 0,
-    behavior: "smooth"
+    top:0,
+    behavior:"smooth"
   });
 
   if (name === "account") {
@@ -3570,113 +3524,42 @@ function showView(name) {
     loadPlans();
   }
 
+  if (name === "admin") {
+    if (adminToken) {
+      showAdminPanel();
+    }
+  }
 }
 
-function setMessage(
-  id,
-  message,
-  type = ""
-) {
-
-  const el = $(id);
-
-  if (!el) return;
-
-  el.innerHTML =
-    message
-      ? '<div class="notice ' +
-        escapeHtml(type) +
-        '">' +
-        escapeHtml(message) +
-        "</div>"
-      : "";
-
-}
-
-async function api(
-  path,
-  options = {}
-) {
-
-  const headers = {
-    ...(options.headers || {})
-  };
-
-  if (
-    options.body &&
-    !headers["Content-Type"]
-  ) {
-    headers["Content-Type"] =
-      "application/json";
-  }
-
-  if (authToken) {
-    headers.Authorization =
-      "Bearer " + authToken;
-  }
-
-  const response =
-    await fetch(
-      path,
-      {
-        ...options,
-        headers
-      }
-    );
-
-  const text =
-    await response.text();
-
-  let data = {};
-
-  try {
-    data =
-      text
-        ? JSON.parse(text)
-        : {};
-  } catch {
-    data = {
-      error:
-        text ||
-        "پاسخ نامعتبر از سرور"
-    };
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "خطای سرور"
-    );
-  }
-
-  return data;
-
+function showMessage(message) {
+  alert(message);
 }
 
 async function doSignup() {
 
   const name =
-    $("signup-name").value.trim();
+    document.getElementById(
+      "signup-name"
+    ).value.trim();
 
   const email =
-    $("signup-email").value.trim();
+    document.getElementById(
+      "signup-email"
+    ).value.trim();
 
   const password =
-    $("signup-password").value;
-
-  setMessage(
-    "signup-message",
-    ""
-  );
+    document.getElementById(
+      "signup-password"
+    ).value;
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/signup",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             name,
             email,
             password
@@ -3684,164 +3567,322 @@ async function doSignup() {
         }
       );
 
-    authToken =
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در ثبت‌نام"
+      );
+    }
+
+    userToken =
       data.token;
 
     localStorage.setItem(
       "abzarak_token",
-      authToken
+      userToken
     );
 
-    setMessage(
-      "signup-message",
-      "ثبت‌نام با موفقیت انجام شد.",
-      "success"
+    showMessage(
+      "ثبت‌نام با موفقیت انجام شد."
     );
 
-    setTimeout(
-      () => showView("account"),
-      600
+    showView("account");
+
+  } catch(error) {
+
+    showMessage(
+      error.message
     );
-
-  } catch (error) {
-
-    setMessage(
-      "signup-message",
-      error.message,
-      "error"
-    );
-
   }
-
 }
 
 async function doLogin() {
 
   const email =
-    $("login-email").value.trim();
+    document.getElementById(
+      "login-email"
+    ).value.trim();
 
   const password =
-    $("login-password").value;
-
-  setMessage(
-    "login-message",
-    ""
-  );
+    document.getElementById(
+      "login-password"
+    ).value;
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/login",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             email,
             password
           })
         }
       );
 
-    authToken =
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در ورود"
+      );
+    }
+
+    userToken =
       data.token;
 
     localStorage.setItem(
       "abzarak_token",
-      authToken
+      userToken
     );
 
-    setMessage(
-      "login-message",
-      "ورود موفق بود.",
-      "success"
+    showMessage(
+      "ورود موفق بود."
     );
 
-    setTimeout(
-      () => showView("account"),
-      400
+    showView("account");
+
+  } catch(error) {
+
+    showMessage(
+      error.message
+    );
+  }
+}
+
+async function loadAccount() {
+
+  const box =
+    document.getElementById(
+      "account-content"
     );
 
-  } catch (error) {
+  box.innerHTML =
+    "در حال دریافت اطلاعات...";
 
-    setMessage(
-      "login-message",
-      error.message,
-      "error"
-    );
+  if (!userToken) {
 
+    box.innerHTML = `
+      <p class="muted">
+        برای مشاهده حساب ابتدا وارد شوید.
+      </p>
+
+      <button
+        class="btn btn-primary"
+        onclick="showView('login')">
+        🔑 ورود
+      </button>
+
+      <button
+        class="btn btn-secondary"
+        onclick="showView('signup')">
+        📝 ثبت‌نام
+      </button>
+    `;
+
+    return;
   }
 
+  try {
+
+    const response =
+      await api(
+        "/api/me"
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      userToken = "";
+
+      localStorage.removeItem(
+        "abzarak_token"
+      );
+
+      throw new Error(
+        data.error ||
+        "نشست نامعتبر است."
+      );
+    }
+
+    const user =
+      data.user;
+
+    box.innerHTML = `
+
+      <div class="account-grid">
+
+        <div class="card">
+          <div class="muted">
+            نام
+          </div>
+          <div class="account-value">
+            ${escapeHtml(
+              user.name || "کاربر"
+            )}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            ایمیل
+          </div>
+          <div class="account-value"
+               style="font-size:17px;word-break:break-all;">
+            ${escapeHtml(
+              user.email
+            )}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted">
+            موجودی
+          </div>
+          <div class="account-value">
+            ${formatNumber(
+              user.balance || 0
+            )}
+            تومان
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+
+        <button
+          class="btn btn-primary"
+          onclick="showView('ai')">
+          🤖 ورود به هوش مصنوعی
+        </button>
+
+        <button
+          class="btn btn-secondary"
+          onclick="showView('plans')">
+          💎 خرید اشتراک
+        </button>
+
+        <button
+          class="btn btn-danger"
+          onclick="logout()">
+          خروج از حساب
+        </button>
+
+      </div>
+
+      <div class="notice">
+        💡 بخش برداشت موجودی برای مدیریت
+        مالی در حال آماده‌سازی است.
+      </div>
+    `;
+
+  } catch(error) {
+
+    box.innerHTML =
+      `<p class="muted">
+        ${escapeHtml(
+          error.message
+        )}
+      </p>`;
+
+  }
+}
+
+function logout() {
+
+  userToken = "";
+
+  localStorage.removeItem(
+    "abzarak_token"
+  );
+
+  showView("home");
 }
 
 async function doForgotPassword() {
 
   const email =
-    $("forgot-email").value.trim();
-
-  setMessage(
-    "forgot-message",
-    ""
-  );
+    document.getElementById(
+      "forgot-email"
+    ).value.trim();
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/forgot-password",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             email
           })
         }
       );
 
-    setMessage(
-      "forgot-message",
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در ارسال کد"
+      );
+    }
+
+    showMessage(
       data.message ||
-        "کد ارسال شد.",
-      "success"
+      "کد ارسال شد."
     );
 
-    $("reset-email").value =
-      email;
+    document.getElementById(
+      "reset-email"
+    ).value = email;
 
-  } catch (error) {
+    showView("reset");
 
-    setMessage(
-      "forgot-message",
-      error.message,
-      "error"
+  } catch(error) {
+
+    showMessage(
+      error.message
     );
-
   }
-
 }
 
 async function doResetPassword() {
 
   const email =
-    $("reset-email").value.trim();
+    document.getElementById(
+      "reset-email"
+    ).value.trim();
 
   const code =
-    $("reset-code").value.trim();
+    document.getElementById(
+      "reset-code"
+    ).value.trim();
 
   const newPassword =
-    $("reset-password").value;
-
-  setMessage(
-    "reset-message",
-    ""
-  );
+    document.getElementById(
+      "reset-password"
+    ).value;
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/reset-password",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             email,
             code,
             newPassword
@@ -3849,494 +3890,444 @@ async function doResetPassword() {
         }
       );
 
-    setMessage(
-      "reset-message",
-      data.message ||
-        "رمز تغییر کرد.",
-      "success"
-    );
-
-    setTimeout(
-      () => showView("login"),
-      900
-    );
-
-  } catch (error) {
-
-    setMessage(
-      "reset-message",
-      error.message,
-      "error"
-    );
-
-  }
-
-}
-
-async function loadAccount() {
-
-  const container =
-    $("account-content");
-
-  if (!container) return;
-
-  if (!authToken) {
-
-    container.innerHTML = `
-      <div class="notice">
-        برای مشاهده حساب ابتدا وارد شوید.
-      </div>
-
-      <button
-        class="btn btn-primary"
-        onclick="showView('login')"
-      >
-        ورود
-      </button>
-    `;
-
-    return;
-
-  }
-
-  try {
-
     const data =
-      await api(
-        "/api/me"
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در تغییر رمز"
       );
+    }
 
-    const user =
-      data.user;
-
-    container.innerHTML = `
-      <div class="account-box">
-
-        <div class="stat">
-          👤 نام
-          <strong>
-            ${escapeHtml(
-              user.name || "-"
-            )}
-          </strong>
-        </div>
-
-        <div class="stat">
-          📧 ایمیل
-          <strong style="font-size:16px;">
-            ${escapeHtml(
-              user.email
-            )}
-          </strong>
-        </div>
-
-        <div class="stat">
-          💰 موجودی
-          <strong>
-            ${Number(
-              user.balance || 0
-            ).toLocaleString("fa-IR")}
-          </strong>
-        </div>
-
-      </div>
-
-      <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
-
-        <button
-          class="btn btn-primary"
-          onclick="showView('ai')"
-        >
-          🤖 ورود به هوش مصنوعی
-        </button>
-
-        <button
-          class="btn btn-secondary"
-          onclick="showView('plans')"
-        >
-          💎 خرید اشتراک
-        </button>
-
-        <button
-          class="btn btn-danger"
-          onclick="logout()"
-        >
-          خروج
-        </button>
-
-      </div>
-    `;
-
-  } catch {
-
-    localStorage.removeItem(
-      "abzarak_token"
+    showMessage(
+      data.message ||
+      "رمز تغییر کرد."
     );
 
-    authToken = "";
+    showView("login");
 
-    container.innerHTML = `
-      <div class="notice error">
-        نشست شما معتبر نیست. دوباره وارد شوید.
-      </div>
-    `;
+  } catch(error) {
 
+    showMessage(
+      error.message
+    );
   }
-
-}
-
-function logout() {
-
-  authToken = "";
-
-  localStorage.removeItem(
-    "abzarak_token"
-  );
-
-  showView("home");
-
-}
-
-function addChatMessage(
-  text,
-  type
-) {
-
-  const container =
-    $("chat-messages");
-
-  const div =
-    document.createElement("div");
-
-  div.className =
-    "msg " + type;
-
-  div.textContent =
-    text;
-
-  container.appendChild(div);
-
-  container.scrollTop =
-    container.scrollHeight;
-
 }
 
 async function sendAiMessage() {
 
-  if (!authToken) {
-
-    showView("login");
-
-    return;
-
-  }
-
   const input =
-    $("ai-input");
+    document.getElementById(
+      "ai-input"
+    );
+
+  const chat =
+    document.getElementById(
+      "chat"
+    );
 
   const message =
     input.value.trim();
 
-  if (!message) return;
+  if (!message) {
+    return;
+  }
+
+  if (!userToken) {
+
+    showMessage(
+      "برای استفاده از هوش مصنوعی ابتدا وارد حساب شوید."
+    );
+
+    showView("login");
+
+    return;
+  }
+
+  addChatMessage(
+    "user",
+    message
+  );
 
   input.value = "";
 
+  const loadingId =
+    "loading-" + Date.now();
+
   addChatMessage(
-    message,
-    "user"
+    "ai",
+    "در حال پاسخ...",
+    loadingId
   );
-
-  const loading =
-    document.createElement("div");
-
-  loading.className =
-    "msg ai";
-
-  loading.textContent =
-    "در حال فکر کردن...";
-
-  loading.id =
-    "ai-loading-message";
-
-  $("chat-messages")
-    .appendChild(loading);
-
-  $("chat-messages").scrollTop =
-    $("chat-messages").scrollHeight;
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/ai/chat",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             message
           })
         }
       );
 
-    loading.remove();
+    const data =
+      await response.json();
+
+    const loading =
+      document.getElementById(
+        loadingId
+      );
+
+    if (loading) {
+      loading.remove();
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در هوش مصنوعی"
+      );
+    }
 
     addChatMessage(
+      "ai",
       data.reply ||
-        "پاسخی دریافت نشد.",
-      "ai"
+      "پاسخی دریافت نشد."
     );
 
-  } catch (error) {
+  } catch(error) {
 
-    loading.remove();
+    const loading =
+      document.getElementById(
+        loadingId
+      );
+
+    if (loading) {
+      loading.remove();
+    }
 
     addChatMessage(
-      "خطا: " +
-        error.message,
-      "ai"
+      "ai",
+      "❌ " +
+      error.message
+    );
+  }
+}
+
+function addChatMessage(
+  type,
+  text,
+  id = ""
+) {
+
+  const chat =
+    document.getElementById(
+      "chat"
     );
 
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  div.className =
+    "message " + type;
+
+  if (id) {
+    div.id = id;
   }
 
+  div.textContent =
+    text;
+
+  chat.appendChild(div);
+
+  chat.scrollTop =
+    chat.scrollHeight;
 }
 
 async function loadPlans() {
 
   const container =
-    $("plans-container");
+    document.getElementById(
+      "plans-container"
+    );
 
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
   container.innerHTML =
-    '<div class="loading">در حال بارگذاری...</div>';
+    "در حال بارگذاری پلن‌ها...";
 
   try {
 
-    const data =
-      await api(
-        "/api/plans"
-      );
+    if (!plansCache) {
 
-    renderPlans(
-      currentCurrency === "usd"
-        ? data.plans_usd
-        : data.plans
-    );
+      const response =
+        await api(
+          "/api/plans"
+        );
 
-  } catch (error) {
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          "خطا در دریافت پلن‌ها"
+        );
+      }
+
+      plansCache = data;
+    }
+
+    renderPlans();
+
+  } catch(error) {
 
     container.innerHTML =
-      '<div class="notice error">' +
-      escapeHtml(
-        error.message
-      ) +
-      "</div>";
-
+      `<div class="card">
+        ❌ ${escapeHtml(
+          error.message
+        )}
+      </div>`;
   }
-
 }
 
-function setPlanCurrency(
-  currency
-) {
-
-  currentCurrency =
-    currency;
-
-  $("currency-irt")
-    .classList.toggle(
-      "active",
-      currency === "irt"
-    );
-
-  $("currency-usd")
-    .classList.toggle(
-      "active",
-      currency === "usd"
-    );
-
-  loadPlans();
-
-}
-
-function renderPlans(
-  plans
-) {
+function renderPlans() {
 
   const container =
-    $("plans-container");
+    document.getElementById(
+      "plans-container"
+    );
 
-  container.innerHTML = "";
+  if (!plansCache) {
+    return;
+  }
 
-  plans.forEach(
-    (plan, index) => {
+  const plans =
+    currentPlanCurrency === "usd"
+      ? plansCache.plans_usd
+      : plansCache.plans;
 
-      const div =
-        document.createElement(
-          "div"
-        );
+  container.innerHTML =
+    plans.map(
+      (plan, index) => {
 
-      div.className =
-        "plan " +
-        (
-          index === 1
-            ? "featured"
-            : ""
-        );
+        const isUsd =
+          currentPlanCurrency ===
+          "usd";
 
-      const isUsd =
-        currentCurrency === "usd";
+        const price =
+          isUsd
+            ? `$${plan.price_usd}`
+            : formatNumber(
+                plan.price_toman
+              );
 
-      const price =
-        isUsd
-          ? "$" +
-            Number(
-              plan.price_usd || 0
+        const period =
+          "ماهانه";
+
+        const features =
+          (plan.features || [])
+            .map(
+              feature =>
+                `<li>${escapeHtml(
+                  feature
+                )}</li>`
             )
-          : Number(
-              plan.price_toman || 0
-            ).toLocaleString(
-              "fa-IR"
-            ) +
-            " تومان";
+            .join("");
 
-      const features =
-        (plan.features || [])
-          .map(
-            feature =>
-              "<li>" +
-              escapeHtml(
-                feature
-              ) +
-              "</li>"
-          )
-          .join("");
+        const popular =
+          (
+            currentPlanCurrency ===
+            "irt" &&
+            (
+              plan.id === "pro" ||
+              plan.id === "special"
+            )
+          ) ||
+          (
+            currentPlanCurrency ===
+            "usd" &&
+            plan.id === "usd_pro"
+          );
 
-      div.innerHTML = `
-        <h3>
-          ${escapeHtml(
-            plan.name
-          )}
-        </h3>
-
-        <div class="price">
-          ${price}
-        </div>
-
-        <p>
-          ماهانه
-        </p>
-
-        <ul>
-          ${features}
-        </ul>
-
-        ${
-          plan.id === "free"
+        const buyButton =
+          plan.price_toman === 0 ||
+          plan.price_usd === 0
             ? `
               <button
                 class="btn btn-secondary"
                 style="width:100%;"
-                onclick="showView('ai')"
-              >
-                شروع رایگان
+                onclick="showView('ai')">
+                شروع استفاده
               </button>
             `
             : `
               <button
                 class="btn btn-primary"
                 style="width:100%;"
-                onclick="buyPlan('${escapeHtml(
-                  plan.id
-                )}')"
-              >
-                خرید اشتراک
+                onclick="buyPlan('${plan.id}')">
+                💳 خرید این پلن
               </button>
-            `
-        }
+            `;
 
-      `;
+        return `
+          <div class="plan ${
+            popular
+              ? "popular"
+              : ""
+          }">
 
-      container.appendChild(
-        div
-      );
+            ${
+              popular
+                ? `
+                <div class="popular-label">
+                  محبوب
+                </div>
+                `
+                : ""
+            }
 
-    }
-  );
+            <h3>
+              ${escapeHtml(
+                plan.name
+              )}
+            </h3>
 
+            <div class="price">
+              ${price}
+              <small>
+                ${isUsd
+                  ? " / month"
+                  : " تومان / ماه"}
+              </small>
+            </div>
+
+            <ul>
+              ${features}
+            </ul>
+
+            ${buyButton}
+
+          </div>
+        `;
+      }
+    ).join("");
+}
+
+function setPlanCurrency(
+  currency
+) {
+
+  currentPlanCurrency =
+    currency;
+
+  const irt =
+    document.getElementById(
+      "currency-irt"
+    );
+
+  const usd =
+    document.getElementById(
+      "currency-usd"
+    );
+
+  if (irt) {
+    irt.classList.toggle(
+      "active",
+      currency === "irt"
+    );
+  }
+
+  if (usd) {
+    usd.classList.toggle(
+      "active",
+      currency === "usd"
+    );
+  }
+
+  renderPlans();
 }
 
 async function buyPlan(
   planId
 ) {
 
-  if (!authToken) {
+  if (!userToken) {
+
+    showMessage(
+      "برای خرید ابتدا وارد حساب شوید."
+    );
 
     showView("login");
 
     return;
-
   }
 
   try {
 
-    const data =
+    const response =
       await api(
         "/api/payment/request",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             planId
           })
         }
       );
 
-    if (
-      data.payment_url
-    ) {
+    const data =
+      await response.json();
 
-      window.location.href =
-        data.payment_url;
-
-    } else {
-
-      alert(
-        "لینک پرداخت دریافت نشد."
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا در ایجاد پرداخت"
       );
-
     }
 
-  } catch (error) {
+    if (
+      !data.payment_url
+    ) {
+      throw new Error(
+        "لینک پرداخت دریافت نشد."
+      );
+    }
 
-    alert(
+    window.location.href =
+      data.payment_url;
+
+  } catch(error) {
+
+    showMessage(
       error.message
     );
-
   }
-
 }
 
 async function doAdminLogin() {
 
   const password =
-    $("admin-password").value;
-
-  setMessage(
-    "admin-login-message",
-    ""
-  );
+    document.getElementById(
+      "admin-password"
+    ).value;
 
   try {
 
     const response =
-      await fetch(
+      await adminApi(
         "/api/admin/login",
         {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             password
           })
         }
@@ -4360,134 +4351,115 @@ async function doAdminLogin() {
       adminToken
     );
 
-    showView("admin");
+    showAdminPanel();
 
-    loadAdminUsers();
+  } catch(error) {
 
-  } catch (error) {
-
-    setMessage(
-      "admin-login-message",
-      error.message,
-      "error"
+    showMessage(
+      error.message
     );
-
   }
-
 }
 
-async function adminApi(
-  path,
-  options = {}
-) {
+function showAdminPanel() {
 
-  const headers = {
-    ...(options.headers || {}),
-    Authorization:
-      "Bearer " +
-      adminToken
-  };
+  document
+    .getElementById(
+      "admin-login-box"
+    )
+    .classList.add("hidden");
 
-  if (
-    options.body &&
-    !headers["Content-Type"]
-  ) {
-    headers["Content-Type"] =
-      "application/json";
-  }
+  document
+    .getElementById(
+      "admin-panel"
+    )
+    .classList.remove("hidden");
 
-  const response =
-    await fetch(
-      path,
-      {
-        ...options,
-        headers
-      }
-    );
-
-  const data =
-    await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      "خطای مدیریت"
-    );
-  }
-
-  return data;
-
+  loadAdminUsers();
 }
 
 async function loadAdminUsers() {
 
-  const container =
-    $("admin-content");
+  const content =
+    document.getElementById(
+      "admin-content"
+    );
 
-  container.innerHTML =
-    '<div class="loading">در حال دریافت کاربران...</div>';
+  content.innerHTML =
+    "در حال دریافت کاربران...";
 
   try {
 
-    const data =
+    const response =
       await adminApi(
         "/api/admin/users"
       );
 
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا"
+      );
+    }
+
     const users =
       data.users || [];
 
-    if (!users.length) {
+    content.innerHTML = `
 
-      container.innerHTML =
-        '<div class="notice">کاربری وجود ندارد.</div>';
-
-      return;
-
-    }
-
-    container.innerHTML = `
       <h3>👥 کاربران</h3>
 
-      <div style="overflow:auto;">
+      <div class="table-wrap">
 
-      <table class="admin-table">
+      <table>
 
         <thead>
           <tr>
             <th>نام</th>
             <th>ایمیل</th>
             <th>موجودی</th>
+            <th>تاریخ</th>
           </tr>
         </thead>
 
         <tbody>
 
-          ${users.map(
-            user => `
-              <tr>
-                <td>
-                  ${escapeHtml(
-                    user.name || "-"
-                  )}
-                </td>
+          ${
+            users.map(
+              user => `
+                <tr>
+                  <td>
+                    ${escapeHtml(
+                      user.name ||
+                      "کاربر"
+                    )}
+                  </td>
 
-                <td>
-                  ${escapeHtml(
-                    user.email
-                  )}
-                </td>
+                  <td>
+                    ${escapeHtml(
+                      user.email
+                    )}
+                  </td>
 
-                <td>
-                  ${Number(
-                    user.balance || 0
-                  ).toLocaleString(
-                    "fa-IR"
-                  )}
-                </td>
-              </tr>
-            `
-          ).join("")}
+                  <td>
+                    ${formatNumber(
+                      user.balance || 0
+                    )}
+                    تومان
+                  </td>
+
+                  <td>
+                    ${escapeHtml(
+                      user.created_at || ""
+                    )}
+                  </td>
+                </tr>
+              `
+            ).join("")
+          }
 
         </tbody>
 
@@ -4496,43 +4468,54 @@ async function loadAdminUsers() {
       </div>
     `;
 
-  } catch (error) {
+  } catch(error) {
 
-    container.innerHTML =
-      '<div class="notice error">' +
-      escapeHtml(
-        error.message
-      ) +
-      "</div>";
-
+    content.innerHTML =
+      `<div class="notice">
+        ${escapeHtml(
+          error.message
+        )}
+      </div>`;
   }
-
 }
 
 async function loadAdminPayments() {
 
-  const container =
-    $("admin-content");
+  const content =
+    document.getElementById(
+      "admin-content"
+    );
 
-  container.innerHTML =
-    '<div class="loading">در حال دریافت تراکنش‌ها...</div>';
+  content.innerHTML =
+    "در حال دریافت تراکنش‌ها...";
 
   try {
 
-    const data =
+    const response =
       await adminApi(
         "/api/admin/payments"
       );
 
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا"
+      );
+    }
+
     const payments =
       data.payments || [];
 
-    container.innerHTML = `
+    content.innerHTML = `
+
       <h3>💳 تراکنش‌ها</h3>
 
-      <div style="overflow:auto;">
+      <div class="table-wrap">
 
-      <table class="admin-table">
+      <table>
 
         <thead>
           <tr>
@@ -4540,43 +4523,65 @@ async function loadAdminPayments() {
             <th>پلن</th>
             <th>مبلغ</th>
             <th>وضعیت</th>
+            <th>تاریخ</th>
           </tr>
         </thead>
 
         <tbody>
 
-          ${payments.map(
-            payment => `
-              <tr>
-                <td>
-                  ${escapeHtml(
-                    payment.email
-                  )}
-                </td>
+        ${
+          payments.map(
+            payment => {
 
-                <td>
-                  ${escapeHtml(
-                    payment.plan_id
-                  )}
-                </td>
+              const status =
+                payment.status ||
+                "";
 
-                <td>
-                  ${Number(
-                    payment.amount_toman || 0
-                  ).toLocaleString(
-                    "fa-IR"
-                  )}
-                  تومان
-                </td>
+              return `
+                <tr>
 
-                <td>
-                  ${escapeHtml(
-                    payment.status
-                  )}
-                </td>
-              </tr>
-            `
-          ).join("")}
+                  <td>
+                    ${escapeHtml(
+                      payment.email ||
+                      ""
+                    )}
+                  </td>
+
+                  <td>
+                    ${escapeHtml(
+                      payment.plan_id ||
+                      ""
+                    )}
+                  </td>
+
+                  <td>
+                    ${formatNumber(
+                      payment.amount_toman ||
+                      0
+                    )}
+                    تومان
+                  </td>
+
+                  <td>
+                    <span class="status status-${escapeHtml(status)}">
+                      ${escapeHtml(
+                        status
+                      )}
+                    </span>
+                  </td>
+
+                  <td>
+                    ${escapeHtml(
+                      payment.created_at ||
+                      ""
+                    )}
+                  </td>
+
+                </tr>
+              `;
+            }
+          ).join("")
+        }
 
         </tbody>
 
@@ -4585,83 +4590,85 @@ async function loadAdminPayments() {
       </div>
     `;
 
-  } catch (error) {
+  } catch(error) {
 
-    container.innerHTML =
-      '<div class="notice error">' +
-      escapeHtml(
-        error.message
-      ) +
-      "</div>";
-
+    content.innerHTML =
+      `<div class="notice">
+        ${escapeHtml(
+          error.message
+        )}
+      </div>`;
   }
-
 }
 
 function showAdjustBalanceForm() {
 
-  $("admin-content").innerHTML = `
+  const content =
+    document.getElementById(
+      "admin-content"
+    );
 
-    <h3>
-      💰 تعدیل موجودی
-    </h3>
+  content.innerHTML = `
+
+    <h3>💰 تعدیل موجودی</h3>
+
+    <p class="muted">
+      مبلغ مثبت برای افزایش موجودی
+      و مبلغ منفی برای کاهش موجودی است.
+      مبلغ به تومان وارد شود.
+    </p>
 
     <input
       id="adjust-user-id"
       class="input"
-      placeholder="شناسه کاربر"
-    >
+      placeholder="شناسه کاربر">
 
     <input
       id="adjust-amount"
       class="input"
       type="number"
-      placeholder="مبلغ به تومان - برای کسر منفی وارد کنید"
-    >
+      placeholder="مبلغ به تومان">
 
     <input
       id="adjust-reason"
       class="input"
-      placeholder="دلیل"
-    >
+      placeholder="دلیل">
 
     <button
       class="btn btn-primary"
-      onclick="adjustBalance()"
-    >
-      ثبت
+      onclick="adjustBalance()">
+      ثبت تغییر
     </button>
-
-    <div
-      id="adjust-message"
-      style="margin-top:12px;"
-    ></div>
-
   `;
-
 }
 
 async function adjustBalance() {
 
   const userId =
-    $("adjust-user-id").value.trim();
+    document.getElementById(
+      "adjust-user-id"
+    ).value.trim();
 
   const amount =
     Number(
-      $("adjust-amount").value
+      document.getElementById(
+        "adjust-amount"
+      ).value
     );
 
   const reason =
-    $("adjust-reason").value.trim();
+    document.getElementById(
+      "adjust-reason"
+    ).value.trim();
 
   try {
 
-    const data =
+    const response =
       await adminApi(
         "/api/admin/adjust-balance",
         {
-          method: "POST",
-          body: JSON.stringify({
+          method:"POST",
+          body:JSON.stringify({
             userId,
             amount,
             reason
@@ -4669,26 +4676,28 @@ async function adjustBalance() {
         }
       );
 
-    $("adjust-message").innerHTML =
-      '<div class="notice success">' +
-      "موجودی جدید: " +
-      Number(
-        data.new_balance
-      ).toLocaleString("fa-IR") +
-      " تومان" +
-      "</div>";
+    const data =
+      await response.json();
 
-  } catch (error) {
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "خطا"
+      );
+    }
 
-    $("adjust-message").innerHTML =
-      '<div class="notice error">' +
-      escapeHtml(
-        error.message
-      ) +
-      "</div>";
+    showMessage(
+      "موجودی با موفقیت تغییر کرد."
+    );
 
+    loadAdminUsers();
+
+  } catch(error) {
+
+    showMessage(
+      error.message
+    );
   }
-
 }
 
 function adminLogout() {
@@ -4699,126 +4708,123 @@ function adminLogout() {
     "abzarak_admin_token"
   );
 
-  showView(
-    "admin-login"
-  );
+  document
+    .getElementById(
+      "admin-login-box"
+    )
+    .classList.remove("hidden");
 
+  document
+    .getElementById(
+      "admin-panel"
+    )
+    .classList.add("hidden");
+}
+
+function formatNumber(value) {
+
+  return Number(
+    value || 0
+  ).toLocaleString(
+    "fa-IR"
+  );
+}
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 function toggleLang() {
 
+  const html =
+    document.documentElement;
+
   const button =
-    $("lang-button");
+    document.getElementById(
+      "lang-button"
+    );
 
-  const current =
-    document.documentElement.lang;
+  if (
+    html.lang === "fa"
+  ) {
 
-  if (current === "fa") {
-
-    document.documentElement.lang =
-      "en";
-
-    document.documentElement.dir =
-      "ltr";
+    html.lang = "en";
+    html.dir = "ltr";
 
     button.textContent =
       "فارسی";
 
-    document
-      .querySelector(".hero h1")
-      .textContent =
-      "Your Smart AI Assistant";
-
-    document
-      .querySelector(".hero p")
-      .textContent =
-      "Chat with AI, ask questions, translate, create content and get help with everyday tasks.";
+    document.title =
+      "Abzarak | AI Assistant";
 
   } else {
 
-    document.documentElement.lang =
-      "fa";
-
-    document.documentElement.dir =
-      "rtl";
+    html.lang = "fa";
+    html.dir = "rtl";
 
     button.textContent =
       "English";
 
-    document
-      .querySelector(".hero h1")
-      .textContent =
-      "دستیار هوشمند شما، همیشه آماده";
-
-    document
-      .querySelector(".hero p")
-      .textContent =
-      "با ابزارک گفتگو کنید، سؤال بپرسید، ترجمه کنید، محتوا بسازید و کارهای روزمره خود را سریع‌تر انجام دهید.";
-
+    document.title =
+      "ابزارک | دستیار هوش مصنوعی چندزبانه";
   }
-
 }
 
-function initInstallPrompt() {
+window.addEventListener(
+  "beforeinstallprompt",
+  event => {
 
-  window.addEventListener(
-    "beforeinstallprompt",
-    event => {
+    event.preventDefault();
 
-      event.preventDefault();
+    pwaPrompt =
+      event;
 
-      deferredInstallPrompt =
-        event;
+    const button =
+      document.getElementById(
+        "install-app-btn"
+      );
 
-      $("install-app-btn")
-        .classList.remove(
-          "hidden"
-        );
-
+    if (button) {
+      button.classList.remove(
+        "hidden"
+      );
     }
-  );
-
-  window.addEventListener(
-    "appinstalled",
-    () => {
-
-      deferredInstallPrompt =
-        null;
-
-      $("install-app-btn")
-        .classList.add(
-          "hidden"
-        );
-
-    }
-  );
-
-}
+  }
+);
 
 async function installPwa() {
 
-  if (!deferredInstallPrompt) {
-
-    alert(
-      "اگر گزینه نصب نمایش داده نمی‌شود، از منوی Chrome گزینه «افزودن به صفحه اصلی» یا «Install app» را انتخاب کنید."
+  if (!pwaPrompt) {
+    showMessage(
+      "اگر مرورگر نصب اپ را پیشنهاد نمی‌کند، از منوی مرورگر گزینه «افزودن به صفحه اصلی» را انتخاب کنید."
     );
-
     return;
-
   }
 
-  deferredInstallPrompt.prompt();
+  pwaPrompt.prompt();
 
-  await deferredInstallPrompt.userChoice;
+  await pwaPrompt.userChoice;
 
-  deferredInstallPrompt =
-    null;
+  pwaPrompt = null;
 
-  $("install-app-btn")
-    .classList.add(
-      "hidden"
+  const button =
+    document.getElementById(
+      "install-app-btn"
     );
 
+  if (button) {
+    button.classList.add(
+      "hidden"
+    );
+  }
 }
 
 function handlePaymentResult() {
@@ -4831,112 +4837,82 @@ function handlePaymentResult() {
   const payment =
     params.get("payment");
 
-  if (!payment) return;
-
-  let message = "";
+  if (!payment) {
+    return;
+  }
 
   if (
     payment === "success"
   ) {
 
-    message =
-      "پرداخت با موفقیت انجام شد.";
+    alert(
+      "✅ پرداخت با موفقیت انجام شد و اشتراک شما فعال شد."
+    );
 
   } else if (
     payment === "cancel"
   ) {
 
-    message =
-      "پرداخت لغو شد.";
+    alert(
+      "پرداخت لغو شد."
+    );
 
   } else if (
     payment === "failed"
   ) {
 
-    message =
-      "پرداخت ناموفق بود.";
+    alert(
+      "❌ پرداخت تأیید نشد."
+    );
 
   } else if (
     payment === "error"
   ) {
 
-    message =
-      "خطا در پرداخت.";
-
-  }
-
-  if (message) {
-
-    setTimeout(
-      () => {
-        alert(message);
-        history.replaceState(
-          {},
-          "",
-          "/"
-        );
-      },
-      300
+    alert(
+      "❌ خطا در پرداخت."
     );
-
   }
 
+  history.replaceState(
+    {},
+    document.title,
+    "/"
+  );
 }
 
-window.addEventListener(
+document.addEventListener(
   "DOMContentLoaded",
   () => {
-
-    initInstallPrompt();
 
     handlePaymentResult();
 
     loadPlans();
 
-    if (authToken) {
+    if (userToken) {
       loadAccount();
     }
 
-  }
-);
-
-if ("serviceWorker" in navigator) {
-
-  window.addEventListener(
-    "load",
-    () => {
+    if ("serviceWorker" in navigator) {
 
       navigator.serviceWorker
-        .register(
-          "/sw.js"
-        )
-        .catch(
-          error =>
-            console.log(
-              "Service Worker:",
-              error
-            )
-        );
-
+        .register("/sw.js")
+        .catch(() => {});
     }
-  );
-
-}
+  }
+);
 
 </script>
 
 </body>
-</html>
-`;
+</html>`;
 }
 
 // =============================================================
 // ROBOTS
 // =============================================================
 
-function renderRobotsTxt(
-  baseUrl
-) {
+function renderRobotsTxt(baseUrl) {
   return `User-agent: *
 Allow: /
 
@@ -4948,9 +4924,7 @@ Sitemap: ${baseUrl}/sitemap.xml
 // SITEMAP
 // =============================================================
 
-function renderSitemapXml(
-  baseUrl
-) {
+function renderSitemapXml(baseUrl) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -4970,10 +4944,7 @@ function renderSitemapXml(
 
 export default {
 
-  async fetch(
-    request,
-    env
-  ) {
+  async fetch(request, env) {
 
     const url =
       new URL(request.url);
@@ -5022,7 +4993,6 @@ export default {
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5049,7 +5019,6 @@ export default {
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5074,7 +5043,6 @@ export default {
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5089,7 +5057,6 @@ export default {
       return html(
         renderHomepage()
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5106,14 +5073,13 @@ export default {
       return new Response(
         "",
         {
-          status: 200,
-          headers: {
+          status:200,
+          headers:{
             "Content-Type":
               "text/plain; charset=utf-8"
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5138,13 +5104,12 @@ export default {
           baseUrl
         ),
         {
-          headers: {
+          headers:{
             "Content-Type":
               "text/plain; charset=utf-8"
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
@@ -5169,17 +5134,16 @@ export default {
           baseUrl
         ),
         {
-          headers: {
+          headers:{
             "Content-Type":
               "application/xml; charset=utf-8"
           }
         }
       );
-
     }
 
     // ---------------------------------------------------------
-    // AUTH
+    // SIGNUP
     // ---------------------------------------------------------
 
     if (
@@ -5188,11 +5152,16 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleSignup(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // LOGIN
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5200,11 +5169,16 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleLogin(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // ME
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5212,11 +5186,16 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handleMe(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // FORGOT
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5224,11 +5203,16 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleForgotPassword(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // RESET
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5236,6 +5220,7 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleResetPassword(
         request,
         env
@@ -5252,6 +5237,7 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handlePlans();
     }
 
@@ -5265,6 +5251,7 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleAiChat(
         request,
         env
@@ -5272,7 +5259,7 @@ export default {
     }
 
     // ---------------------------------------------------------
-    // PAYMENT
+    // PAYMENT REQUEST
     // ---------------------------------------------------------
 
     if (
@@ -5281,11 +5268,16 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleCreatePayment(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // PAYMENT VERIFY
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5293,6 +5285,7 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handleVerifyPayment(
         request,
         env
@@ -5300,7 +5293,7 @@ export default {
     }
 
     // ---------------------------------------------------------
-    // ADMIN
+    // ADMIN LOGIN
     // ---------------------------------------------------------
 
     if (
@@ -5309,11 +5302,16 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleAdminLogin(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // ADMIN USERS
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5321,11 +5319,16 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handleAdminUsers(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // ADMIN PAYMENTS
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5333,11 +5336,16 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handleAdminPayments(
         request,
         env
       );
     }
+
+    // ---------------------------------------------------------
+    // ADMIN BALANCE
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
@@ -5345,6 +5353,7 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleAdminAdjustBalance(
         request,
         env
@@ -5362,7 +5371,5 @@ export default {
       },
       404
     );
-
   }
-
 };
