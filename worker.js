@@ -1,8 +1,9 @@
 
-// =============================================================
+     // =============================================================
 // worker.js — ابزارک: دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان
 //            + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
 //            + بازیابی رمز + پنل مدیریت + پرداخت زرین‌پال
+//            + PWA / Installable Android App
 //
 // Bindings required in Cloudflare dashboard:
 //   DB -> D1 database
@@ -176,6 +177,216 @@ function isValidEmail(email) {
 
 
 // =============================================================
+// PWA
+// =============================================================
+
+function getBaseUrl(request, env) {
+  return (
+    env.PUBLIC_BASE_URL ||
+    new URL(request.url).origin
+  ).replace(/\/+$/, "");
+}
+
+function renderManifest(baseUrl) {
+  return JSON.stringify(
+    {
+      name: "ابزارک | دستیار هوش مصنوعی",
+      short_name: "ابزارک",
+      description:
+        "دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان",
+      start_url: "/",
+      scope: "/",
+      display: "standalone",
+      display_override: [
+        "window-controls-overlay",
+        "standalone",
+      ],
+      orientation: "portrait-primary",
+      background_color: "#f4f6fb",
+      theme_color: "#12163a",
+      lang: "fa",
+      dir: "rtl",
+
+      categories: [
+        "productivity",
+        "utilities",
+        "education",
+      ],
+
+      icons: [
+        {
+          src: `${baseUrl}/icon.svg`,
+          sizes: "192x192",
+          type: "image/svg+xml",
+          purpose: "any maskable",
+        },
+        {
+          src: `${baseUrl}/icon.svg`,
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable",
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
+function renderIconSvg() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+>
+  <rect
+    width="512"
+    height="512"
+    rx="110"
+    fill="#12163a"
+  />
+
+  <circle
+    cx="256"
+    cy="245"
+    r="145"
+    fill="#2952e3"
+  />
+
+  <circle
+    cx="205"
+    cy="225"
+    r="18"
+    fill="white"
+  />
+
+  <circle
+    cx="307"
+    cy="225"
+    r="18"
+    fill="white"
+  />
+
+  <path
+    d="M185 285 Q256 340 327 285"
+    fill="none"
+    stroke="white"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+
+  <rect
+    x="226"
+    y="75"
+    width="60"
+    height="45"
+    rx="22"
+    fill="white"
+  />
+
+  <circle
+    cx="256"
+    cy="55"
+    r="18"
+    fill="#2952e3"
+  />
+
+  <text
+    x="256"
+    y="445"
+    text-anchor="middle"
+    font-family="Arial,sans-serif"
+    font-size="52"
+    font-weight="bold"
+    fill="white"
+  >AI</text>
+</svg>`;
+}
+
+function renderServiceWorker() {
+  return `
+const CACHE_NAME = "abzarak-pwa-v1";
+
+const APP_SHELL = [
+  "/",
+  "/manifest.json",
+  "/icon.svg"
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+
+  if (request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (
+          response &&
+          response.status === 200 &&
+          response.type === "basic"
+        ) {
+          const copy = response.clone();
+
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(request, copy);
+            })
+            .catch(() => {});
+        }
+
+        return response;
+      })
+      .catch(() =>
+        caches.match(request)
+          .then((cached) =>
+            cached ||
+            caches.match("/")
+          )
+      )
+  );
+});
+`;
+}
+
+
+// =============================================================
 // Authentication
 // =============================================================
 
@@ -219,7 +430,8 @@ function getAdminToken(request) {
 
   return auth.replace(
     /^Bearer\s+/i,
-    "");
+    ""
+  );
 }
 
 async function requireAdmin(request, env) {
@@ -2014,6 +2226,44 @@ function renderHomepage() {
   content="36032134"
 />
 
+<!-- ========================= PWA ========================= -->
+
+<link
+  rel="manifest"
+  href="/manifest.json"
+>
+
+<link
+  rel="icon"
+  href="/icon.svg"
+  type="image/svg+xml"
+>
+
+<meta
+  name="theme-color"
+  content="#12163a"
+>
+
+<meta
+  name="mobile-web-app-capable"
+  content="yes"
+>
+
+<meta
+  name="apple-mobile-web-app-capable"
+  content="yes"
+>
+
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="default"
+>
+
+<meta
+  name="apple-mobile-web-app-title"
+  content="ابزارک"
+>
+
 <!-- ========================= SEO ========================= -->
 
 <title>
@@ -2099,9 +2349,6 @@ function renderHomepage() {
   content="A multilingual AI assistant designed for users worldwide."
 >
 
-<!-- ====================================================== -->
-
-
 <style>
 
 * {
@@ -2166,7 +2413,25 @@ header p {
     0.85rem;
 }
 
-.lang-switch {
+.header-actions {
+  display:
+    flex;
+
+  gap:
+    8px;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  justify-content:
+    flex-end;
+}
+
+.lang-switch,
+.install-btn {
   background:
     rgba(255,255,255,0.12);
 
@@ -2191,6 +2456,14 @@ header p {
 
   white-space:
     nowrap;
+}
+
+.install-btn {
+  background:
+    #2952e3;
+
+  border-color:
+    #4d6ff0;
 }
 
 nav {
@@ -2597,9 +2870,7 @@ table th {
 
 </head>
 
-
 <body>
-
 
 <header>
 
@@ -2619,16 +2890,27 @@ table th {
 
   </div>
 
-  <button
-    class="lang-switch"
-    id="lang-switch-btn"
-    onclick="toggleLang()"
-  >
-    English
-  </button>
+  <div class="header-actions">
+
+    <button
+      class="install-btn hidden"
+      id="install-app-btn"
+      onclick="installPwa()"
+    >
+      📲 نصب اپ
+    </button>
+
+    <button
+      class="lang-switch"
+      id="lang-switch-btn"
+      onclick="toggleLang()"
+    >
+      English
+    </button>
+
+  </div>
 
 </header>
-
 
 <nav>
 
@@ -2662,11 +2944,7 @@ table th {
 
 </nav>
 
-
 <main>
-
-
-<!-- LOGIN -->
 
 <div
   id="view-login"
@@ -2730,8 +3008,6 @@ table th {
 </div>
 
 
-<!-- SIGNUP -->
-
 <div
   id="view-signup"
   class="card hidden"
@@ -2788,8 +3064,6 @@ table th {
 
 </div>
 
-
-<!-- FORGOT -->
 
 <div
   id="view-forgot"
@@ -2880,8 +3154,6 @@ table th {
 </div>
 
 
-<!-- ACCOUNT -->
-
 <div
   id="view-account"
   class="card hidden"
@@ -2914,8 +3186,6 @@ table th {
 
 </div>
 
-
-<!-- AI -->
 
 <div
   id="view-ai"
@@ -2957,8 +3227,6 @@ table th {
 
 </div>
 
-
-<!-- PLANS -->
 
 <div
   id="view-plans"
@@ -3002,8 +3270,6 @@ table th {
 </div>
 
 
-<!-- ADMIN LOGIN -->
-
 <div
   id="view-admin-login"
   class="card hidden"
@@ -3046,8 +3312,6 @@ table th {
 
 </div>
 
-
-<!-- ADMIN PANEL -->
 
 <div
   id="view-admin-panel"
@@ -3103,8 +3367,6 @@ table th {
 
 </div>
 
-
-<!-- SEO CONTENT -->
 
 <div
   class="card seo-content"
@@ -3189,11 +3451,134 @@ table th {
 
 </div>
 
-
 </main>
 
 
 <script>
+
+// =============================================================
+// PWA INSTALL
+// =============================================================
+
+let deferredInstallPrompt = null;
+
+window.addEventListener(
+  "beforeinstallprompt",
+  (event) => {
+
+    event.preventDefault();
+
+    deferredInstallPrompt =
+      event;
+
+    const button =
+      document.getElementById(
+        "install-app-btn"
+      );
+
+    if (button) {
+      button.classList.remove(
+        "hidden"
+      );
+    }
+  }
+);
+
+window.addEventListener(
+  "appinstalled",
+  () => {
+
+    deferredInstallPrompt =
+      null;
+
+    const button =
+      document.getElementById(
+        "install-app-btn"
+      );
+
+    if (button) {
+      button.classList.add(
+        "hidden"
+      );
+    }
+  }
+);
+
+async function installPwa() {
+
+  if (!deferredInstallPrompt) {
+
+    const message =
+      currentLang === "fa"
+        ? "اگر گزینه نصب نمایش داده نشد، از منوی سه‌نقطه Chrome گزینه «Install app» یا «افزودن به صفحه اصلی» را انتخاب کنید."
+        : "If the install prompt is not shown, open the Chrome menu and choose Install app or Add to Home screen.";
+
+    alert(message);
+
+    return;
+  }
+
+  try {
+
+    await deferredInstallPrompt.prompt();
+
+    await deferredInstallPrompt.userChoice;
+
+  } catch (err) {
+
+    console.error(
+      "PWA install error:",
+      err
+    );
+
+  }
+
+  deferredInstallPrompt =
+    null;
+
+  const button =
+    document.getElementById(
+      "install-app-btn"
+    );
+
+  if (button) {
+    button.classList.add(
+      "hidden"
+    );
+  }
+}
+
+
+// =============================================================
+// Service Worker registration
+// =============================================================
+
+if (
+  "serviceWorker" in navigator
+) {
+
+  window.addEventListener(
+    "load",
+    () => {
+
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then(() => {
+          console.log(
+            "Abzarak PWA Service Worker registered."
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "Service Worker registration failed:",
+            error
+          );
+        });
+
+    }
+  );
+
+}
 
 
 // =============================================================
@@ -5380,7 +5765,6 @@ showView(
     : 'login'
 );
 
-
 </script>
 
 </body>
@@ -5449,7 +5833,95 @@ export default {
     }
 
 
+    // =========================================================
+    // PWA manifest
+    // =========================================================
+
+    if (
+      url.pathname ===
+        "/manifest.json" &&
+      request.method === "GET"
+    ) {
+
+      const baseUrl =
+        getBaseUrl(
+          request,
+          env
+        );
+
+      return new Response(
+        renderManifest(
+          baseUrl
+        ),
+        {
+          headers: {
+            "Content-Type":
+              "application/manifest+json; charset=utf-8",
+
+            "Cache-Control":
+              "public, max-age=3600"
+          }
+        }
+      );
+    }
+
+
+    // =========================================================
+    // PWA Service Worker
+    // =========================================================
+
+    if (
+      url.pathname ===
+        "/sw.js" &&
+      request.method === "GET"
+    ) {
+
+      return new Response(
+        renderServiceWorker(),
+        {
+          headers: {
+            "Content-Type":
+              "application/javascript; charset=utf-8",
+
+            "Cache-Control":
+              "no-cache",
+
+            "Service-Worker-Allowed":
+              "/"
+          }
+        }
+      );
+    }
+
+
+    // =========================================================
+    // PWA Icon
+    // =========================================================
+
+    if (
+      url.pathname ===
+        "/icon.svg" &&
+      request.method === "GET"
+    ) {
+
+      return new Response(
+        renderIconSvg(),
+        {
+          headers: {
+            "Content-Type":
+              "image/svg+xml; charset=utf-8",
+
+            "Cache-Control":
+              "public, max-age=86400"
+          }
+        }
+      );
+    }
+
+
+    // =========================================================
     // Homepage
+    // =========================================================
 
     if (
       url.pathname === "/" &&
@@ -5461,7 +5933,9 @@ export default {
     }
 
 
+    // =========================================================
     // eNamad verification
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5483,7 +5957,9 @@ export default {
     }
 
 
+    // =========================================================
     // robots.txt
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5492,8 +5968,10 @@ export default {
     ) {
 
       const baseUrl =
-        env.PUBLIC_BASE_URL ||
-        url.origin;
+        getBaseUrl(
+          request,
+          env
+        );
 
       return new Response(
         renderRobotsTxt(
@@ -5509,7 +5987,9 @@ export default {
     }
 
 
+    // =========================================================
     // sitemap.xml
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5518,8 +5998,10 @@ export default {
     ) {
 
       const baseUrl =
-        env.PUBLIC_BASE_URL ||
-        url.origin;
+        getBaseUrl(
+          request,
+          env
+        );
 
       return new Response(
         renderSitemapXml(
@@ -5535,7 +6017,9 @@ export default {
     }
 
 
+    // =========================================================
     // Signup
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5549,7 +6033,9 @@ export default {
     }
 
 
+    // =========================================================
     // Login
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5563,7 +6049,9 @@ export default {
     }
 
 
+    // =========================================================
     // Me
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5577,7 +6065,9 @@ export default {
     }
 
 
+    // =========================================================
     // Forgot password
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5591,7 +6081,9 @@ export default {
     }
 
 
+    // =========================================================
     // Reset password
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5605,7 +6097,9 @@ export default {
     }
 
 
+    // =========================================================
     // Plans
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5619,7 +6113,9 @@ export default {
     }
 
 
+    // =========================================================
     // AI Chat
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5633,7 +6129,9 @@ export default {
     }
 
 
+    // =========================================================
     // Payment request
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5647,7 +6145,9 @@ export default {
     }
 
 
+    // =========================================================
     // Payment verification
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5661,7 +6161,9 @@ export default {
     }
 
 
+    // =========================================================
     // Admin login
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5675,7 +6177,9 @@ export default {
     }
 
 
+    // =========================================================
     // Admin users
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5689,7 +6193,9 @@ export default {
     }
 
 
+    // =========================================================
     // Admin payments
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5703,7 +6209,9 @@ export default {
     }
 
 
+    // =========================================================
     // Admin balance adjustment
+    // =========================================================
 
     if (
       url.pathname ===
@@ -5725,4 +6233,4 @@ export default {
       404
     );
   },
-};
+};     
