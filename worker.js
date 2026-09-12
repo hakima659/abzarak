@@ -1,42 +1,13 @@
-
-     // =============================================================
-// worker.js — ابزارک: دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان
-//            + احراز هویت + حساب + پلن‌ها + هوش مصنوعی
-//            + بازیابی رمز + پنل مدیریت + پرداخت زرین‌پال
-//            + PWA / Installable Android App
-//
-// Bindings required in Cloudflare dashboard:
-//   DB -> D1 database
-//   AI -> Workers AI binding
-//
-// Variables/Secrets required:
-//   ADMIN_PASSWORD
-//   RESEND_API_KEY
-//   RESEND_FROM_EMAIL
-//   ZARINPAL_MERCHANT_ID
-//   ZARINPAL_SANDBOX
-//   PUBLIC_BASE_URL -> https://abzarakai.ir
-//
-// D1 schema note:
-//   جدول payments باید ستون zarinpal_authority داشته باشد:
-//   ALTER TABLE payments ADD COLUMN zarinpal_authority TEXT;
-//
-//   برای پلن‌های دلاری:
-//   ALTER TABLE payments ADD COLUMN plan_currency TEXT DEFAULT 'irt';
-//
-//   برای تعدیل موجودی ادمین:
-//   CREATE TABLE IF NOT EXISTS balance_adjustments (
-//     id TEXT PRIMARY KEY,
-//     user_id TEXT NOT NULL,
-//     amount INTEGER NOT NULL,
-//     reason TEXT,
-//     created_at TEXT NOT NULL
-//   );
+// =============================================================
+// worker.js — ابزارک | دستیار هوش مصنوعی چندزبانه
+// Auth + Account + AI + Plans + ZarinPal + Admin + PWA + SEO
 // =============================================================
 
+const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
+const USD_TO_TOMAN_RATE = 70000;
 
 // =============================================================
-// Utilities
+// BASIC RESPONSE HELPERS
 // =============================================================
 
 function json(data, status = 200) {
@@ -51,8 +22,9 @@ function json(data, status = 200) {
   });
 }
 
-function html(content) {
+function html(content, status = 200) {
   return new Response(content, {
+    status,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
     },
@@ -65,25 +37,33 @@ function uuid() {
 
 function randomCode(len = 6) {
   const digits = "0123456789";
-  let out = "";
-
-  const bytes = crypto.getRandomValues(
-    new Uint8Array(len)
-  );
+  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  let result = "";
 
   for (let i = 0; i < len; i++) {
-    out += digits[bytes[i] % digits.length];
+    result += digits[bytes[i] % 10];
   }
 
-  return out;
+  return result;
 }
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
+}
+
+function getBaseUrl(request, env) {
+  return (env.PUBLIC_BASE_URL || new URL(request.url).origin)
+    .replace(/\/+$/, "");
+}
+
+// =============================================================
+// PASSWORD HASH
+// =============================================================
 
 async function hashPassword(password) {
   const iterations = 100000;
 
-  const saltBytes = crypto.getRandomValues(
-    new Uint8Array(16)
-  );
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
 
   const saltHex = [...saltBytes]
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -116,76 +96,71 @@ async function hashPassword(password) {
 }
 
 async function verifyPassword(password, stored) {
-  const parts = stored.split(":");
+  try {
+    const parts = String(stored || "").split(":");
 
-  if (
-    parts.length !== 4 ||
-    parts[0] !== "pbkdf2"
-  ) {
+    if (parts.length !== 4 || parts[0] !== "pbkdf2") {
+      return false;
+    }
+
+    const iterations = parseInt(parts[1], 10);
+
+    if (!Number.isFinite(iterations)) {
+      return false;
+    }
+
+    const saltPairs = parts[2].match(/.{1,2}/g);
+
+    if (!saltPairs) {
+      return false;
+    }
+
+    const saltBytes = new Uint8Array(
+      saltPairs.map((b) => parseInt(b, 16))
+    );
+
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password),
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits"]
+    );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: saltBytes,
+        iterations,
+        hash: "SHA-256",
+      },
+      keyMaterial,
+      256
+    );
+
+    const hashHex = [...new Uint8Array(derivedBits)]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    if (hashHex.length !== parts[3].length) {
+      return false;
+    }
+
+    let diff = 0;
+
+    for (let i = 0; i < hashHex.length; i++) {
+      diff |= hashHex.charCodeAt(i) ^ parts[3].charCodeAt(i);
+    }
+
+    return diff === 0;
+  } catch {
     return false;
   }
-
-  const iterations = parseInt(parts[1], 10);
-
-  const saltBytes = new Uint8Array(
-    parts[2]
-      .match(/.{1,2}/g)
-      .map((b) => parseInt(b, 16))
-  );
-
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    { name: "PBKDF2" },
-    false,
-    ["deriveBits"]
-  );
-
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: "PBKDF2",
-      salt: saltBytes,
-      iterations,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    256
-  );
-
-  const hashHex = [...new Uint8Array(derivedBits)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (hashHex.length !== parts[3].length) {
-    return false;
-  }
-
-  let diff = 0;
-
-  for (let i = 0; i < hashHex.length; i++) {
-    diff |=
-      hashHex.charCodeAt(i) ^
-      parts[3].charCodeAt(i);
-  }
-
-  return diff === 0;
 }
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 
 // =============================================================
 // PWA
 // =============================================================
-
-function getBaseUrl(request, env) {
-  return (
-    env.PUBLIC_BASE_URL ||
-    new URL(request.url).origin
-  ).replace(/\/+$/, "");
-}
 
 function renderManifest(baseUrl) {
   return JSON.stringify(
@@ -206,13 +181,11 @@ function renderManifest(baseUrl) {
       theme_color: "#12163a",
       lang: "fa",
       dir: "rtl",
-
       categories: [
         "productivity",
         "utilities",
         "education",
       ],
-
       icons: [
         {
           src: `${baseUrl}/icon.svg`,
@@ -234,80 +207,106 @@ function renderManifest(baseUrl) {
 }
 
 function renderIconSvg() {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="512"
-  height="512"
-  viewBox="0 0 512 512"
->
+  return `
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="512"
+     height="512"
+     viewBox="0 0 512 512">
+
+  <defs>
+    <linearGradient id="bg"
+      x1="0"
+      y1="0"
+      x2="1"
+      y2="1">
+      <stop offset="0%" stop-color="#12163a"/>
+      <stop offset="55%" stop-color="#3446c7"/>
+      <stop offset="100%" stop-color="#6d5dfc"/>
+    </linearGradient>
+
+    <linearGradient id="orb"
+      x1="0"
+      y1="0"
+      x2="1"
+      y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#aab8ff"/>
+    </linearGradient>
+  </defs>
+
   <rect
     width="512"
     height="512"
-    rx="110"
-    fill="#12163a"
+    rx="120"
+    fill="url(#bg)"
   />
 
   <circle
     cx="256"
-    cy="245"
-    r="145"
-    fill="#2952e3"
-  />
-
-  <circle
-    cx="205"
-    cy="225"
-    r="18"
-    fill="white"
-  />
-
-  <circle
-    cx="307"
-    cy="225"
-    r="18"
-    fill="white"
+    cy="220"
+    r="112"
+    fill="url(#orb)"
+    opacity="0.98"
   />
 
   <path
-    d="M185 285 Q256 340 327 285"
+    d="M185 220
+       C185 178 216 146 256 146
+       C296 146 327 178 327 220
+       C327 262 296 294 256 294
+       C216 294 185 262 185 220Z"
+    fill="#12163a"
+  />
+
+  <circle cx="225" cy="218" r="13" fill="#ffffff"/>
+  <circle cx="287" cy="218" r="13" fill="#ffffff"/>
+
+  <path
+    d="M220 255
+       C239 270 273 270 292 255"
     fill="none"
-    stroke="white"
-    stroke-width="18"
+    stroke="#ffffff"
+    stroke-width="10"
     stroke-linecap="round"
   />
 
-  <rect
-    x="226"
-    y="75"
-    width="60"
-    height="45"
-    rx="22"
-    fill="white"
-  />
-
-  <circle
-    cx="256"
-    cy="55"
-    r="18"
-    fill="#2952e3"
+  <path
+    d="M256 106 V75
+       M150 145 L128 123
+       M362 145 L384 123"
+    stroke="#ffffff"
+    stroke-width="10"
+    stroke-linecap="round"
+    opacity="0.9"
   />
 
   <text
     x="256"
-    y="445"
+    y="390"
     text-anchor="middle"
-    font-family="Arial,sans-serif"
-    font-size="52"
+    font-family="Arial, sans-serif"
+    font-size="55"
     font-weight="bold"
-    fill="white"
-  >AI</text>
-</svg>`;
+    fill="#ffffff">
+    ابزارک
+  </text>
+
+  <text
+    x="256"
+    y="435"
+    text-anchor="middle"
+    font-family="Arial, sans-serif"
+    font-size="25"
+    fill="#dce2ff">
+    AI Assistant
+  </text>
+</svg>
+`;
 }
 
 function renderServiceWorker() {
   return `
-const CACHE_NAME = "abzarak-pwa-v1";
+const CACHE_NAME = "abzarak-pwa-v2";
 
 const APP_SHELL = [
   "/",
@@ -315,48 +314,43 @@ const APP_SHELL = [
   "/icon.svg"
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then(cache => cache.addAll(APP_SHELL))
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then((keys) =>
+      .then(keys =>
         Promise.all(
           keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key))
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
         )
       )
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   const request = event.request;
 
-  if (request.method !== "GET") {
-    return;
-  }
+  if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  if (url.origin !== self.location.origin) return;
 
-  if (url.pathname.startsWith("/api/")) {
-    return;
-  }
+  if (url.pathname.startsWith("/api/")) return;
 
   event.respondWith(
     fetch(request)
-      .then((response) => {
+      .then(response => {
+
         if (
           response &&
           response.status === 200 &&
@@ -365,9 +359,7 @@ self.addEventListener("fetch", (event) => {
           const copy = response.clone();
 
           caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(request, copy);
-            })
+            .then(cache => cache.put(request, copy))
             .catch(() => {});
         }
 
@@ -375,9 +367,8 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() =>
         caches.match(request)
-          .then((cached) =>
-            cached ||
-            caches.match("/")
+          .then(cached =>
+            cached || caches.match("/")
           )
       )
   );
@@ -385,53 +376,56 @@ self.addEventListener("fetch", (event) => {
 `;
 }
 
-
 // =============================================================
-// Authentication
+// AUTH
 // =============================================================
 
 async function getUserFromToken(request, env) {
   const auth =
     request.headers.get("Authorization") || "";
 
-  const token = auth.replace(
-    /^Bearer\s+/i,
-    ""
-  );
+  const token =
+    auth.replace(/^Bearer\s+/i, "").trim();
 
   if (!token) {
     return null;
   }
 
-  const session = await env.DB
-    .prepare(
-      "SELECT user_id FROM sessions WHERE token = ?"
-    )
-    .bind(token)
-    .first();
+  try {
+    const session = await env.DB
+      .prepare(
+        "SELECT user_id FROM sessions WHERE token = ?"
+      )
+      .bind(token)
+      .first();
 
-  if (!session) {
+    if (!session) {
+      return null;
+    }
+
+    const user = await env.DB
+      .prepare(
+        `SELECT id, name, email, balance
+         FROM users
+         WHERE id = ?`
+      )
+      .bind(session.user_id)
+      .first();
+
+    return user || null;
+  } catch (error) {
+    console.error("getUserFromToken:", error);
     return null;
   }
-
-  const user = await env.DB
-    .prepare(
-      "SELECT id, name, email, balance FROM users WHERE id = ?"
-    )
-    .bind(session.user_id)
-    .first();
-
-  return user || null;
 }
 
 function getAdminToken(request) {
   const auth =
     request.headers.get("Authorization") || "";
 
-  return auth.replace(
-    /^Bearer\s+/i,
-    ""
-  );
+  return auth
+    .replace(/^Bearer\s+/i, "")
+    .trim();
 }
 
 async function requireAdmin(request, env) {
@@ -441,19 +435,22 @@ async function requireAdmin(request, env) {
     return false;
   }
 
-  const session = await env.DB
-    .prepare(
-      "SELECT id FROM admin_sessions WHERE token = ?"
-    )
-    .bind(token)
-    .first();
+  try {
+    const session = await env.DB
+      .prepare(
+        "SELECT id FROM admin_sessions WHERE token = ?"
+      )
+      .bind(token)
+      .first();
 
-  return !!session;
+    return !!session;
+  } catch {
+    return false;
+  }
 }
 
-
 // =============================================================
-// Email sending - Resend
+// EMAIL
 // =============================================================
 
 async function sendEmail(
@@ -466,7 +463,7 @@ async function sendEmail(
     return {
       ok: false,
       error:
-        "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)",
+        "RESEND_API_KEY تنظیم نشده است.",
     };
   }
 
@@ -475,7 +472,7 @@ async function sendEmail(
     "onboarding@resend.dev";
 
   try {
-    const res = await fetch(
+    const response = await fetch(
       "https://api.resend.com/emails",
       {
         method: "POST",
@@ -494,32 +491,26 @@ async function sendEmail(
       }
     );
 
-    if (!res.ok) {
-      const errText = await res.text();
-
+    if (!response.ok) {
       return {
         ok: false,
-        error: errText,
+        error: await response.text(),
       };
     }
 
-    return {
-      ok: true,
-    };
-
-  } catch (err) {
+    return { ok: true };
+  } catch (error) {
     return {
       ok: false,
       error:
-        err?.message ||
-        String(err),
+        error?.message ||
+        String(error),
     };
   }
 }
 
-
 // =============================================================
-// Signup
+// SIGNUP
 // =============================================================
 
 async function handleSignup(request, env) {
@@ -529,25 +520,25 @@ async function handleSignup(request, env) {
     body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const {
-    name,
-    email,
-    password,
-  } = body;
+  const name =
+    String(body.name || "").trim();
+
+  const email =
+    String(body.email || "").trim().toLowerCase();
+
+  const password =
+    String(body.password || "");
 
   if (!email || !password) {
     return json(
       {
         error:
-          "ایمیل و رمز عبور الزامی است",
+          "ایمیل و رمز عبور الزامی است.",
       },
       400
     );
@@ -557,7 +548,7 @@ async function handleSignup(request, env) {
     return json(
       {
         error:
-          "فرمت ایمیل نامعتبر است",
+          "فرمت ایمیل نامعتبر است.",
       },
       400
     );
@@ -567,89 +558,98 @@ async function handleSignup(request, env) {
     return json(
       {
         error:
-          "رمز عبور باید حداقل ۶ کاراکتر باشد",
+          "رمز عبور باید حداقل ۶ کاراکتر باشد.",
       },
       400
     );
   }
 
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  try {
+    const existing =
+      await env.DB
+        .prepare(
+          "SELECT id FROM users WHERE email = ?"
+        )
+        .bind(email)
+        .first();
 
-  const existing =
+    if (existing) {
+      return json(
+        {
+          error:
+            "این ایمیل قبلاً ثبت‌نام کرده است.",
+        },
+        409
+      );
+    }
+
+    const userId = uuid();
+
+    const passwordHash =
+      await hashPassword(password);
+
+    const createdAt =
+      new Date().toISOString();
+
     await env.DB
       .prepare(
-        "SELECT id FROM users WHERE email = ?"
+        `INSERT INTO users
+        (id, name, email, password_hash, balance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .bind(normalizedEmail)
-      .first();
+      .bind(
+        userId,
+        name,
+        email,
+        passwordHash,
+        0,
+        createdAt
+      )
+      .run();
 
-  if (existing) {
+    const token =
+      uuid() + uuid();
+
+    await env.DB
+      .prepare(
+        `INSERT INTO sessions
+        (id, user_id, token, created_at)
+        VALUES (?, ?, ?, ?)`
+      )
+      .bind(
+        uuid(),
+        userId,
+        token,
+        createdAt
+      )
+      .run();
+
+    return json({
+      success: true,
+      token,
+      user: {
+        id: userId,
+        name,
+        email,
+        balance: 0,
+      },
+    });
+  } catch (error) {
+    console.error("Signup:", error);
+
     return json(
       {
         error:
-          "این ایمیل قبلاً ثبت‌نام کرده است",
+          "خطا در ثبت‌نام: " +
+          (error?.message || String(error)),
       },
-      409
+      500
     );
   }
-
-  const passwordHash =
-    await hashPassword(password);
-
-  const userId = uuid();
-
-  const createdAt =
-    new Date().toISOString();
-
-  await env.DB
-    .prepare(
-      `INSERT INTO users
-       (id, name, email, password_hash, balance, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    )
-    .bind(
-      userId,
-      name || "",
-      normalizedEmail,
-      passwordHash,
-      0,
-      createdAt
-    )
-    .run();
-
-  const token =
-    uuid() + uuid();
-
-  await env.DB
-    .prepare(
-      `INSERT INTO sessions
-       (id, user_id, token, created_at)
-       VALUES (?, ?, ?, ?)`
-    )
-    .bind(
-      uuid(),
-      userId,
-      token,
-      createdAt
-    )
-    .run();
-
-  return json({
-    success: true,
-    user: {
-      id: userId,
-      name: name || "",
-      email: normalizedEmail,
-      balance: 0,
-    },
-    token,
-  });
 }
 
-
 // =============================================================
-// Login
+// LOGIN
 // =============================================================
 
 async function handleLogin(request, env) {
@@ -659,118 +659,114 @@ async function handleLogin(request, env) {
     body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const {
-    email,
-    password,
-  } = body;
+  const email =
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
+
+  const password =
+    String(body.password || "");
 
   if (!email || !password) {
     return json(
       {
         error:
-          "ایمیل و رمز عبور الزامی است",
+          "ایمیل و رمز عبور الزامی است.",
       },
       400
     );
   }
 
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  try {
+    const user =
+      await env.DB
+        .prepare(
+          `SELECT
+             id,
+             name,
+             email,
+             password_hash,
+             balance
+           FROM users
+           WHERE email = ?`
+        )
+        .bind(email)
+        .first();
 
-  const user =
-    await env.DB
-      .prepare(
-        `SELECT
-           id,
-           name,
-           email,
-           password_hash,
-           balance
-         FROM users
-         WHERE email = ?`
-      )
-      .bind(normalizedEmail)
-      .first();
-
-  const genericError = {
-    error:
-      "ایمیل یا رمز عبور اشتباه است",
-  };
-
-  if (!user) {
-    return json(
-      genericError,
-      401
-    );
-  }
-
-  const isValid =
-    await verifyPassword(
-      password,
-      user.password_hash
-    );
-
-  if (!isValid) {
-    if (
-      !user.password_hash.startsWith(
-        "pbkdf2:"
-      )
-    ) {
+    if (!user) {
       return json(
         {
           error:
-            "رمز عبور این حساب نیاز به بازیابی دارد (فرمت قدیمی)",
+            "ایمیل یا رمز عبور اشتباه است.",
         },
         401
       );
     }
 
+    const valid =
+      await verifyPassword(
+        password,
+        user.password_hash
+      );
+
+    if (!valid) {
+      return json(
+        {
+          error:
+            "ایمیل یا رمز عبور اشتباه است.",
+        },
+        401
+      );
+    }
+
+    const token =
+      uuid() + uuid();
+
+    await env.DB
+      .prepare(
+        `INSERT INTO sessions
+        (id, user_id, token, created_at)
+        VALUES (?, ?, ?, ?)`
+      )
+      .bind(
+        uuid(),
+        user.id,
+        token,
+        new Date().toISOString()
+      )
+      .run();
+
+    return json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        balance: user.balance || 0,
+      },
+    });
+  } catch (error) {
+    console.error("Login:", error);
+
     return json(
-      genericError,
-      401
+      {
+        error:
+          "خطا در ورود: " +
+          (error?.message || String(error)),
+      },
+      500
     );
   }
-
-  const token =
-    uuid() + uuid();
-
-  await env.DB
-    .prepare(
-      `INSERT INTO sessions
-       (id, user_id, token, created_at)
-       VALUES (?, ?, ?, ?)`
-    )
-    .bind(
-      uuid(),
-      user.id,
-      token,
-      new Date().toISOString()
-    )
-    .run();
-
-  return json({
-    success: true,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      balance: user.balance,
-    },
-    token,
-  });
 }
 
-
 // =============================================================
-// Me
+// ME
 // =============================================================
 
 async function handleMe(request, env) {
@@ -784,20 +780,17 @@ async function handleMe(request, env) {
     return json(
       {
         error:
-          "نشست نامعتبر یا منقضی شده است",
+          "نشست نامعتبر یا منقضی شده است.",
       },
       401
     );
   }
 
-  return json({
-    user,
-  });
+  return json({ user });
 }
 
-
 // =============================================================
-// Forgot Password
+// FORGOT PASSWORD
 // =============================================================
 
 async function handleForgotPassword(
@@ -810,120 +803,123 @@ async function handleForgotPassword(
     body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const { email } = body;
+  const email =
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
 
-  if (
-    !email ||
-    !isValidEmail(email)
-  ) {
+  if (!isValidEmail(email)) {
     return json(
       {
         error:
-          "ایمیل معتبر وارد کنید",
+          "ایمیل معتبر وارد کنید.",
       },
       400
     );
   }
 
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  try {
+    const user =
+      await env.DB
+        .prepare(
+          "SELECT id FROM users WHERE email = ?"
+        )
+        .bind(email)
+        .first();
 
-  const user =
+    if (!user) {
+      return json({
+        success: true,
+        message:
+          "اگر این ایمیل ثبت شده باشد، کد بازیابی ارسال می‌شود.",
+      });
+    }
+
+    const code =
+      randomCode(6);
+
+    const expiresAt =
+      new Date(
+        Date.now() + 15 * 60 * 1000
+      ).toISOString();
+
     await env.DB
       .prepare(
-        "SELECT id FROM users WHERE email = ?"
+        `INSERT INTO reset_codes
+        (id, user_id, code, expires_at, used, created_at)
+        VALUES (?, ?, ?, ?, 0, ?)`
       )
-      .bind(normalizedEmail)
-      .first();
+      .bind(
+        uuid(),
+        user.id,
+        code,
+        expiresAt,
+        new Date().toISOString()
+      )
+      .run();
 
-  if (!user) {
+    const emailResult =
+      await sendEmail(
+        env,
+        email,
+        "کد بازیابی رمز عبور ابزارک",
+        `
+<!doctype html>
+<html lang="fa" dir="rtl">
+<body style="font-family:Arial,sans-serif;background:#f5f7fb;padding:30px;">
+<div style="max-width:520px;margin:auto;background:white;padding:30px;border-radius:20px;">
+<h2>🤖 ابزارک</h2>
+<p>کد بازیابی رمز عبور شما:</p>
+<h1 style="letter-spacing:8px;text-align:center;">
+${code}
+</h1>
+<p>این کد تا ۱۵ دقیقه معتبر است.</p>
+</div>
+</body>
+</html>
+`
+      );
+
+    if (!emailResult.ok) {
+      return json(
+        {
+          error:
+            "کد ساخته شد اما ارسال ایمیل ناموفق بود: " +
+            emailResult.error,
+        },
+        503
+      );
+    }
+
     return json({
       success: true,
       message:
-        "اگر این ایمیل ثبت شده باشد، کد بازیابی ارسال می‌شود.",
+        "کد بازیابی به ایمیل شما ارسال شد.",
     });
-  }
-
-  const code =
-    randomCode(6);
-
-  const expiresAt =
-    new Date(
-      Date.now() +
-      15 * 60 * 1000
-    ).toISOString();
-
-  await env.DB
-    .prepare(
-      `INSERT INTO reset_codes
-       (id, user_id, code, expires_at, used, created_at)
-       VALUES (?, ?, ?, ?, 0, ?)`
-    )
-    .bind(
-      uuid(),
-      user.id,
-      code,
-      expiresAt,
-      new Date().toISOString()
-    )
-    .run();
-
-  const emailResult =
-    await sendEmail(
-      env,
-      normalizedEmail,
-      "کد بازیابی رمز عبور",
-      `
-      <div
-        dir="rtl"
-        style="font-family:Tahoma,sans-serif;"
-      >
-        <p>
-          کد بازیابی رمز عبور شما:
-        </p>
-
-        <h2
-          style="letter-spacing:4px;"
-        >
-          ${code}
-        </h2>
-
-        <p>
-          این کد تا ۱۵ دقیقه دیگر معتبر است.
-        </p>
-      </div>
-      `
+  } catch (error) {
+    console.error(
+      "Forgot password:",
+      error
     );
 
-  if (!emailResult.ok) {
     return json(
       {
         error:
-          "کد ساخته شد اما ارسال ایمیل ناموفق بود: " +
-          emailResult.error,
+          "خطا در ارسال کد: " +
+          (error?.message || String(error)),
       },
-      503
+      500
     );
   }
-
-  return json({
-    success: true,
-    message:
-      "کد بازیابی به ایمیل شما ارسال شد.",
-  });
 }
 
-
 // =============================================================
-// Reset Password
+// RESET PASSWORD
 // =============================================================
 
 async function handleResetPassword(
@@ -936,19 +932,21 @@ async function handleResetPassword(
     body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const {
-    email,
-    code,
-    newPassword,
-  } = body;
+  const email =
+    String(body.email || "")
+      .trim()
+      .toLowerCase();
+
+  const code =
+    String(body.code || "").trim();
+
+  const newPassword =
+    String(body.newPassword || "");
 
   if (
     !email ||
@@ -958,137 +956,147 @@ async function handleResetPassword(
     return json(
       {
         error:
-          "ایمیل، کد و رمز جدید الزامی است",
+          "ایمیل، کد و رمز جدید الزامی است.",
       },
       400
     );
   }
 
-  if (
-    newPassword.length < 6
-  ) {
+  if (newPassword.length < 6) {
     return json(
       {
         error:
-          "رمز عبور باید حداقل ۶ کاراکتر باشد",
+          "رمز عبور باید حداقل ۶ کاراکتر باشد.",
       },
       400
     );
   }
 
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  try {
+    const user =
+      await env.DB
+        .prepare(
+          "SELECT id FROM users WHERE email = ?"
+        )
+        .bind(email)
+        .first();
 
-  const user =
-    await env.DB
-      .prepare(
-        "SELECT id FROM users WHERE email = ?"
-      )
-      .bind(normalizedEmail)
-      .first();
+    if (!user) {
+      return json(
+        {
+          error:
+            "کد نامعتبر یا منقضی شده است.",
+        },
+        400
+      );
+    }
 
-  if (!user) {
-    return json(
-      {
-        error:
-          "کد نامعتبر یا منقضی شده است",
-      },
-      400
-    );
-  }
-
-  const resetRow =
-    await env.DB
-      .prepare(
-        `SELECT
-           id,
-           expires_at,
-           used
-         FROM reset_codes
-         WHERE user_id = ?
+    const resetRow =
+      await env.DB
+        .prepare(
+          `SELECT
+             id,
+             expires_at,
+             used
+           FROM reset_codes
+           WHERE user_id = ?
            AND code = ?
-         ORDER BY created_at DESC
-         LIMIT 1`
+           ORDER BY created_at DESC
+           LIMIT 1`
+        )
+        .bind(
+          user.id,
+          code
+        )
+        .first();
+
+    if (!resetRow) {
+      return json(
+        {
+          error:
+            "کد نامعتبر یا منقضی شده است.",
+        },
+        400
+      );
+    }
+
+    if (Number(resetRow.used) === 1) {
+      return json(
+        {
+          error:
+            "این کد قبلاً استفاده شده است.",
+        },
+        400
+      );
+    }
+
+    if (
+      new Date(
+        resetRow.expires_at
+      ).getTime() < Date.now()
+    ) {
+      return json(
+        {
+          error:
+            "کد منقضی شده است.",
+        },
+        400
+      );
+    }
+
+    const passwordHash =
+      await hashPassword(
+        newPassword
+      );
+
+    await env.DB
+      .prepare(
+        "UPDATE users SET password_hash = ? WHERE id = ?"
       )
       .bind(
-        user.id,
-        code
+        passwordHash,
+        user.id
       )
-      .first();
+      .run();
 
-  if (!resetRow) {
+    await env.DB
+      .prepare(
+        "UPDATE reset_codes SET used = 1 WHERE id = ?"
+      )
+      .bind(resetRow.id)
+      .run();
+
+    await env.DB
+      .prepare(
+        "DELETE FROM sessions WHERE user_id = ?"
+      )
+      .bind(user.id)
+      .run();
+
+    return json({
+      success: true,
+      message:
+        "رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.",
+    });
+  } catch (error) {
+    console.error(
+      "Reset password:",
+      error
+    );
+
     return json(
       {
         error:
-          "کد نامعتبر یا منقضی شده است",
+          "خطا در تغییر رمز: " +
+          (error?.message || String(error)),
       },
-      400
+      500
     );
   }
-
-  if (resetRow.used) {
-    return json(
-      {
-        error:
-          "این کد قبلاً استفاده شده است",
-      },
-      400
-    );
-  }
-
-  if (
-    new Date(
-      resetRow.expires_at
-    ).getTime() < Date.now()
-  ) {
-    return json(
-      {
-        error:
-          "کد منقضی شده است",
-      },
-      400
-    );
-  }
-
-  const newHash =
-    await hashPassword(
-      newPassword
-    );
-
-  await env.DB
-    .prepare(
-      "UPDATE users SET password_hash = ? WHERE id = ?"
-    )
-    .bind(
-      newHash,
-      user.id
-    )
-    .run();
-
-  await env.DB
-    .prepare(
-      "UPDATE reset_codes SET used = 1 WHERE id = ?"
-    )
-    .bind(resetRow.id)
-    .run();
-
-  await env.DB
-    .prepare(
-      "DELETE FROM sessions WHERE user_id = ?"
-    )
-    .bind(user.id)
-    .run();
-
-  return json({
-    success: true,
-    message:
-      "رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.",
-  });
 }
 
-
 // =============================================================
-// AI CHAT — MULTILINGUAL / WORLDWIDE
+// AI
 // =============================================================
 
 async function handleAiChat(
@@ -1105,9 +1113,19 @@ async function handleAiChat(
     return json(
       {
         error:
-          "برای استفاده از هوش مصنوعی ابتدا وارد حساب شوید",
+          "برای استفاده از هوش مصنوعی ابتدا وارد حساب شوید.",
       },
       401
+    );
+  }
+
+  if (!env.AI) {
+    return json(
+      {
+        error:
+          "Binding هوش مصنوعی با نام AI تنظیم نشده است.",
+      },
+      503
     );
   }
 
@@ -1117,45 +1135,38 @@ async function handleAiChat(
     body = await request.json();
   } catch {
     return json(
+      { error: "بدنه درخواست نامعتبر است." },
+      400
+    );
+  }
+
+  const message =
+    String(body.message || "").trim();
+
+  if (!message) {
+    return json(
       {
         error:
-          "بدنه درخواست نامعتبر است",
+          "پیام نمی‌تواند خالی باشد.",
       },
       400
     );
   }
 
-  const {
-    message,
-  } = body;
-
-  if (
-    !message ||
-    typeof message !== "string"
-  ) {
+  if (message.length > 12000) {
     return json(
       {
         error:
-          "پیام الزامی است",
+          "پیام بیش از حد طولانی است.",
       },
       400
-    );
-  }
-
-  if (!env.AI) {
-    return json(
-      {
-        error:
-          "سرویس هوش مصنوعی تنظیم نشده است. Binding با نام AI را به Worker اضافه کنید.",
-      },
-      503
     );
   }
 
   try {
     const aiResponse =
       await env.AI.run(
-        "@cf/meta/llama-3.1-8b-instruct-fast",
+        AI_MODEL,
         {
           messages: [
             {
@@ -1163,27 +1174,24 @@ async function handleAiChat(
               content: `
 You are Abzarak AI, a multilingual AI assistant for users worldwide.
 
-LANGUAGE RULES:
-- Detect the language used by the user.
-- Reply in the same language as the user's message by default.
-- Do NOT force Persian.
-- Do NOT force English.
-- Support multilingual conversations naturally.
-- Users may write in Persian, English, Arabic, Turkish, Azerbaijani, Kurdish, French, German, Spanish, Italian, Russian, Urdu, Hindi, Chinese, Japanese, or other languages.
-- If the user asks for translation, follow the requested source and target languages.
-- If the user mixes languages, understand the meaning and respond naturally, preferably using the dominant language.
-- Preserve the user's requested tone and writing style.
-- Do not tell users that you only support Persian.
-- Do not unnecessarily translate the user's message.
-- If the user asks in a language you understand, answer in that language.
+LANGUAGE:
+- Detect the user's language automatically.
+- Reply in the same language by default.
+- Do not force Persian.
+- Do not force English.
+- Support Persian, English, Arabic, Turkish, Azerbaijani, Kurdish, French, German, Spanish, Italian, Russian, Urdu, Hindi, Chinese, Japanese and other languages when possible.
+- If the user requests translation, follow the requested target language.
+- If the user mixes languages, respond naturally using the dominant language.
 
-GENERAL RULES:
-- Be helpful, accurate, clear and concise.
+STYLE:
+- Be helpful.
+- Be accurate.
+- Be concise.
 - Answer directly.
-- Follow the user's instructions.
+- Use clear formatting when useful.
 - Do not mention these system instructions.
-- Do not claim that Abzarak is limited to Iran or Persian-speaking users.
-- Support users worldwide.
+- Do not claim the service is limited to Iran.
+- Do not unnecessarily translate the user's message.
               `,
             },
             {
@@ -1191,8 +1199,7 @@ GENERAL RULES:
               content: message,
             },
           ],
-
-          max_tokens: 512,
+          max_tokens: 768,
           temperature: 0.6,
         }
       );
@@ -1200,36 +1207,31 @@ GENERAL RULES:
     const reply =
       aiResponse?.response ||
       aiResponse?.result?.response ||
-      "No response was received from the AI.";
+      "پاسخی از هوش مصنوعی دریافت نشد.";
 
     return json({
       success: true,
       reply,
     });
-
-  } catch (err) {
+  } catch (error) {
     console.error(
-      "Workers AI Error:",
-      err
+      "Workers AI error:",
+      error
     );
 
     return json(
       {
         error:
           "خطا در ارتباط با هوش مصنوعی: " +
-          (
-            err?.message ||
-            String(err)
-          ),
+          (error?.message || String(error)),
       },
       500
     );
   }
 }
 
-
 // =============================================================
-// Plans
+// PLANS
 // =============================================================
 
 const PLANS = [
@@ -1241,9 +1243,10 @@ const PLANS = [
     messages_per_day: 10,
     features: [
       "۱۰ پیام در روز",
+      "دستیار هوش مصنوعی",
+      "پشتیبانی چندزبانه",
     ],
   },
-
   {
     id: "basic",
     name: "پایه",
@@ -1253,9 +1256,9 @@ const PLANS = [
     features: [
       "پیام نامحدود",
       "امکانات پایه",
+      "پشتیبانی چندزبانه",
     ],
   },
-
   {
     id: "plus",
     name: "پیشرفته",
@@ -1265,9 +1268,9 @@ const PLANS = [
     features: [
       "پیام نامحدود",
       "پاسخ سریع‌تر",
+      "امکانات بیشتر",
     ],
   },
-
   {
     id: "pro",
     name: "ویژه",
@@ -1276,14 +1279,11 @@ const PLANS = [
     messages_per_day: null,
     features: [
       "پیام نامحدود",
-      "اولویت صف پاسخ‌دهی",
+      "اولویت پاسخ‌دهی",
       "پشتیبانی اختصاصی",
     ],
   },
 ];
-
-const USD_TO_TOMAN_RATE =
-  70000;
 
 const PLANS_USD = [
   {
@@ -1291,57 +1291,47 @@ const PLANS_USD = [
     name: "Basic",
     price_usd: 5,
     period: "monthly",
-    messages_per_day: null,
     features: [
       "Unlimited messages",
       "Basic features",
     ],
   },
-
   {
     id: "usd_plus",
     name: "Plus",
     price_usd: 10,
     period: "monthly",
-    messages_per_day: null,
     features: [
       "Unlimited messages",
       "Faster responses",
     ],
   },
-
   {
     id: "usd_pro",
     name: "Pro",
     price_usd: 15,
     period: "monthly",
-    messages_per_day: null,
     features: [
       "Unlimited messages",
       "Priority queue",
       "Dedicated support",
     ],
   },
-
   {
     id: "usd_premium",
     name: "Premium",
     price_usd: 20,
     period: "monthly",
-    messages_per_day: null,
     features: [
       "Unlimited messages",
       "Priority queue",
       "Dedicated support",
-      "Early access to new features",
+      "Early access",
     ],
   },
 ];
 
-async function handlePlans(
-  request,
-  env
-) {
+async function handlePlans() {
   return json({
     plans: PLANS,
     plans_usd: PLANS_USD,
@@ -1350,20 +1340,18 @@ async function handlePlans(
   });
 }
 
+// =============================================================
+// ZARINPAL
+// =============================================================
+
+function zarinpalBase(env) {
+  return env.ZARINPAL_SANDBOX === "true"
+    ? "https://sandbox.zarinpal.com"
+    : "https://api.zarinpal.com";
+}
 
 // =============================================================
-// PAYMENTS - ZarinPal
-// =============================================================
-
-const ZARINPAL_BASE =
-  (env) =>
-    env.ZARINPAL_SANDBOX === "true"
-      ? "https://sandbox.zarinpal.com"
-      : "https://api.zarinpal.com";
-
-
-// =============================================================
-// Create Payment
+// CREATE PAYMENT
 // =============================================================
 
 async function handleCreatePayment(
@@ -1380,19 +1368,17 @@ async function handleCreatePayment(
     return json(
       {
         error:
-          "ابتدا وارد حساب شوید",
+          "ابتدا وارد حساب شوید.",
       },
       401
     );
   }
 
-  if (
-    !env.ZARINPAL_MERCHANT_ID
-  ) {
+  if (!env.ZARINPAL_MERCHANT_ID) {
     return json(
       {
         error:
-          "درگاه پرداخت هنوز تنظیم نشده است. ZARINPAL_MERCHANT_ID را اضافه کنید.",
+          "ZARINPAL_MERCHANT_ID تنظیم نشده است.",
       },
       503
     );
@@ -1401,53 +1387,40 @@ async function handleCreatePayment(
   let body;
 
   try {
-    body =
-      await request.json();
+    body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const {
-    planId,
-  } = body;
+  const planId =
+    String(body.planId || "");
 
   let plan =
     PLANS.find(
-      (p) =>
-        p.id === planId
+      p => p.id === planId
     );
 
   let planCurrency = "irt";
+  let priceToman = null;
+  let planName = null;
 
-  let priceToman =
-    plan
-      ? plan.price_toman
-      : null;
-
-  let planName =
-    plan
-      ? plan.name
-      : null;
-
-  if (!plan) {
+  if (plan) {
+    priceToman =
+      plan.price_toman;
+    planName =
+      plan.name;
+  } else {
     const usdPlan =
       PLANS_USD.find(
-        (p) =>
-          p.id === planId
+        p => p.id === planId
       );
 
     if (usdPlan) {
-      plan =
-        usdPlan;
-
-      planCurrency =
-        "usd";
+      plan = usdPlan;
+      planCurrency = "usd";
 
       priceToman =
         Math.round(
@@ -1468,64 +1441,58 @@ async function handleCreatePayment(
     return json(
       {
         error:
-          "پلن نامعتبر است",
+          "پلن نامعتبر است.",
       },
       400
     );
   }
 
   const baseUrl =
-    env.PUBLIC_BASE_URL ||
-    new URL(request.url).origin;
+    (
+      env.PUBLIC_BASE_URL ||
+      new URL(request.url).origin
+    ).replace(/\/+$/, "");
 
-  const paymentId =
-    uuid();
+  const paymentId = uuid();
 
+  // ZarinPal expects Rial.
   const amountRial =
-    priceToman * 10;
+    Math.round(
+      priceToman * 10
+    );
 
   try {
-    const res =
+    const response =
       await fetch(
-        `${ZARINPAL_BASE(env)}/pg/v4/payment/request.json`,
+        `${zarinpalBase(env)}/pg/v4/payment/request.json`,
         {
           method: "POST",
-
           headers: {
             "Content-Type":
               "application/json",
           },
-
-          body:
-            JSON.stringify({
-              merchant_id:
-                env.ZARINPAL_MERCHANT_ID,
-
-              amount:
-                amountRial,
-
-              callback_url:
-                `${baseUrl}/api/payment/verify?pid=${paymentId}`,
-
-              description:
-                `اشتراک ${planName}`,
-
-              metadata: {
-                email:
-                  user.email,
-              },
-            }),
+          body: JSON.stringify({
+            merchant_id:
+              env.ZARINPAL_MERCHANT_ID,
+            amount:
+              amountRial,
+            callback_url:
+              `${baseUrl}/api/payment/verify?pid=${paymentId}`,
+            description:
+              `اشتراک ابزارک - ${planName}`,
+            metadata: {
+              email: user.email,
+            },
+          }),
         }
       );
 
     const data =
-      await res.json();
+      await response.json();
 
     if (
       data?.errors &&
-      Object.keys(
-        data.errors
-      ).length > 0
+      Object.keys(data.errors).length
     ) {
       return json(
         {
@@ -1533,9 +1500,7 @@ async function handleCreatePayment(
             "خطای زرین‌پال: " +
             (
               data.errors.message ||
-              JSON.stringify(
-                data.errors
-              )
+              JSON.stringify(data.errors)
             ),
         },
         502
@@ -1549,7 +1514,8 @@ async function handleCreatePayment(
       return json(
         {
           error:
-            "پاسخ نامعتبر از زرین‌پال",
+            "پاسخ معتبر از زرین‌پال دریافت نشد.",
+          details: data,
         },
         502
       );
@@ -1558,93 +1524,77 @@ async function handleCreatePayment(
     await env.DB
       .prepare(
         `INSERT INTO payments
-         (
-           id,
-           user_id,
-           plan_id,
-           currency,
-           amount,
-           status,
-           zarinpal_authority,
-           created_at
-         )
-         VALUES
-         (
-           ?,
-           ?,
-           ?,
-           'irt',
-           ?,
-           'pending',
-           ?,
-           ?
-         )`
+        (
+          id,
+          user_id,
+          plan_id,
+          currency,
+          amount,
+          status,
+          zarinpal_authority,
+          created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         paymentId,
         user.id,
         plan.id,
+        "irt",
         amountRial,
+        "pending",
         authority,
         new Date().toISOString()
       )
       .run();
 
-    if (
-      planCurrency ===
-      "usd"
-    ) {
-      try {
-        await env.DB
-          .prepare(
-            "UPDATE payments SET plan_currency = 'usd' WHERE id = ?"
-          )
-          .bind(
-            paymentId
-          )
-          .run();
-      } catch (e) {
-        console.error(
-          "plan_currency column missing?",
-          e?.message ||
-          e
-        );
-      }
+    try {
+      await env.DB
+        .prepare(
+          `UPDATE payments
+           SET plan_currency = ?
+           WHERE id = ?`
+        )
+        .bind(
+          planCurrency,
+          paymentId
+        )
+        .run();
+    } catch (error) {
+      console.log(
+        "plan_currency column not available:",
+        error?.message
+      );
     }
 
-    const sandboxPrefix =
-      env.ZARINPAL_SANDBOX ===
-      "true"
-        ? "sandbox"
-        : "www";
-
     const paymentUrl =
-      `https://${sandboxPrefix}.zarinpal.com/pg/StartPay/${authority}`;
+      env.ZARINPAL_SANDBOX === "true"
+        ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+        : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
     return json({
       success: true,
-      payment_url:
-        paymentUrl,
+      payment_url: paymentUrl,
     });
+  } catch (error) {
+    console.error(
+      "Create payment:",
+      error
+    );
 
-  } catch (err) {
     return json(
       {
         error:
           "خطا در ساخت پرداخت: " +
-          (
-            err?.message ||
-            String(err)
-          ),
+          (error?.message || String(error)),
       },
       500
     );
   }
 }
 
-
 // =============================================================
-// Verify Payment
+// VERIFY PAYMENT
 // =============================================================
 
 async function handleVerifyPayment(
@@ -1670,8 +1620,10 @@ async function handleVerifyPayment(
     );
 
   const baseUrl =
-    env.PUBLIC_BASE_URL ||
-    url.origin;
+    (
+      env.PUBLIC_BASE_URL ||
+      url.origin
+    ).replace(/\/+$/, "");
 
   if (
     !authority ||
@@ -1683,83 +1635,74 @@ async function handleVerifyPayment(
     );
   }
 
-  const payment =
-    await env.DB
-      .prepare(
-        `SELECT *
-         FROM payments
-         WHERE id = ?
-           AND zarinpal_authority = ?`
-      )
-      .bind(
-        paymentId,
-        authority
-      )
-      .first();
-
-  if (!payment) {
-    return Response.redirect(
-      `${baseUrl}/?payment=error&reason=payment_not_found`,
-      302
-    );
-  }
-
-  if (
-    payment.status ===
-    "paid"
-  ) {
-    return Response.redirect(
-      `${baseUrl}/?payment=success`,
-      302
-    );
-  }
-
-  if (
-    status !== "OK"
-  ) {
-    await env.DB
-      .prepare(
-        "UPDATE payments SET status = 'cancelled' WHERE id = ?"
-      )
-      .bind(
-        paymentId
-      )
-      .run();
-
-    return Response.redirect(
-      `${baseUrl}/?payment=cancel`,
-      302
-    );
-  }
-
   try {
-    const verifyRes =
+    const payment =
+      await env.DB
+        .prepare(
+          `SELECT *
+           FROM payments
+           WHERE id = ?
+           AND zarinpal_authority = ?`
+        )
+        .bind(
+          paymentId,
+          authority
+        )
+        .first();
+
+    if (!payment) {
+      return Response.redirect(
+        `${baseUrl}/?payment=error&reason=payment_not_found`,
+        302
+      );
+    }
+
+    if (
+      payment.status === "paid"
+    ) {
+      return Response.redirect(
+        `${baseUrl}/?payment=success`,
+        302
+      );
+    }
+
+    if (status !== "OK") {
+      await env.DB
+        .prepare(
+          `UPDATE payments
+           SET status = 'cancelled'
+           WHERE id = ?`
+        )
+        .bind(paymentId)
+        .run();
+
+      return Response.redirect(
+        `${baseUrl}/?payment=cancel`,
+        302
+      );
+    }
+
+    const verifyResponse =
       await fetch(
-        `${ZARINPAL_BASE(env)}/pg/v4/payment/verify.json`,
+        `${zarinpalBase(env)}/pg/v4/payment/verify.json`,
         {
           method: "POST",
-
           headers: {
             "Content-Type":
               "application/json",
           },
-
-          body:
-            JSON.stringify({
-              merchant_id:
-                env.ZARINPAL_MERCHANT_ID,
-
-              amount:
-                payment.amount,
-
-              authority:
-                authority,
-            }),
+          body: JSON.stringify({
+            merchant_id:
+              env.ZARINPAL_MERCHANT_ID,
+            amount:
+              payment.amount,
+            authority,
+          }),
         }
       );
 
     const verifyData =
-      await verifyRes.json();
+      await verifyResponse.json();
 
     const code =
       verifyData?.data?.code;
@@ -1791,9 +1734,9 @@ async function handleVerifyPayment(
             `SELECT id
              FROM subscriptions
              WHERE user_id = ?
-               AND plan_id = ?
-               AND status = 'active'
-               AND started_at > ?`
+             AND plan_id = ?
+             AND status = 'active'
+             AND started_at > ?`
           )
           .bind(
             payment.user_id,
@@ -1809,21 +1752,14 @@ async function handleVerifyPayment(
         await env.DB
           .prepare(
             `INSERT INTO subscriptions
-             (
-               id,
-               user_id,
-               plan_id,
-               status,
-               started_at
-             )
-             VALUES
-             (
-               ?,
-               ?,
-               ?,
-               'active',
-               ?
-             )`
+            (
+              id,
+              user_id,
+              plan_id,
+              status,
+              started_at
+            )
+            VALUES (?, ?, ?, 'active', ?)`
           )
           .bind(
             uuid(),
@@ -1835,37 +1771,37 @@ async function handleVerifyPayment(
       }
 
       return Response.redirect(
-        `${baseUrl}/?payment=success&ref=${refId}`,
-        302
-      );
-
-    } else {
-      await env.DB
-        .prepare(
-          "UPDATE payments SET status = 'failed' WHERE id = ?"
-        )
-        .bind(
-          paymentId
-        )
-        .run();
-
-      return Response.redirect(
-        `${baseUrl}/?payment=failed`,
+        `${baseUrl}/?payment=success&ref=${encodeURIComponent(
+          String(refId)
+        )}`,
         302
       );
     }
 
-  } catch (err) {
+    await env.DB
+      .prepare(
+        `UPDATE payments
+         SET status = 'failed'
+         WHERE id = ?`
+      )
+      .bind(paymentId)
+      .run();
+
+    return Response.redirect(
+      `${baseUrl}/?payment=failed`,
+      302
+    );
+  } catch (error) {
     console.error(
-      "ZarinPal verify error:",
-      err
+      "Verify payment:",
+      error
     );
 
     const reason =
       encodeURIComponent(
         (
-          err?.message ||
-          String(err)
+          error?.message ||
+          String(error)
         ).slice(0, 200)
       );
 
@@ -1875,7 +1811,6 @@ async function handleVerifyPayment(
     );
   }
 }
-
 
 // =============================================================
 // ADMIN LOGIN
@@ -1888,31 +1823,26 @@ async function handleAdminLogin(
   let body;
 
   try {
-    body =
-      await request.json();
+    body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
-
-  const {
-    password,
-  } = body;
 
   if (!env.ADMIN_PASSWORD) {
     return json(
       {
         error:
-          "رمز مدیریت تنظیم نشده است",
+          "ADMIN_PASSWORD تنظیم نشده است.",
       },
       503
     );
   }
+
+  const password =
+    String(body.password || "");
 
   if (
     password !==
@@ -1921,34 +1851,44 @@ async function handleAdminLogin(
     return json(
       {
         error:
-          "رمز اشتباه است",
+          "رمز مدیریت اشتباه است.",
       },
       401
     );
   }
 
-  const token =
-    uuid() + uuid();
+  try {
+    const token =
+      uuid() + uuid();
 
-  await env.DB
-    .prepare(
-      `INSERT INTO admin_sessions
-       (id, token, created_at)
-       VALUES (?, ?, ?)`
-    )
-    .bind(
-      uuid(),
+    await env.DB
+      .prepare(
+        `INSERT INTO admin_sessions
+        (id, token, created_at)
+        VALUES (?, ?, ?)`
+      )
+      .bind(
+        uuid(),
+        token,
+        new Date().toISOString()
+      )
+      .run();
+
+    return json({
+      success: true,
       token,
-      new Date().toISOString()
-    )
-    .run();
-
-  return json({
-    success: true,
-    token,
-  });
+    });
+  } catch (error) {
+    return json(
+      {
+        error:
+          "خطا در ورود مدیریت: " +
+          (error?.message || String(error)),
+      },
+      500
+    );
+  }
 }
-
 
 // =============================================================
 // ADMIN USERS
@@ -1958,42 +1898,48 @@ async function handleAdminUsers(
   request,
   env
 ) {
-  const isAdmin =
-    await requireAdmin(
+  if (
+    !(await requireAdmin(
       request,
       env
-    );
-
-  if (!isAdmin) {
+    ))
+  ) {
     return json(
-      {
-        error:
-          "دسترسی غیرمجاز",
-      },
+      { error: "دسترسی غیرمجاز." },
       401
     );
   }
 
-  const { results } =
-    await env.DB
-      .prepare(
-        `SELECT
-           id,
-           name,
-           email,
-           balance,
-           created_at
-         FROM users
-         ORDER BY created_at DESC
-         LIMIT 200`
-      )
-      .all();
+  try {
+    const { results } =
+      await env.DB
+        .prepare(
+          `SELECT
+             id,
+             name,
+             email,
+             balance,
+             created_at
+           FROM users
+           ORDER BY created_at DESC
+           LIMIT 200`
+        )
+        .all();
 
-  return json({
-    users: results,
-  });
+    return json({
+      users: results || [],
+    });
+  } catch (error) {
+    return json(
+      {
+        error:
+          "خطا در دریافت کاربران: " +
+          (error?.message || String(error)),
+      },
+      500
+    );
+  }
 }
-
 
 // =============================================================
 // ADMIN PAYMENTS
@@ -2003,83 +1949,83 @@ async function handleAdminPayments(
   request,
   env
 ) {
-  const isAdmin =
-    await requireAdmin(
+  if (
+    !(await requireAdmin(
       request,
       env
-    );
-
-  if (!isAdmin) {
+    ))
+  ) {
     return json(
-      {
-        error:
-          "دسترسی غیرمجاز",
-      },
+      { error: "دسترسی غیرمجاز." },
       401
     );
   }
 
-  const { results } =
-    await env.DB
-      .prepare(
-        `SELECT
-           payments.id,
-           payments.plan_id,
-           payments.amount,
-           payments.currency,
-           payments.status,
-           payments.created_at,
-           users.email
-         FROM payments
-         JOIN users
-           ON users.id =
-              payments.user_id
-         ORDER BY payments.created_at DESC
-         LIMIT 200`
-      )
-      .all();
+  try {
+    const { results } =
+      await env.DB
+        .prepare(
+          `SELECT
+             payments.id,
+             payments.plan_id,
+             payments.amount,
+             payments.currency,
+             payments.status,
+             payments.created_at,
+             users.email
+           FROM payments
+           JOIN users
+           ON users.id = payments.user_id
+           ORDER BY payments.created_at DESC
+           LIMIT 200`
+        )
+        .all();
 
-  const paymentsToman =
-    results.map(
-      (p) => ({
-        ...p,
+    const payments =
+      (results || []).map(
+        payment => ({
+          ...payment,
+          amount_toman:
+            payment.currency === "irt"
+              ? Math.round(
+                  Number(payment.amount || 0) /
+                  10
+                )
+              : payment.amount,
+        })
+      );
 
-        amount_toman:
-          p.currency === "irt"
-            ? Math.round(
-                p.amount / 10
-              )
-            : p.amount,
-      })
+    return json({
+      payments,
+    });
+  } catch (error) {
+    return json(
+      {
+        error:
+          "خطا در دریافت تراکنش‌ها: " +
+          (error?.message || String(error)),
+      },
+      500
     );
-
-  return json({
-    payments:
-      paymentsToman,
-  });
+  }
 }
 
-
 // =============================================================
-// ADMIN ADJUST BALANCE
+// ADMIN BALANCE
 // =============================================================
 
 async function handleAdminAdjustBalance(
   request,
   env
 ) {
-  const isAdmin =
-    await requireAdmin(
+  if (
+    !(await requireAdmin(
       request,
       env
-    );
-
-  if (!isAdmin) {
+    ))
+  ) {
     return json(
-      {
-        error:
-          "دسترسی غیرمجاز",
-      },
+      { error: "دسترسی غیرمجاز." },
       401
     );
   }
@@ -2087,156 +2033,138 @@ async function handleAdminAdjustBalance(
   let body;
 
   try {
-    body =
-      await request.json();
+    body = await request.json();
   } catch {
     return json(
-      {
-        error:
-          "بدنه درخواست نامعتبر است",
-      },
+      { error: "بدنه درخواست نامعتبر است." },
       400
     );
   }
 
-  const {
-    userId,
-    amount,
-    reason,
-  } = body;
+  const userId =
+    String(body.userId || "");
+
+  const amount =
+    Number(body.amount);
+
+  const reason =
+    String(body.reason || "");
 
   if (
     !userId ||
-    typeof amount !==
-      "number" ||
+    !Number.isFinite(amount) ||
     amount === 0
   ) {
     return json(
       {
         error:
-          "شناسه کاربر و مبلغ (غیر صفر، به تومان) الزامی است",
+          "شناسه کاربر و مبلغ معتبر الزامی است.",
       },
       400
     );
   }
-
-  const user =
-    await env.DB
-      .prepare(
-        "SELECT id, balance FROM users WHERE id = ?"
-      )
-      .bind(userId)
-      .first();
-
-  if (!user) {
-    return json(
-      {
-        error:
-          "کاربر یافت نشد",
-      },
-      404
-    );
-  }
-
-  const newBalance =
-    (user.balance || 0) +
-    amount;
-
-  if (
-    newBalance < 0
-  ) {
-    return json(
-      {
-        error:
-          "موجودی نمی‌تواند منفی شود",
-      },
-      400
-    );
-  }
-
-  await env.DB
-    .prepare(
-      "UPDATE users SET balance = ? WHERE id = ?"
-    )
-    .bind(
-      newBalance,
-      userId
-    )
-    .run();
 
   try {
+    const user =
+      await env.DB
+        .prepare(
+          `SELECT id, balance
+           FROM users
+           WHERE id = ?`
+        )
+        .bind(userId)
+        .first();
+
+    if (!user) {
+      return json(
+        {
+          error:
+            "کاربر پیدا نشد.",
+        },
+        404
+      );
+    }
+
+    const newBalance =
+      Number(user.balance || 0) +
+      amount;
+
+    if (newBalance < 0) {
+      return json(
+        {
+          error:
+            "موجودی نمی‌تواند منفی شود.",
+        },
+        400
+      );
+    }
+
     await env.DB
       .prepare(
-        `INSERT INTO balance_adjustments
-         (
-           id,
-           user_id,
-           amount,
-           reason,
-           created_at
-         )
-         VALUES (?, ?, ?, ?, ?)`
+        `UPDATE users
+         SET balance = ?
+         WHERE id = ?`
       )
       .bind(
-        uuid(),
-        userId,
-        amount,
-        reason || "",
-        new Date().toISOString()
+        newBalance,
+        userId
       )
       .run();
 
-  } catch (e) {
-    console.error(
-      "balance_adjustments table missing?",
-      e?.message ||
-      e
+    try {
+      await env.DB
+        .prepare(
+          `INSERT INTO balance_adjustments
+          (id, user_id, amount, reason, created_at)
+          VALUES (?, ?, ?, ?, ?)`
+        )
+        .bind(
+          uuid(),
+          userId,
+          amount,
+          reason,
+          new Date().toISOString()
+        )
+        .run();
+    } catch (error) {
+      console.log(
+        "balance_adjustments unavailable:",
+        error?.message
+      );
+    }
+
+    return json({
+      success: true,
+      user_id: userId,
+      new_balance: newBalance,
+    });
+  } catch (error) {
+    return json(
+      {
+        error:
+          "خطا در تعدیل موجودی: " +
+          (error?.message || String(error)),
+      },
+      500
     );
   }
-
-  return json({
-    success: true,
-    user_id:
-      userId,
-    new_balance:
-      newBalance,
-  });
 }
-
 
 // =============================================================
 // HOMEPAGE
 // =============================================================
 
 function renderHomepage() {
-  return `<!DOCTYPE html>
+  return `
+<!doctype html>
 <html lang="fa" dir="rtl">
-
 <head>
 
 <meta charset="UTF-8">
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<meta
-  name="enamad"
-  content="36032134"
-/>
-
-<!-- ========================= PWA ========================= -->
-
-<link
-  rel="manifest"
-  href="/manifest.json"
->
-
-<link
-  rel="icon"
-  href="/icon.svg"
-  type="image/svg+xml"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
 >
 
 <meta
@@ -2264,38 +2192,24 @@ function renderHomepage() {
   content="ابزارک"
 >
 
-<!-- ========================= SEO ========================= -->
-
 <title>
-ابزارک | دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان
+ابزارک | دستیار هوش مصنوعی چندزبانه
 </title>
 
 <meta
   name="description"
-  content="ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است. گفتگو، پاسخ به سوالات، ترجمه، تولید محتوا و کمک در کارهای روزمره با پشتیبانی از زبان‌های مختلف."
+  content="ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است."
 >
 
 <meta
   name="keywords"
-  content="ابزارک, AI Assistant, multilingual AI, دستیار هوش مصنوعی, هوش مصنوعی چندزبانه, AI chatbot, multilingual chatbot, artificial intelligence"
->
-
-<meta
-  name="author"
-  content="ابزارک"
+  content="ابزارک, هوش مصنوعی, AI, AI Assistant, دستیار هوش مصنوعی, چت هوش مصنوعی, multilingual AI"
 >
 
 <meta
   name="robots"
   content="index, follow"
 >
-
-<link
-  rel="canonical"
-  href="https://abzarakai.ir/"
->
-
-<!-- Open Graph -->
 
 <meta
   property="og:type"
@@ -2309,12 +2223,12 @@ function renderHomepage() {
 
 <meta
   property="og:title"
-  content="ابزارک | دستیار هوش مصنوعی چندزبانه"
+  content="ابزارک | دستیار هوش مصنوعی"
 >
 
 <meta
   property="og:description"
-  content="ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است."
+  content="دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان."
 >
 
 <meta
@@ -2332,8 +2246,6 @@ function renderHomepage() {
   content="en_US"
 >
 
-<!-- Twitter -->
-
 <meta
   name="twitter:card"
   content="summary"
@@ -2341,12 +2253,23 @@ function renderHomepage() {
 
 <meta
   name="twitter:title"
-  content="ابزارک | Multilingual AI Assistant"
+  content="ابزارک | AI Assistant"
 >
 
 <meta
   name="twitter:description"
-  content="A multilingual AI assistant designed for users worldwide."
+  content="A multilingual AI assistant for users worldwide."
+>
+
+<link
+  rel="manifest"
+  href="/manifest.json"
+>
+
+<link
+  rel="icon"
+  href="/icon.svg"
+  type="image/svg+xml"
 >
 
 <style>
@@ -2355,515 +2278,631 @@ function renderHomepage() {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
+  margin: 0;
+  min-height: 100vh;
   font-family:
     Tahoma,
-    "Segoe UI",
     Arial,
     sans-serif;
-
-  margin: 0;
-
   background:
-    #f4f6fb;
-
-  color:
-    #1a1a2e;
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(104, 87, 255, .20),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(25, 190, 255, .18),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      #f5f7ff,
+      #eef1ff 45%,
+      #f9fbff
+    );
+  color: #171a35;
 }
 
-header {
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(18px);
   background:
-    #12163a;
+    rgba(255,255,255,.88);
+  border-bottom:
+    1px solid rgba(20,25,70,.08);
+}
 
-  color:
-    white;
-
+.topbar-inner {
+  max-width: 1180px;
+  margin: auto;
   padding:
-    20px;
-
-  display:
-    flex;
-
-  justify-content:
-    space-between;
-
-  align-items:
-    flex-start;
-
-  gap:
-    12px;
+    14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
 }
 
-header h1 {
-  margin:
-    0;
-
-  font-size:
-    1.4rem;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  color: #171a35;
+  text-decoration: none;
 }
 
-header p {
-  margin:
-    6px 0 0;
-
-  opacity:
-    0.8;
-
-  font-size:
-    0.85rem;
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  box-shadow:
+    0 10px 25px
+    rgba(50,60,180,.25);
 }
 
-.header-actions {
-  display:
-    flex;
-
-  gap:
-    8px;
-
-  align-items:
-    center;
-
-  flex-wrap:
-    wrap;
-
-  justify-content:
-    flex-end;
+.brand-text {
+  font-size: 19px;
 }
 
-.lang-switch,
-.install-btn {
+.nav {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.nav button {
+  border: 0;
+  background: transparent;
+  color: #343853;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.nav button:hover {
+  background: #eef0ff;
+}
+
+.hero {
+  max-width: 1180px;
+  margin: auto;
+  padding:
+    55px 18px
+    25px;
+}
+
+.hero-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  padding:
+    55px 45px;
+  color: white;
   background:
-    rgba(255,255,255,0.12);
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(117, 135, 255, .65),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #111638,
+      #2f3fb0 55%,
+      #6957ed
+    );
+  box-shadow:
+    0 25px 70px
+    rgba(38,48,140,.25);
+}
 
+.hero-box::before {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background:
+    rgba(255,255,255,.08);
+  left: -80px;
+  bottom: -100px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  padding: 8px 13px;
+  border-radius: 100px;
+  background:
+    rgba(255,255,255,.13);
   border:
     1px solid
-    rgba(255,255,255,0.3);
+    rgba(255,255,255,.16);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
 
-  color:
-    white;
-
-  border-radius:
-    8px;
-
-  padding:
-    6px 12px;
-
+.hero h1 {
   font-size:
-    0.8rem;
-
-  cursor:
-    pointer;
-
-  white-space:
-    nowrap;
-}
-
-.install-btn {
-  background:
-    #2952e3;
-
-  border-color:
-    #4d6ff0;
-}
-
-nav {
-  display:
-    flex;
-
-  gap:
-    10px;
-
-  padding:
-    16px;
-
-  flex-wrap:
-    wrap;
-
-  background:
-    white;
-}
-
-nav button {
-  background:
-    #2952e3;
-
-  color:
-    white;
-
-  border:
-    none;
-
-  border-radius:
-    10px;
-
-  padding:
-    12px 18px;
-
-  font-size:
-    0.95rem;
-
-  cursor:
-    pointer;
-}
-
-main {
-  padding:
-    20px;
-
-  max-width:
-    480px;
-
+    clamp(34px, 6vw, 64px);
+  line-height: 1.12;
   margin:
-    0 auto;
+    0 0 18px;
+}
+
+.hero p {
+  font-size: 18px;
+  line-height: 2;
+  color: #e7eaff;
+  margin-bottom: 25px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hero-orb {
+  position: absolute;
+  left: 65px;
+  top: 55px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #fff,
+      #b9c3ff 45%,
+      #6b62e9
+    );
+  opacity: .16;
+  filter: blur(1px);
+}
+
+.container {
+  max-width: 1050px;
+  margin: auto;
+  padding:
+    20px 18px 60px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
 }
 
 .card {
   background:
-    white;
-
-  border-radius:
-    16px;
-
-  padding:
-    24px;
-
-  margin-bottom:
-    16px;
-
-  box-shadow:
-    0 2px 8px
-    rgba(0,0,0,0.06);
-}
-
-.card h2 {
-  margin-top:
-    0;
-
-  text-align:
-    start;
-}
-
-input,
-select {
-  width:
-    100%;
-
-  padding:
-    12px;
-
-  margin:
-    8px 0;
-
-  border-radius:
-    10px;
-
+    rgba(255,255,255,.94);
   border:
     1px solid
-    #dcdfe8;
-
-  background:
-    #f0f2fa;
-
-  font-size:
-    1rem;
+    rgba(20,25,70,.08);
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow:
+    0 15px 45px
+    rgba(30,40,100,.08);
+  margin-bottom: 20px;
 }
 
-.actions {
-  display:
-    flex;
-
-  gap:
-    10px;
-
-  justify-content:
-    flex-end;
-
-  margin-top:
-    10px;
-
-  flex-wrap:
-    wrap;
+.card h2,
+.card h3 {
+  margin-top: 0;
 }
 
-.actions button {
+.form {
+  max-width: 500px;
+  margin: 25px auto;
+}
+
+.input {
+  width: 100%;
   padding:
-    10px 20px;
-
-  border-radius:
-    10px;
-
+    14px 16px;
   border:
-    none;
+    1px solid #dfe3f3;
+  border-radius: 14px;
+  outline: none;
+  background: #fff;
+  margin-bottom: 12px;
+}
 
-  cursor:
-    pointer;
+.input:focus {
+  border-color: #6371e9;
+  box-shadow:
+    0 0 0 4px
+    rgba(99,113,233,.10);
+}
 
-  font-size:
-    0.95rem;
+.btn {
+  border: 0;
+  border-radius: 14px;
+  padding:
+    13px 18px;
+  min-height: 46px;
+  font-weight: 800;
+  transition:
+    transform .15s,
+    box-shadow .15s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
 }
 
 .btn-primary {
+  color: white;
   background:
-    #2952e3;
-
-  color:
-    white;
+    linear-gradient(
+      135deg,
+      #4857d9,
+      #705ce9
+    );
+  box-shadow:
+    0 10px 25px
+    rgba(80,85,210,.22);
 }
 
 .btn-secondary {
-  background:
-    #6b7280;
+  background: #eef0fb;
+  color: #222746;
+}
 
-  color:
-    white;
+.btn-light {
+  background: white;
+  color: #222746;
+}
+
+.btn-danger {
+  background: #ffe8eb;
+  color: #a32235;
 }
 
 .link-btn {
+  border: 0;
+  background: transparent;
+  color: #4b58c9;
+  padding: 10px;
+}
+
+.install-btn {
+  border: 0;
   background:
-    none;
-
-  color:
-    #2952e3;
-
-  text-decoration:
-    underline;
-
+    linear-gradient(
+      135deg,
+      #21c79a,
+      #159cce
+    );
+  color: white;
   padding:
-    4px;
+    11px 15px;
+  border-radius: 13px;
+  font-weight: 800;
+}
 
-  font-size:
-    0.85rem;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-switch {
+  border: 0;
+  background: #eef0fb;
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.notice {
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: #f1f3ff;
+  color: #343a75;
+  margin: 12px 0;
+}
+
+.error {
+  background: #fff0f2;
+  color: #a12539;
+}
+
+.success {
+  background: #eafbf5;
+  color: #146b52;
+}
+
+.account-box {
+  display: grid;
+  grid-template-columns:
+    repeat(3, 1fr);
+  gap: 15px;
+}
+
+.stat {
+  padding: 20px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #f7f8ff,
+      #edf0ff
+    );
+}
+
+.stat strong {
+  display: block;
+  font-size: 25px;
+  margin-top: 8px;
+}
+
+.ai-box {
+  max-width: 850px;
+  margin: auto;
+}
+
+.chat-messages {
+  min-height: 320px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding: 15px;
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      180deg,
+      #f6f8ff,
+      #eef1ff
+    );
+  margin-bottom: 12px;
 }
 
 .msg {
   padding:
-    12px;
-
-  border-radius:
-    10px;
-
-  margin-top:
-    10px;
+    13px 16px;
+  border-radius: 18px;
+  margin-bottom: 10px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.msg.error {
+.msg.user {
   background:
-    #fdeaea;
-
-  color:
-    #b91c1c;
+    linear-gradient(
+      135deg,
+      #5361dc,
+      #705fe8
+    );
+  color: white;
+  margin-right: 20%;
 }
 
-.msg.success {
-  background:
-    #eafaf0;
-
-  color:
-    #15803d;
+.msg.ai {
+  background: white;
+  color: #20243e;
+  margin-left: 10%;
+  box-shadow:
+    0 5px 18px
+    rgba(20,30,90,.06);
 }
 
-.hidden {
-  display:
-    none;
+.ai-input-row {
+  display: flex;
+  gap: 8px;
 }
 
-.chat-box {
-  max-height:
-    320px;
-
-  overflow-y:
-    auto;
-
-  display:
-    flex;
-
-  flex-direction:
-    column;
-
-  gap:
-    8px;
-
-  margin-bottom:
-    12px;
+.ai-input {
+  flex: 1;
+  margin: 0;
 }
 
-.bubble {
-  padding:
-    10px 14px;
-
-  border-radius:
-    12px;
-
-  max-width:
-    85%;
-
-  white-space:
-    pre-wrap;
-
-  word-break:
-    break-word;
+.plans-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, 1fr);
+  gap: 16px;
 }
 
-.bubble.user {
-  background:
-    #2952e3;
-
-  color:
-    white;
-
-  align-self:
-    flex-start;
-}
-
-.bubble.ai {
-  background:
-    #eef0f7;
-
-  align-self:
-    flex-end;
-}
-
-table {
-  width:
-    100%;
-
-  border-collapse:
-    collapse;
-
-  font-size:
-    0.85rem;
-}
-
-table th,
-table td {
+.plan {
+  position: relative;
+  padding: 24px;
+  border-radius: 23px;
+  background: white;
   border:
-    1px solid
-    #e5e7eb;
-
-  padding:
-    6px;
-
-  text-align:
-    start;
+    1px solid #e1e4f5;
+  box-shadow:
+    0 12px 35px
+    rgba(30,40,100,.07);
 }
 
-table th {
-  background:
-    #f0f2fa;
-}
-
-.plan-card {
+.plan.featured {
   border:
-    1px solid
-    #e5e7eb;
-
-  border-radius:
-    12px;
-
-  padding:
-    14px;
-
-  margin-bottom:
-    10px;
+    2px solid #6370e9;
+  transform: translateY(-6px);
 }
 
-.plan-price {
-  color:
-    #2952e3;
-
-  font-size:
-    1.1rem;
+.plan h3 {
+  font-size: 22px;
 }
 
-.note {
-  font-size:
-    0.85rem;
-
-  color:
-    #555;
+.price {
+  font-size: 28px;
+  font-weight: 900;
+  color: #404cc5;
 }
 
-.currency-toggle {
-  display:
-    flex;
-
-  gap:
-    8px;
-
-  margin-bottom:
-    14px;
+.plan ul {
+  padding-right: 20px;
+  line-height: 2;
+  min-height: 110px;
 }
 
-.currency-toggle button {
-  flex:
-    1;
+.currency-switch {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
 
-  padding:
-    10px;
-
-  border-radius:
-    10px;
-
-  border:
-    1px solid
-    #dcdfe8;
-
+.currency-switch button.active {
   background:
-    #f0f2fa;
-
-  cursor:
-    pointer;
-
-  font-size:
-    0.9rem;
+    #515fd8;
+  color: white;
 }
 
-.currency-toggle button.active {
-  background:
-    #2952e3;
-
-  color:
-    white;
-
-  border-color:
-    #2952e3;
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.seo-content {
-  line-height:
-    1.9;
+.admin-table th,
+.admin-table td {
+  border-bottom:
+    1px solid #edf0f7;
+  padding: 11px 7px;
+  text-align: right;
 }
 
-.seo-content h2 {
-  font-size:
-    1.15rem;
-
-  margin-top:
-    0;
+.seo-section {
+  line-height: 2;
 }
 
-.seo-content h3 {
-  font-size:
-    1rem;
-
-  margin:
-    16px 0 6px;
+.footer {
+  max-width: 1050px;
+  margin: auto;
+  padding:
+    20px 18px 45px;
+  text-align: center;
+  color: #777d9b;
 }
 
-.seo-content ul {
-  margin:
-    6px 0;
-
-  padding-inline-start:
-    20px;
+.loading {
+  text-align: center;
+  padding: 25px;
 }
 
-.seo-content p {
-  margin:
-    8px 0;
+@media (max-width: 900px) {
 
-  color:
-    #333;
+  .nav {
+    display: none;
+  }
+
+  .topbar-inner {
+    flex-wrap: wrap;
+  }
+
+  .plans-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .account-box {
+    grid-template-columns:
+      1fr;
+  }
+
+  .hero-orb {
+    left: -80px;
+    top: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .hero {
+    padding-top: 20px;
+  }
+
+  .hero-box {
+    padding:
+      38px 23px;
+    border-radius: 25px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
+  .plans-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .plan.featured {
+    transform: none;
+  }
+
+  .ai-input-row {
+    flex-direction: column;
+  }
+
+  .msg.user {
+    margin-right: 5%;
+  }
+
+  .msg.ai {
+    margin-left: 5%;
+  }
+
+  .topbar-inner {
+    padding:
+      10px 12px;
+  }
+
+  .brand-text {
+    font-size: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 19px;
+  }
 }
 
 </style>
@@ -2872,2908 +2911,2027 @@ table th {
 
 <body>
 
-<header>
+<div class="app">
 
-  <div>
+<header class="topbar">
 
-    <h1
-      data-i18n="app_title"
-    >
-      🤖 دستیار هوش مصنوعی
-    </h1>
+<div class="topbar-inner">
 
-    <p
-      data-i18n="app_subtitle"
-    >
-      دستیار هوشمند • حساب کاربری
-    </p>
+<a
+  href="/"
+  class="brand"
+  onclick="showView('home');return false;"
+>
 
-  </div>
+<img
+  src="/icon.svg"
+  class="brand-icon"
+  alt="ابزارک"
+>
 
-  <div class="header-actions">
+<span class="brand-text">
+🤖 ابزارک
+</span>
 
-    <button
-      class="install-btn hidden"
-      id="install-app-btn"
-      onclick="installPwa()"
-    >
-      📲 نصب اپ
-    </button>
+</a>
 
-    <button
-      class="lang-switch"
-      id="lang-switch-btn"
-      onclick="toggleLang()"
-    >
-      English
-    </button>
+<nav class="nav">
 
-  </div>
+<button onclick="showView('home')">
+🏠 خانه
+</button>
 
-</header>
+<button onclick="showView('account')">
+👤 حساب
+</button>
 
-<nav>
+<button onclick="showView('ai')">
+🤖 هوش مصنوعی
+</button>
 
-  <button
-    onclick="showView('account')"
-    data-i18n="nav_account"
-  >
-    🏠 حساب
-  </button>
+<button onclick="showView('plans')">
+💰 پلن‌ها
+</button>
 
-  <button
-    onclick="showView('ai')"
-    data-i18n="nav_ai"
-  >
-    🤖 هوش مصنوعی
-  </button>
-
-  <button
-    onclick="showView('plans')"
-    data-i18n="nav_plans"
-  >
-    💰 پلن‌ها
-  </button>
-
-  <button
-    onclick="showView('admin-login')"
-    data-i18n="nav_admin"
-  >
-    🛠️ مدیریت
-  </button>
+<button onclick="showView('admin-login')">
+🛠️ مدیریت
+</button>
 
 </nav>
 
-<main>
+<div class="header-actions">
 
-<div
+<button
+  id="install-app-btn"
+  class="install-btn hidden"
+  onclick="installPwa()"
+>
+📲 نصب اپ
+</button>
+
+<button
+  class="lang-switch"
+  onclick="toggleLang()"
+  id="lang-button"
+>
+English
+</button>
+
+</div>
+
+</div>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-box">
+
+<div class="hero-orb"></div>
+
+<div class="hero-content">
+
+<div class="hero-badge">
+✨ هوش مصنوعی چندزبانه
+</div>
+
+<h1>
+دستیار هوشمند شما، همیشه آماده
+</h1>
+
+<p>
+با ابزارک گفتگو کنید، سؤال بپرسید،
+ترجمه کنید، محتوا بسازید و کارهای
+روزمره خود را سریع‌تر انجام دهید.
+</p>
+
+<div class="hero-actions">
+
+<button
+  class="btn btn-light"
+  onclick="showView('ai')"
+>
+🤖 شروع گفتگو
+</button>
+
+<button
+  class="btn"
+  style="background:rgba(255,255,255,.14);color:white;"
+  onclick="showView('plans')"
+>
+💎 مشاهده پلن‌ها
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<main class="container">
+
+<!-- HOME -->
+
+<section
+  id="view-home"
+  class="view active"
+>
+
+<div class="card">
+
+<h2>
+🌍 دستیار هوش مصنوعی برای همه
+</h2>
+
+<p>
+ابزارک یک دستیار هوش مصنوعی چندزبانه
+است که برای کاربران سراسر جهان طراحی شده است.
+</p>
+
+<div class="account-box">
+
+<div class="stat">
+<span>🤖</span>
+<strong>AI</strong>
+دستیار هوشمند
+</div>
+
+<div class="stat">
+<span>🌍</span>
+<strong>Multi</strong>
+پشتیبانی چندزبانه
+</div>
+
+<div class="stat">
+<span>📱</span>
+<strong>PWA</strong>
+قابل نصب روی موبایل
+</div>
+
+</div>
+
+</div>
+
+<div class="card seo-section">
+
+<h2>
+چرا ابزارک؟
+</h2>
+
+<p>
+ابزارک برای گفتگو با هوش مصنوعی،
+پاسخ به پرسش‌ها، تولید محتوا،
+ترجمه و کمک در کارهای روزمره ساخته شده است.
+</p>
+
+<h3>
+ویژگی‌ها
+</h3>
+
+<ul>
+<li>گفتگوی متنی با هوش مصنوعی</li>
+<li>پشتیبانی از زبان‌های مختلف</li>
+<li>حساب کاربری و مدیریت اشتراک</li>
+<li>نسخه قابل نصب روی موبایل</li>
+<li>قابل استفاده در کامپیوتر و موبایل</li>
+</ul>
+
+</div>
+
+</section>
+
+<!-- LOGIN -->
+
+<section
   id="view-login"
-  class="card"
+  class="view"
 >
 
-  <h2
-    data-i18n="login_title"
-  >
-    🔑 ورود به حساب
-  </h2>
+<div class="card form">
 
-  <input
-    id="login-email"
-    type="email"
-    data-i18n-placeholder="email_placeholder"
-    placeholder="ایمیل"
-  >
+<h2>
+🔑 ورود به حساب
+</h2>
 
-  <input
-    id="login-password"
-    type="password"
-    data-i18n-placeholder="password_placeholder"
-    placeholder="رمز عبور"
-  >
+<input
+  id="login-email"
+  class="input"
+  type="email"
+  placeholder="ایمیل"
+>
 
-  <div class="actions">
+<input
+  id="login-password"
+  class="input"
+  type="password"
+  placeholder="رمز عبور"
+>
 
-    <button
-      class="link-btn"
-      onclick="showView('forgot')"
-      data-i18n="forgot_link"
-    >
-      فراموشی رمز عبور؟
-    </button>
+<div id="login-message"></div>
 
-  </div>
+<button
+  class="btn btn-primary"
+  style="width:100%;"
+  onclick="doLogin()"
+>
+ورود
+</button>
 
-  <div class="actions">
+<button
+  class="link-btn"
+  onclick="showView('forgot')"
+>
+فراموشی رمز عبور؟
+</button>
 
-    <button
-      class="btn-secondary"
-      onclick="showView('signup')"
-      data-i18n="signup_link"
-    >
-      ثبت‌نام
-    </button>
-
-    <button
-      class="btn-primary"
-      onclick="doLogin()"
-      data-i18n="login_button"
-    >
-      ورود
-    </button>
-
-  </div>
-
-  <div id="login-msg"></div>
+<button
+  class="btn btn-secondary"
+  style="width:100%;"
+  onclick="showView('signup')"
+>
+ثبت‌نام
+</button>
 
 </div>
 
+</section>
 
-<div
+<!-- SIGNUP -->
+
+<section
   id="view-signup"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="signup_title"
-  >
-    📝 ثبت‌نام
-  </h2>
+<div class="card form">
 
-  <input
-    id="signup-name"
-    type="text"
-    data-i18n-placeholder="name_placeholder"
-    placeholder="نام"
-  >
+<h2>
+📝 ثبت‌نام
+</h2>
 
-  <input
-    id="signup-email"
-    type="email"
-    data-i18n-placeholder="email_placeholder"
-    placeholder="ایمیل"
-  >
+<input
+  id="signup-name"
+  class="input"
+  placeholder="نام"
+>
 
-  <input
-    id="signup-password"
-    type="password"
-    data-i18n-placeholder="signup_password_placeholder"
-    placeholder="رمز عبور (حداقل ۶ کاراکتر)"
-  >
+<input
+  id="signup-email"
+  class="input"
+  type="email"
+  placeholder="ایمیل"
+>
 
-  <div class="actions">
+<input
+  id="signup-password"
+  class="input"
+  type="password"
+  placeholder="رمز عبور حداقل ۶ کاراکتر"
+>
 
-    <button
-      class="btn-secondary"
-      onclick="showView('login')"
-      data-i18n="back_button"
-    >
-      بازگشت
-    </button>
+<div id="signup-message"></div>
 
-    <button
-      class="btn-primary"
-      onclick="doSignup()"
-      data-i18n="signup_button"
-    >
-      ثبت‌نام
-    </button>
+<button
+  class="btn btn-primary"
+  style="width:100%;"
+  onclick="doSignup()"
+>
+ثبت‌نام
+</button>
 
-  </div>
-
-  <div id="signup-msg"></div>
+<button
+  class="btn btn-secondary"
+  style="width:100%;margin-top:8px;"
+  onclick="showView('login')"
+>
+بازگشت
+</button>
 
 </div>
 
+</section>
 
-<div
+<!-- FORGOT -->
+
+<section
   id="view-forgot"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="forgot_title"
-  >
-    🔐 فراموشی رمز عبور
-  </h2>
+<div class="card form">
 
-  <p
-    class="note"
-    data-i18n="forgot_intro"
-  >
-    ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.
-  </p>
+<h2>
+🔐 بازیابی رمز
+</h2>
 
-  <input
-    id="forgot-email"
-    type="email"
-    data-i18n-placeholder="email_placeholder"
-    placeholder="ایمیل"
-  >
+<p>
+ایمیل خود را وارد کنید.
+</p>
 
-  <div class="actions">
+<input
+  id="forgot-email"
+  class="input"
+  type="email"
+  placeholder="ایمیل"
+>
 
-    <button
-      class="btn-secondary"
-      onclick="showView('login')"
-      data-i18n="back_button"
-    >
-      بازگشت
-    </button>
+<div id="forgot-message"></div>
 
-    <button
-      class="btn-primary"
-      onclick="doForgotPassword()"
-      data-i18n="send_code_button"
-    >
-      ارسال کد
-    </button>
+<button
+  class="btn btn-primary"
+  style="width:100%;"
+  onclick="doForgotPassword()"
+>
+ارسال کد
+</button>
 
-  </div>
-
-  <div id="forgot-msg"></div>
-
-  <hr
-    style="margin:16px 0;border:none;border-top:1px solid #eee;"
-  >
-
-  <p
-    class="note"
-    data-i18n="reset_intro"
-  >
-    کد دریافتی و رمز جدید را وارد کنید:
-  </p>
-
-  <input
-    id="reset-code"
-    type="text"
-    data-i18n-placeholder="code_placeholder"
-    placeholder="کد ۶ رقمی"
-  >
-
-  <input
-    id="reset-password"
-    type="password"
-    data-i18n-placeholder="new_password_placeholder"
-    placeholder="رمز عبور جدید"
-  >
-
-  <div class="actions">
-
-    <button
-      class="btn-primary"
-      onclick="doResetPassword()"
-      data-i18n="reset_button"
-    >
-      تغییر رمز عبور
-    </button>
-
-  </div>
-
-  <div id="reset-msg"></div>
+<button
+  class="btn btn-secondary"
+  style="width:100%;margin-top:8px;"
+  onclick="showView('reset')"
+>
+کد را دارم
+</button>
 
 </div>
 
+</section>
 
-<div
+<!-- RESET -->
+
+<section
+  id="view-reset"
+  class="view"
+>
+
+<div class="card form">
+
+<h2>
+🔑 تغییر رمز
+</h2>
+
+<input
+  id="reset-email"
+  class="input"
+  type="email"
+  placeholder="ایمیل"
+>
+
+<input
+  id="reset-code"
+  class="input"
+  placeholder="کد ۶ رقمی"
+>
+
+<input
+  id="reset-password"
+  class="input"
+  type="password"
+  placeholder="رمز عبور جدید"
+>
+
+<div id="reset-message"></div>
+
+<button
+  class="btn btn-primary"
+  style="width:100%;"
+  onclick="doResetPassword()"
+>
+تغییر رمز
+</button>
+
+</div>
+
+</section>
+
+<!-- ACCOUNT -->
+
+<section
   id="view-account"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="account_title"
-  >
-    🏠 حساب من
-  </h2>
+<div class="card">
 
-  <div
-    id="account-info"
-    data-i18n="loading"
-  >
-    در حال بارگذاری...
-  </div>
+<h2>
+🏠 حساب من
+</h2>
 
-  <div class="actions">
-
-    <button
-      class="btn-secondary"
-      onclick="logout()"
-      data-i18n="logout_button"
-    >
-      خروج
-    </button>
-
-  </div>
+<div id="account-content">
+<div class="loading">
+در حال بررسی حساب...
+</div>
+</div>
 
 </div>
 
+</section>
 
-<div
+<!-- AI -->
+
+<section
   id="view-ai"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="ai_title"
-  >
-    🤖 گفتگو با هوش مصنوعی
-  </h2>
+<div class="card ai-box">
 
-  <div
-    class="chat-box"
-    id="chat-box"
-  ></div>
+<h2>
+🤖 گفتگو با هوش مصنوعی
+</h2>
 
-  <input
-    id="ai-input"
-    type="text"
-    data-i18n-placeholder="ai_input_placeholder"
-    placeholder="پیام خود را بنویسید..."
-    onkeydown="if(event.key === 'Enter') sendAiMessage()"
-  >
+<p>
+هر زبانی که استفاده کنید،
+ابزارک تلاش می‌کند به همان زبان پاسخ دهد.
+</p>
 
-  <div class="actions">
+<div
+  id="chat-messages"
+  class="chat-messages"
+></div>
 
-    <button
-      class="btn-primary"
-      onclick="sendAiMessage()"
-      data-i18n="send_button"
-    >
-      ارسال
-    </button>
+<div class="ai-input-row">
 
-  </div>
+<input
+  id="ai-input"
+  class="input ai-input"
+  placeholder="پیام خود را بنویسید..."
+  onkeydown="if(event.key==='Enter')sendAiMessage()"
+>
 
-  <div id="ai-msg"></div>
+<button
+  class="btn btn-primary"
+  onclick="sendAiMessage()"
+>
+ارسال
+</button>
 
 </div>
 
+</div>
 
-<div
+</section>
+
+<!-- PLANS -->
+
+<section
   id="view-plans"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="plans_title"
-  >
-    💰 پلن‌ها
-  </h2>
+<div class="card">
 
-  <div class="currency-toggle">
+<h2>
+💰 پلن‌های اشتراک
+</h2>
 
-    <button
-      id="currency-btn-irt"
-      class="active"
-      onclick="setPlanCurrency('irt')"
-      data-i18n="currency_toman"
-    >
-      تومان (ایران)
-    </button>
+<div class="currency-switch">
 
-    <button
-      id="currency-btn-usd"
-      onclick="setPlanCurrency('usd')"
-      data-i18n="currency_usd"
-    >
-      USD (Worldwide)
-    </button>
+<button
+  id="currency-irt"
+  class="btn btn-secondary active"
+  onclick="setPlanCurrency('irt')"
+>
+تومان 🇮🇷
+</button>
 
-  </div>
-
-  <div
-    id="plans-list"
-    data-i18n="loading"
-  >
-    در حال بارگذاری...
-  </div>
+<button
+  id="currency-usd"
+  class="btn btn-secondary"
+  onclick="setPlanCurrency('usd')"
+>
+USD 🌍
+</button>
 
 </div>
 
-
 <div
+  id="plans-container"
+  class="plans-grid"
+>
+<div class="loading">
+در حال بارگذاری پلن‌ها...
+</div>
+</div>
+
+</div>
+
+</section>
+
+<!-- ADMIN LOGIN -->
+
+<section
   id="view-admin-login"
-  class="card hidden"
+  class="view"
 >
 
-  <h2
-    data-i18n="admin_login_title"
-  >
-    🛠️ ورود به پنل مدیریت
-  </h2>
+<div class="card form">
 
-  <input
-    id="admin-password"
-    type="password"
-    data-i18n-placeholder="admin_password_placeholder"
-    placeholder="رمز مدیریت"
-  >
+<h2>
+🛠️ ورود مدیریت
+</h2>
 
-  <div class="actions">
+<input
+  id="admin-password"
+  class="input"
+  type="password"
+  placeholder="رمز مدیریت"
+>
 
-    <button
-      class="btn-secondary"
-      onclick="showView('login')"
-      data-i18n="back_button"
-    >
-      بازگشت
-    </button>
+<div id="admin-login-message"></div>
 
-    <button
-      class="btn-primary"
-      onclick="doAdminLogin()"
-      data-i18n="login_button"
-    >
-      ورود
-    </button>
-
-  </div>
-
-  <div id="admin-login-msg"></div>
+<button
+  class="btn btn-primary"
+  style="width:100%;"
+  onclick="doAdminLogin()"
+>
+ورود
+</button>
 
 </div>
 
+</section>
 
-<div
-  id="view-admin-panel"
-  class="card hidden"
+<!-- ADMIN -->
+
+<section
+  id="view-admin"
+  class="view"
 >
 
-  <h2
-    data-i18n="admin_panel_title"
-  >
-    🛠️ پنل مدیریت
-  </h2>
+<div class="card">
 
-  <div class="actions">
+<h2>
+🛠️ پنل مدیریت
+</h2>
 
-    <button
-      class="btn-secondary"
-      onclick="loadAdminUsers()"
-      data-i18n="admin_users_button"
-    >
-      کاربران
-    </button>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
 
-    <button
-      class="btn-secondary"
-      onclick="loadAdminPayments()"
-      data-i18n="admin_payments_button"
-    >
-      تراکنش‌ها
-    </button>
+<button
+  class="btn btn-secondary"
+  onclick="loadAdminUsers()"
+>
+👥 کاربران
+</button>
 
-    <button
-      class="btn-secondary"
-      onclick="showAdjustBalanceForm()"
-      data-i18n="admin_adjust_balance_button"
-    >
-      تعدیل موجودی
-    </button>
+<button
+  class="btn btn-secondary"
+  onclick="loadAdminPayments()"
+>
+💳 تراکنش‌ها
+</button>
 
-    <button
-      class="btn-secondary"
-      onclick="adminLogout()"
-      data-i18n="admin_logout_button"
-    >
-      خروج از مدیریت
-    </button>
+<button
+  class="btn btn-secondary"
+  onclick="showAdjustBalanceForm()"
+>
+💰 تعدیل موجودی
+</button>
 
-  </div>
-
-  <div
-    id="admin-content"
-    style="margin-top:14px;overflow-x:auto;"
-  ></div>
+<button
+  class="btn btn-danger"
+  onclick="adminLogout()"
+>
+خروج
+</button>
 
 </div>
 
-
-<div
-  class="card seo-content"
-  id="seo-content"
->
-
-  <h2
-    data-i18n="seo_h1"
-  >
-    ابزارک، دستیار هوش مصنوعی چندزبانه شما
-  </h2>
-
-  <p
-    data-i18n="seo_intro_p1"
-  >
-    ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است که برای گفتگو، پاسخ‌گویی، ترجمه، تولید محتوا و کمک در کارهای روزمره طراحی شده است.
-  </p>
-
-  <h3
-    data-i18n="seo_h2_about"
-  >
-    درباره دستیار هوش مصنوعی ابزارک
-  </h3>
-
-  <p
-    data-i18n="seo_about_p1"
-  >
-    ابزارک می‌تواند زبان پیام کاربر را تشخیص دهد و به همان زبان پاسخ دهد. هدف ابزارک فراهم کردن دسترسی ساده و کاربردی به هوش مصنوعی برای کاربران سراسر جهان است.
-  </p>
-
-  <h3
-    data-i18n="seo_h2_features"
-  >
-    امکانات ابزارک
-  </h3>
-
-  <ul>
-
-    <li
-      data-i18n="seo_feature_1"
-    >
-      گفتگوی متنی با هوش مصنوعی به زبان‌های مختلف
-    </li>
-
-    <li
-      data-i18n="seo_feature_2"
-    >
-      پاسخ‌گویی سریع و دقیق به سوالات روزمره
-    </li>
-
-    <li
-      data-i18n="seo_feature_3"
-    >
-      حساب کاربری امن با امکان بازیابی رمز عبور
-    </li>
-
-    <li
-      data-i18n="seo_feature_4"
-    >
-      پلن‌های رایگان و اشتراکی متناسب با نیاز شما
-    </li>
-
-    <li
-      data-i18n="seo_feature_5"
-    >
-      پشتیبانی از کاربران سراسر جهان و زبان‌های مختلف
-    </li>
-
-  </ul>
-
-  <h3
-    data-i18n="seo_h2_plans"
-  >
-    پلن‌های اشتراک
-  </h3>
-
-  <p
-    data-i18n="seo_plans_p1"
-  >
-    ابزارک یک پلن رایگان با محدودیت پیام روزانه و پلن‌های اشتراکی برای کاربران مختلف ارائه می‌دهد. سرویس هوش مصنوعی برای کاربران سراسر جهان و زبان‌های مختلف طراحی شده است.
-  </p>
+<div id="admin-content" style="margin-top:20px;">
+</div>
 
 </div>
+
+</section>
 
 </main>
 
+<footer class="footer">
+
+© 2026 ابزارک — دستیار هوش مصنوعی چندزبانه
+
+</footer>
+
+</div>
 
 <script>
 
-// =============================================================
-// PWA INSTALL
-// =============================================================
+let authToken =
+  localStorage.getItem("abzarak_token") || "";
+
+let adminToken =
+  localStorage.getItem("abzarak_admin_token") || "";
+
+let currentCurrency = "irt";
 
 let deferredInstallPrompt = null;
 
-window.addEventListener(
-  "beforeinstallprompt",
-  (event) => {
+const $ = id =>
+  document.getElementById(id);
 
-    event.preventDefault();
+function escapeHtml(value) {
 
-    deferredInstallPrompt =
-      event;
-
-    const button =
-      document.getElementById(
-        "install-app-btn"
-      );
-
-    if (button) {
-      button.classList.remove(
-        "hidden"
-      );
-    }
-  }
-);
-
-window.addEventListener(
-  "appinstalled",
-  () => {
-
-    deferredInstallPrompt =
-      null;
-
-    const button =
-      document.getElementById(
-        "install-app-btn"
-      );
-
-    if (button) {
-      button.classList.add(
-        "hidden"
-      );
-    }
-  }
-);
-
-async function installPwa() {
-
-  if (!deferredInstallPrompt) {
-
-    const message =
-      currentLang === "fa"
-        ? "اگر گزینه نصب نمایش داده نشد، از منوی سه‌نقطه Chrome گزینه «Install app» یا «افزودن به صفحه اصلی» را انتخاب کنید."
-        : "If the install prompt is not shown, open the Chrome menu and choose Install app or Add to Home screen.";
-
-    alert(message);
-
-    return;
-  }
-
-  try {
-
-    await deferredInstallPrompt.prompt();
-
-    await deferredInstallPrompt.userChoice;
-
-  } catch (err) {
-
-    console.error(
-      "PWA install error:",
-      err
-    );
-
-  }
-
-  deferredInstallPrompt =
-    null;
-
-  const button =
-    document.getElementById(
-      "install-app-btn"
-    );
-
-  if (button) {
-    button.classList.add(
-      "hidden"
-    );
-  }
-}
-
-
-// =============================================================
-// Service Worker registration
-// =============================================================
-
-if (
-  "serviceWorker" in navigator
-) {
-
-  window.addEventListener(
-    "load",
-    () => {
-
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then(() => {
-          console.log(
-            "Abzarak PWA Service Worker registered."
-          );
-        })
-        .catch((error) => {
-          console.error(
-            "Service Worker registration failed:",
-            error
-          );
-        });
-
-    }
-  );
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
-
-// =============================================================
-// i18n
-// =============================================================
-
-const translations = {
-
-  fa: {
-
-    page_title:
-      'دستیار هوشمند 🤖',
-
-    app_title:
-      '🤖 دستیار هوش مصنوعی',
-
-    app_subtitle:
-      'دستیار هوشمند • حساب کاربری',
-
-    nav_account:
-      '🏠 حساب',
-
-    nav_ai:
-      '🤖 هوش مصنوعی',
-
-    nav_plans:
-      '💰 پلن‌ها',
-
-    nav_admin:
-      '🛠️ مدیریت',
-
-    login_title:
-      '🔑 ورود به حساب',
-
-    email_placeholder:
-      'ایمیل',
-
-    password_placeholder:
-      'رمز عبور',
-
-    forgot_link:
-      'فراموشی رمز عبور؟',
-
-    signup_link:
-      'ثبت‌نام',
-
-    login_button:
-      'ورود',
-
-    signup_title:
-      '📝 ثبت‌نام',
-
-    name_placeholder:
-      'نام',
-
-    signup_password_placeholder:
-      'رمز عبور (حداقل ۶ کاراکتر)',
-
-    back_button:
-      'بازگشت',
-
-    signup_button:
-      'ثبت‌نام',
-
-    forgot_title:
-      '🔐 فراموشی رمز عبور',
-
-    forgot_intro:
-      'ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.',
-
-    send_code_button:
-      'ارسال کد',
-
-    reset_intro:
-      'کد دریافتی و رمز جدید را وارد کنید:',
-
-    code_placeholder:
-      'کد ۶ رقمی',
-
-    new_password_placeholder:
-      'رمز عبور جدید',
-
-    reset_button:
-      'تغییر رمز عبور',
-
-    account_title:
-      '🏠 حساب من',
-
-    loading:
-      'در حال بارگذاری...',
-
-    logout_button:
-      'خروج',
-
-    ai_title:
-      '🤖 گفتگو با هوش مصنوعی',
-
-    ai_input_placeholder:
-      'پیام خود را بنویسید...',
-
-    send_button:
-      'ارسال',
-
-    sending_button:
-      'در حال پاسخ...',
-
-    plans_title:
-      '💰 پلن‌ها',
-
-    currency_toman:
-      'تومان (ایران)',
-
-    currency_usd:
-      'دلار (جهانی)',
-
-    admin_login_title:
-      '🛠️ ورود به پنل مدیریت',
-
-    admin_password_placeholder:
-      'رمز مدیریت',
-
-    admin_panel_title:
-      '🛠️ پنل مدیریت',
-
-    admin_users_button:
-      'کاربران',
-
-    admin_payments_button:
-      'تراکنش‌ها',
-
-    admin_adjust_balance_button:
-      'تعدیل موجودی',
-
-    admin_logout_button:
-      'خروج از مدیریت',
-
-    label_name:
-      'نام',
-
-    label_email:
-      'ایمیل',
-
-    label_balance:
-      'موجودی',
-
-    label_signup_date:
-      'تاریخ ثبت‌نام',
-
-    label_plan:
-      'پلن',
-
-    label_amount_toman:
-      'مبلغ (تومان)',
-
-    label_status:
-      'وضعیت',
-
-    label_date:
-      'تاریخ',
-
-    monthly_suffix:
-      'تومان / ماهانه',
-
-    monthly_suffix_usd:
-      '$ / ماهانه',
-
-    free_label:
-      'رایگان',
-
-    buy_plan_button:
-      'خرید این پلن',
-
-    unknown_error:
-      'خطای ناشناخته (کد {status})',
-
-    technical_error:
-      'خطای فنی: {message}',
-
-    code_sent:
-      'کد ارسال شد.',
-
-    password_changed:
-      'رمز عبور با موفقیت تغییر کرد.',
-
-    error_fetching_account:
-      'خطا در دریافت حساب: {message}',
-
-    error_fetching_plans:
-      'خطا در دریافت پلن‌ها: {message}',
-
-    error_creating_payment:
-      'خطا در ساخت پرداخت',
-
-    no_reply:
-      'پاسخی دریافت نشد.',
-
-    generic_error:
-      'خطا',
-
-    adjust_balance_title:
-      'تعدیل موجودی کاربر',
-
-    adjust_balance_user_id_placeholder:
-      'شناسه کاربر (User ID)',
-
-    adjust_balance_amount_placeholder:
-      'مبلغ به تومان (منفی برای کسر)',
-
-    adjust_balance_reason_placeholder:
-      'دلیل (اختیاری)',
-
-    adjust_balance_submit:
-      'اعمال تغییر',
-
-    adjust_balance_success:
-      'موجودی با موفقیت به‌روزرسانی شد. موجودی جدید: {balance}',
-
-    adjust_balance_hint:
-      'شناسه کاربر را از جدول «کاربران» کپی کنید.',
-
-    seo_h1:
-      'ابزارک، دستیار هوش مصنوعی چندزبانه شما',
-
-    seo_intro_p1:
-      'ابزارک یک دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان است که برای گفتگو، پاسخ‌گویی، ترجمه، تولید محتوا و کمک در کارهای روزمره طراحی شده است.',
-
-    seo_h2_about:
-      'درباره دستیار هوش مصنوعی ابزارک',
-
-    seo_about_p1:
-      'ابزارک می‌تواند زبان پیام کاربر را تشخیص دهد و به همان زبان پاسخ دهد. هدف ابزارک فراهم کردن دسترسی ساده و کاربردی به هوش مصنوعی برای کاربران سراسر جهان است.',
-
-    seo_h2_features:
-      'امکانات ابزارک',
-
-    seo_feature_1:
-      'گفتگوی متنی با هوش مصنوعی به زبان‌های مختلف',
-
-    seo_feature_2:
-      'پاسخ‌گویی سریع و دقیق به سوالات روزمره',
-
-    seo_feature_3:
-      'حساب کاربری امن با امکان بازیابی رمز عبور',
-
-    seo_feature_4:
-      'پلن‌های رایگان و اشتراکی متناسب با نیاز شما',
-
-    seo_feature_5:
-      'پشتیبانی از کاربران سراسر جهان و زبان‌های مختلف',
-
-    seo_h2_plans:
-      'پلن‌های اشتراک',
-
-    seo_plans_p1:
-      'ابزارک یک پلن رایگان با محدودیت پیام روزانه و پلن‌های اشتراکی برای کاربران مختلف ارائه می‌دهد. سرویس هوش مصنوعی برای کاربران سراسر جهان و زبان‌های مختلف طراحی شده است.'
-
-  },
-
-
-  en: {
-
-    page_title:
-      'AI Assistant 🤖',
-
-    app_title:
-      '🤖 AI Assistant',
-
-    app_subtitle:
-      'Smart assistant • Your account',
-
-    nav_account:
-      '🏠 Account',
-
-    nav_ai:
-      '🤖 AI Chat',
-
-    nav_plans:
-      '💰 Plans',
-
-    nav_admin:
-      '🛠️ Admin',
-
-    login_title:
-      '🔑 Sign In',
-
-    email_placeholder:
-      'Email',
-
-    password_placeholder:
-      'Password',
-
-    forgot_link:
-      'Forgot password?',
-
-    signup_link:
-      'Sign Up',
-
-    login_button:
-      'Sign In',
-
-    signup_title:
-      '📝 Sign Up',
-
-    name_placeholder:
-      'Name',
-
-    signup_password_placeholder:
-      'Password (min. 6 characters)',
-
-    back_button:
-      'Back',
-
-    signup_button:
-      'Sign Up',
-
-    forgot_title:
-      '🔐 Forgot Password',
-
-    forgot_intro:
-      'Enter your email to receive a recovery code.',
-
-    send_code_button:
-      'Send Code',
-
-    reset_intro:
-      'Enter the code you received and your new password:',
-
-    code_placeholder:
-      '6-digit code',
-
-    new_password_placeholder:
-      'New password',
-
-    reset_button:
-      'Change Password',
-
-    account_title:
-      '🏠 My Account',
-
-    loading:
-      'Loading...',
-
-    logout_button:
-      'Log Out',
-
-    ai_title:
-      '🤖 Chat with AI',
-
-    ai_input_placeholder:
-      'Type your message...',
-
-    send_button:
-      'Send',
-
-    sending_button:
-      'Sending...',
-
-    plans_title:
-      '💰 Plans',
-
-    currency_toman:
-      'Toman (Iran)',
-
-    currency_usd:
-      'USD (Worldwide)',
-
-    admin_login_title:
-      '🛠️ Admin Login',
-
-    admin_password_placeholder:
-      'Admin password',
-
-    admin_panel_title:
-      '🛠️ Admin Panel',
-
-    admin_users_button:
-      'Users',
-
-    admin_payments_button:
-      'Payments',
-
-    admin_adjust_balance_button:
-      'Adjust Balance',
-
-    admin_logout_button:
-      'Log Out of Admin',
-
-    label_name:
-      'Name',
-
-    label_email:
-      'Email',
-
-    label_balance:
-      'Balance',
-
-    label_signup_date:
-      'Signup Date',
-
-    label_plan:
-      'Plan',
-
-    label_amount_toman:
-      'Amount (Toman)',
-
-    label_status:
-      'Status',
-
-    label_date:
-      'Date',
-
-    monthly_suffix:
-      'Toman / month',
-
-    monthly_suffix_usd:
-      '$ / month',
-
-    free_label:
-      'Free',
-
-    buy_plan_button:
-      'Buy this plan',
-
-    unknown_error:
-      'Unknown error (code {status})',
-
-    technical_error:
-      'Technical error: {message}',
-
-    code_sent:
-      'Code sent.',
-
-    password_changed:
-      'Password changed successfully.',
-
-    error_fetching_account:
-      'Error fetching account: {message}',
-
-    error_fetching_plans:
-      'Error fetching plans: {message}',
-
-    error_creating_payment:
-      'Error creating payment',
-
-    no_reply:
-      'No reply received.',
-
-    generic_error:
-      'Error',
-
-    adjust_balance_title:
-      'Adjust User Balance',
-
-    adjust_balance_user_id_placeholder:
-      'User ID',
-
-    adjust_balance_amount_placeholder:
-      'Amount in Toman (negative to deduct)',
-
-    adjust_balance_reason_placeholder:
-      'Reason (optional)',
-
-    adjust_balance_submit:
-      'Apply',
-
-    adjust_balance_success:
-      'Balance updated successfully. New balance: {balance}',
-
-    adjust_balance_hint:
-      'Copy the user ID from the "Users" table.',
-
-    seo_h1:
-      'Abzarak — Multilingual AI Assistant for Users Worldwide',
-
-    seo_intro_p1:
-      'Abzarak is a multilingual AI assistant designed for users worldwide. Chat naturally, ask questions, translate text, create content, and get help with everyday tasks in multiple languages.',
-
-    seo_h2_about:
-      'About Abzarak AI Assistant',
-
-    seo_about_p1:
-      'Abzarak can detect the language of the user and respond naturally in the same language. The service is designed to provide simple and useful access to AI for users around the world.',
-
-    seo_h2_features:
-      'Features',
-
-    seo_feature_1:
-      'Multilingual text conversations with AI',
-
-    seo_feature_2:
-      'Fast and accurate answers to everyday questions',
-
-    seo_feature_3:
-      'Secure account with password recovery',
-
-    seo_feature_4:
-      'Free and paid plans for different needs',
-
-    seo_feature_5:
-      'Designed for users worldwide with multilingual AI support',
-
-    seo_h2_plans:
-      'Subscription Plans',
-
-    seo_plans_p1:
-      'Abzarak offers a free plan with a daily message limit and subscription plans for users who need more access and features. The AI service is designed for users worldwide and supports multiple languages.'
-
-  }
-
-};
-
-
-let currentLang =
-  localStorage.getItem(
-    'lang'
-  ) || 'fa';
-
-let currentPlanCurrency =
-  'irt';
-
-
-function t(
-  key,
-  vars
-) {
-  const dict =
-    translations[
-      currentLang
-    ] ||
-    translations.fa;
-
-  let text =
-    dict[key] ||
-    translations.fa[key] ||
-    key;
-
-  if (vars) {
-    Object.keys(vars)
-      .forEach(
-        (k) => {
-          text =
-            text.replace(
-              '{' + k + '}',
-              vars[k]
-            );
-        }
-      );
-  }
-
-  return text;
-}
-
-
-function applyTranslations() {
-
-  document.documentElement.lang =
-    currentLang === 'fa'
-      ? 'fa'
-      : 'en';
-
-  document.documentElement.dir =
-    currentLang === 'fa'
-      ? 'rtl'
-      : 'ltr';
+function showView(name) {
 
   document
-    .querySelectorAll(
-      '[data-i18n]'
-    )
-    .forEach(
-      (el) => {
-
-        const key =
-          el.getAttribute(
-            'data-i18n'
-          );
-
-        el.textContent =
-          t(key);
-      }
+    .querySelectorAll(".view")
+    .forEach(v =>
+      v.classList.remove("active")
     );
 
-  document
-    .querySelectorAll(
-      '[data-i18n-placeholder]'
-    )
-    .forEach(
-      (el) => {
+  const target =
+    $("view-" + name);
 
-        const key =
-          el.getAttribute(
-            'data-i18n-placeholder'
-          );
-
-        el.setAttribute(
-          'placeholder',
-          t(key)
-        );
-
-      }
-    );
-
-  const btn =
-    document.getElementById(
-      'lang-switch-btn'
-    );
-
-  if (btn) {
-    btn.textContent =
-      currentLang === 'fa'
-        ? 'English'
-        : 'فارسی';
-  }
-}
-
-
-function toggleLang() {
-
-  currentLang =
-    currentLang === 'fa'
-      ? 'en'
-      : 'fa';
-
-  localStorage.setItem(
-    'lang',
-    currentLang
-  );
-
-  applyTranslations();
-
-  const activeView =
-    document.querySelector(
-      'main > div:not(.hidden)'
-    );
-
-  if (activeView) {
-
-    const id =
-      activeView.id.replace(
-        'view-',
-        ''
-      );
-
-    if (
-      id === 'account' &&
-      token
-    ) {
-      loadAccount();
-    }
-
-    if (
-      id === 'plans'
-    ) {
-      loadPlans();
-    }
-
-  }
-}
-
-
-// =============================================================
-// App Logic
-// =============================================================
-
-let token =
-  localStorage.getItem(
-    'token'
-  ) || null;
-
-let adminToken =
-  localStorage.getItem(
-    'adminToken'
-  ) || null;
-
-let cachedPlansData =
-  null;
-
-
-function showMsg(
-  elId,
-  text,
-  type
-) {
-
-  const el =
-    document.getElementById(
-      elId
-    );
-
-  el.innerHTML =
-    '<div class="msg ' +
-    type +
-    '">' +
-    escapeHtml(text) +
-    '</div>';
-}
-
-
-function escapeHtml(
-  text
-) {
-
-  return String(text)
-    .replace(
-      /&/g,
-      '&amp;'
-    )
-    .replace(
-      /</g,
-      '&lt;'
-    )
-    .replace(
-      />/g,
-      '&gt;'
-    )
-    .replace(
-      /"/g,
-      '&quot;'
-    )
-    .replace(
-      /'/g,
-      '&#039;'
-    );
-}
-
-
-function showView(
-  name
-) {
-
-  const views = [
-    'login',
-    'signup',
-    'forgot',
-    'account',
-    'ai',
-    'plans',
-    'admin-login',
-    'admin-panel'
-  ];
-
-  views.forEach(
-    (v) => {
-
-      document
-        .getElementById(
-          'view-' + v
-        )
-        .classList.add(
-          'hidden'
-        );
-
-    }
-  );
-
-  if (
-    (
-      name === 'account' ||
-      name === 'ai'
-    ) &&
-    !token
-  ) {
-    name =
-      'login';
+  if (target) {
+    target.classList.add("active");
   }
 
-  if (
-    name === 'admin-panel' &&
-    !adminToken
-  ) {
-    name =
-      'admin-login';
-  }
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 
-  document
-    .getElementById(
-      'view-' + name
-    )
-    .classList.remove(
-      'hidden'
-    );
-
-  if (
-    name === 'account'
-  ) {
+  if (name === "account") {
     loadAccount();
   }
 
-  if (
-    name === 'plans'
-  ) {
+  if (name === "plans") {
     loadPlans();
   }
 
-  if (
-    name === 'admin-panel'
-  ) {
-    loadAdminUsers();
-  }
 }
 
+function setMessage(
+  id,
+  message,
+  type = ""
+) {
 
-// =============================================================
-// Signup Frontend
-// =============================================================
+  const el = $(id);
+
+  if (!el) return;
+
+  el.innerHTML =
+    message
+      ? '<div class="notice ' +
+        escapeHtml(type) +
+        '">' +
+        escapeHtml(message) +
+        "</div>"
+      : "";
+
+}
+
+async function api(
+  path,
+  options = {}
+) {
+
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if (
+    options.body &&
+    !headers["Content-Type"]
+  ) {
+    headers["Content-Type"] =
+      "application/json";
+  }
+
+  if (authToken) {
+    headers.Authorization =
+      "Bearer " + authToken;
+  }
+
+  const response =
+    await fetch(
+      path,
+      {
+        ...options,
+        headers
+      }
+    );
+
+  const text =
+    await response.text();
+
+  let data = {};
+
+  try {
+    data =
+      text
+        ? JSON.parse(text)
+        : {};
+  } catch {
+    data = {
+      error:
+        text ||
+        "پاسخ نامعتبر از سرور"
+    };
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      "خطای سرور"
+    );
+  }
+
+  return data;
+
+}
 
 async function doSignup() {
 
   const name =
-    document.getElementById(
-      'signup-name'
-    ).value;
+    $("signup-name").value.trim();
 
   const email =
-    document.getElementById(
-      'signup-email'
-    ).value;
+    $("signup-email").value.trim();
 
   const password =
-    document.getElementById(
-      'signup-password'
-    ).value;
+    $("signup-password").value;
+
+  setMessage(
+    "signup-message",
+    ""
+  );
 
   try {
 
-    const res =
-      await fetch(
-        '/api/signup',
+    const data =
+      await api(
+        "/api/signup",
         {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-              name,
-              email,
-              password
-            })
+          method: "POST",
+          body: JSON.stringify({
+            name,
+            email,
+            password
+          })
         }
       );
 
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'signup-msg',
-        data.error ||
-          t(
-            'unknown_error',
-            {
-              status:
-                res.status
-            }
-          ),
-        'error'
-      );
-
-      return;
-    }
-
-    token =
+    authToken =
       data.token;
 
     localStorage.setItem(
-      'token',
-      token
+      "abzarak_token",
+      authToken
     );
 
-    showView(
-      'account'
+    setMessage(
+      "signup-message",
+      "ثبت‌نام با موفقیت انجام شد.",
+      "success"
     );
 
-  } catch (err) {
-
-    showMsg(
-      'signup-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
+    setTimeout(
+      () => showView("account"),
+      600
     );
+
+  } catch (error) {
+
+    setMessage(
+      "signup-message",
+      error.message,
+      "error"
+    );
+
   }
+
 }
-
-
-// =============================================================
-// Login Frontend
-// =============================================================
 
 async function doLogin() {
 
   const email =
-    document.getElementById(
-      'login-email'
-    ).value;
+    $("login-email").value.trim();
 
   const password =
-    document.getElementById(
-      'login-password'
-    ).value;
+    $("login-password").value;
+
+  setMessage(
+    "login-message",
+    ""
+  );
 
   try {
 
-    const res =
-      await fetch(
-        '/api/login',
+    const data =
+      await api(
+        "/api/login",
         {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-              email,
-              password
-            })
+          method: "POST",
+          body: JSON.stringify({
+            email,
+            password
+          })
         }
       );
 
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'login-msg',
-        data.error ||
-          t(
-            'unknown_error',
-            {
-              status:
-                res.status
-            }
-          ),
-        'error'
-      );
-
-      return;
-    }
-
-    token =
+    authToken =
       data.token;
 
     localStorage.setItem(
-      'token',
-      token
+      "abzarak_token",
+      authToken
     );
 
-    showView(
-      'account'
+    setMessage(
+      "login-message",
+      "ورود موفق بود.",
+      "success"
     );
 
-  } catch (err) {
-
-    showMsg(
-      'login-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
+    setTimeout(
+      () => showView("account"),
+      400
     );
+
+  } catch (error) {
+
+    setMessage(
+      "login-message",
+      error.message,
+      "error"
+    );
+
   }
+
 }
-
-
-// =============================================================
-// Forgot Frontend
-// =============================================================
 
 async function doForgotPassword() {
 
   const email =
-    document.getElementById(
-      'forgot-email'
-    ).value;
+    $("forgot-email").value.trim();
+
+  setMessage(
+    "forgot-message",
+    ""
+  );
 
   try {
 
-    const res =
-      await fetch(
-        '/api/forgot-password',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-              email
-            })
-        }
-      );
-
     const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'forgot-msg',
-        data.error ||
-          t(
-            'unknown_error',
-            {
-              status:
-                res.status
-            }
-          ),
-        'error'
+      await api(
+        "/api/forgot-password",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email
+          })
+        }
       );
 
-      return;
-    }
-
-    showMsg(
-      'forgot-msg',
+    setMessage(
+      "forgot-message",
       data.message ||
-        t('code_sent'),
-      'success'
+        "کد ارسال شد.",
+      "success"
     );
 
-  } catch (err) {
+    $("reset-email").value =
+      email;
 
-    showMsg(
-      'forgot-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
+  } catch (error) {
+
+    setMessage(
+      "forgot-message",
+      error.message,
+      "error"
     );
+
   }
+
 }
-
-
-// =============================================================
-// Reset Password Frontend
-// =============================================================
 
 async function doResetPassword() {
 
   const email =
-    document.getElementById(
-      'forgot-email'
-    ).value;
+    $("reset-email").value.trim();
 
   const code =
-    document.getElementById(
-      'reset-code'
-    ).value;
+    $("reset-code").value.trim();
 
   const newPassword =
-    document.getElementById(
-      'reset-password'
-    ).value;
+    $("reset-password").value;
+
+  setMessage(
+    "reset-message",
+    ""
+  );
 
   try {
 
-    const res =
-      await fetch(
-        '/api/reset-password',
+    const data =
+      await api(
+        "/api/reset-password",
         {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-              email,
-              code,
-              newPassword
-            })
+          method: "POST",
+          body: JSON.stringify({
+            email,
+            code,
+            newPassword
+          })
         }
       );
 
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'reset-msg',
-        data.error ||
-          t(
-            'unknown_error',
-            {
-              status:
-                res.status
-            }
-          ),
-        'error'
-      );
-
-      return;
-    }
-
-    showMsg(
-      'reset-msg',
+    setMessage(
+      "reset-message",
       data.message ||
-        t('password_changed'),
-      'success'
+        "رمز تغییر کرد.",
+      "success"
     );
 
     setTimeout(
-      () =>
-        showView(
-          'login'
-        ),
-      1500
+      () => showView("login"),
+      900
     );
 
-  } catch (err) {
+  } catch (error) {
 
-    showMsg(
-      'reset-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
+    setMessage(
+      "reset-message",
+      error.message,
+      "error"
     );
+
   }
+
 }
-
-
-// =============================================================
-// Logout
-// =============================================================
-
-function logout() {
-
-  token =
-    null;
-
-  localStorage.removeItem(
-    'token'
-  );
-
-  showView(
-    'login'
-  );
-}
-
-
-// =============================================================
-// Account
-// =============================================================
 
 async function loadAccount() {
 
+  const container =
+    $("account-content");
+
+  if (!container) return;
+
+  if (!authToken) {
+
+    container.innerHTML = `
+      <div class="notice">
+        برای مشاهده حساب ابتدا وارد شوید.
+      </div>
+
+      <button
+        class="btn btn-primary"
+        onclick="showView('login')"
+      >
+        ورود
+      </button>
+    `;
+
+    return;
+
+  }
+
   try {
 
-    const res =
-      await fetch(
-        '/api/me',
+    const data =
+      await api(
+        "/api/me"
+      );
+
+    const user =
+      data.user;
+
+    container.innerHTML = `
+      <div class="account-box">
+
+        <div class="stat">
+          👤 نام
+          <strong>
+            ${escapeHtml(
+              user.name || "-"
+            )}
+          </strong>
+        </div>
+
+        <div class="stat">
+          📧 ایمیل
+          <strong style="font-size:16px;">
+            ${escapeHtml(
+              user.email
+            )}
+          </strong>
+        </div>
+
+        <div class="stat">
+          💰 موجودی
+          <strong>
+            ${Number(
+              user.balance || 0
+            ).toLocaleString("fa-IR")}
+          </strong>
+        </div>
+
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
+
+        <button
+          class="btn btn-primary"
+          onclick="showView('ai')"
+        >
+          🤖 ورود به هوش مصنوعی
+        </button>
+
+        <button
+          class="btn btn-secondary"
+          onclick="showView('plans')"
+        >
+          💎 خرید اشتراک
+        </button>
+
+        <button
+          class="btn btn-danger"
+          onclick="logout()"
+        >
+          خروج
+        </button>
+
+      </div>
+    `;
+
+  } catch {
+
+    localStorage.removeItem(
+      "abzarak_token"
+    );
+
+    authToken = "";
+
+    container.innerHTML = `
+      <div class="notice error">
+        نشست شما معتبر نیست. دوباره وارد شوید.
+      </div>
+    `;
+
+  }
+
+}
+
+function logout() {
+
+  authToken = "";
+
+  localStorage.removeItem(
+    "abzarak_token"
+  );
+
+  showView("home");
+
+}
+
+function addChatMessage(
+  text,
+  type
+) {
+
+  const container =
+    $("chat-messages");
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    "msg " + type;
+
+  div.textContent =
+    text;
+
+  container.appendChild(div);
+
+  container.scrollTop =
+    container.scrollHeight;
+
+}
+
+async function sendAiMessage() {
+
+  if (!authToken) {
+
+    showView("login");
+
+    return;
+
+  }
+
+  const input =
+    $("ai-input");
+
+  const message =
+    input.value.trim();
+
+  if (!message) return;
+
+  input.value = "";
+
+  addChatMessage(
+    message,
+    "user"
+  );
+
+  const loading =
+    document.createElement("div");
+
+  loading.className =
+    "msg ai";
+
+  loading.textContent =
+    "در حال فکر کردن...";
+
+  loading.id =
+    "ai-loading-message";
+
+  $("chat-messages")
+    .appendChild(loading);
+
+  $("chat-messages").scrollTop =
+    $("chat-messages").scrollHeight;
+
+  try {
+
+    const data =
+      await api(
+        "/api/ai/chat",
         {
-          headers: {
-            'Authorization':
-              'Bearer ' +
-              token
-          }
+          method: "POST",
+          body: JSON.stringify({
+            message
+          })
         }
       );
 
-    const data =
-      await res.json();
+    loading.remove();
 
-    if (!res.ok) {
+    addChatMessage(
+      data.reply ||
+        "پاسخی دریافت نشد.",
+      "ai"
+    );
 
-      logout();
+  } catch (error) {
 
-      return;
-    }
+    loading.remove();
 
-    document.getElementById(
-      'account-info'
-    ).innerHTML =
+    addChatMessage(
+      "خطا: " +
+        error.message,
+      "ai"
+    );
 
-      '<p><b>' +
-      t('label_name') +
-      ':</b> ' +
-      escapeHtml(
-        data.user.name ||
-        '-'
-      ) +
-      '</p>' +
-
-      '<p><b>' +
-      t('label_email') +
-      ':</b> ' +
-      escapeHtml(
-        data.user.email
-      ) +
-      '</p>' +
-
-      '<p><b>' +
-      t('label_balance') +
-      ':</b> ' +
-      escapeHtml(
-        data.user.balance
-      ) +
-      '</p>';
-
-  } catch (err) {
-
-    document.getElementById(
-      'account-info'
-    ).innerHTML =
-      '<div class="msg error">' +
-      t(
-        'error_fetching_account',
-        {
-          message:
-            err.message
-        }
-      ) +
-      '</div>';
   }
+
 }
 
+async function loadPlans() {
 
-// =============================================================
-// Plans Frontend
-// =============================================================
+  const container =
+    $("plans-container");
+
+  if (!container) return;
+
+  container.innerHTML =
+    '<div class="loading">در حال بارگذاری...</div>';
+
+  try {
+
+    const data =
+      await api(
+        "/api/plans"
+      );
+
+    renderPlans(
+      currentCurrency === "usd"
+        ? data.plans_usd
+        : data.plans
+    );
+
+  } catch (error) {
+
+    container.innerHTML =
+      '<div class="notice error">' +
+      escapeHtml(
+        error.message
+      ) +
+      "</div>";
+
+  }
+
+}
 
 function setPlanCurrency(
   currency
 ) {
 
-  currentPlanCurrency =
+  currentCurrency =
     currency;
 
-  document
-    .getElementById(
-      'currency-btn-irt'
-    )
+  $("currency-irt")
     .classList.toggle(
-      'active',
-      currency === 'irt'
+      "active",
+      currency === "irt"
     );
 
-  document
-    .getElementById(
-      'currency-btn-usd'
-    )
+  $("currency-usd")
     .classList.toggle(
-      'active',
-      currency === 'usd'
+      "active",
+      currency === "usd"
     );
 
-  renderPlansList();
+  loadPlans();
+
 }
 
+function renderPlans(
+  plans
+) {
 
-function renderPlansList() {
+  const container =
+    $("plans-container");
 
-  if (!cachedPlansData) {
-    return;
-  }
+  container.innerHTML = "";
 
-  const list =
-    currentPlanCurrency ===
-    'usd'
-      ? cachedPlansData.plans_usd
-      : cachedPlansData.plans;
+  plans.forEach(
+    (plan, index) => {
 
-  const isUsd =
-    currentPlanCurrency ===
-    'usd';
-
-  document.getElementById(
-    'plans-list'
-  ).innerHTML =
-
-    list.map(
-      (p) => {
-
-        const priceLine =
-          isUsd
-
-            ? (
-                p.price_usd > 0
-                  ? '$' +
-                    Number(
-                      p.price_usd
-                    ).toLocaleString(
-                      'en-US'
-                    ) +
-                    ' ' +
-                    t(
-                      'monthly_suffix_usd'
-                    )
-
-                  : t(
-                      'free_label'
-                    )
-              )
-
-            : (
-                p.price_toman > 0
-                  ? Number(
-                      p.price_toman
-                    ).toLocaleString(
-                      currentLang === 'fa'
-                        ? 'fa-IR'
-                        : 'en-US'
-                    ) +
-                    ' ' +
-                    t(
-                      'monthly_suffix'
-                    )
-
-                  : t(
-                      'free_label'
-                    )
-              );
-
-        const hasPrice =
-          isUsd
-            ? p.price_usd > 0
-            : p.price_toman > 0;
-
-        return (
-
-          '<div class="plan-card">' +
-
-          '<b>' +
-          escapeHtml(
-            p.name
-          ) +
-          '</b><br>' +
-
-          '<span class="plan-price">' +
-          priceLine +
-          '</span><br>' +
-
-          '<ul style="margin:6px 0 0;padding-inline-start:18px;">' +
-
-          p.features
-            .map(
-              (f) =>
-                '<li>' +
-                escapeHtml(f) +
-                '</li>'
-            )
-            .join('') +
-
-          '</ul>' +
-
-          (
-            hasPrice
-
-              ? '<div class="actions">' +
-                '<button class="btn-primary" onclick="buyPlan(\\'' +
-                p.id +
-                '\\')">' +
-                t(
-                  'buy_plan_button'
-                ) +
-                '</button>' +
-                '</div>'
-
-              : ''
-          ) +
-
-          '</div>'
+      const div =
+        document.createElement(
+          "div"
         );
-      }
-    ).join('');
-}
 
+      div.className =
+        "plan " +
+        (
+          index === 1
+            ? "featured"
+            : ""
+        );
 
-async function loadPlans() {
+      const isUsd =
+        currentCurrency === "usd";
 
-  try {
+      const price =
+        isUsd
+          ? "$" +
+            Number(
+              plan.price_usd || 0
+            )
+          : Number(
+              plan.price_toman || 0
+            ).toLocaleString(
+              "fa-IR"
+            ) +
+            " تومان";
 
-    const res =
-      await fetch(
-        '/api/plans'
+      const features =
+        (plan.features || [])
+          .map(
+            feature =>
+              "<li>" +
+              escapeHtml(
+                feature
+              ) +
+              "</li>"
+          )
+          .join("");
+
+      div.innerHTML = `
+        <h3>
+          ${escapeHtml(
+            plan.name
+          )}
+        </h3>
+
+        <div class="price">
+          ${price}
+        </div>
+
+        <p>
+          ماهانه
+        </p>
+
+        <ul>
+          ${features}
+        </ul>
+
+        ${
+          plan.id === "free"
+            ? `
+              <button
+                class="btn btn-secondary"
+                style="width:100%;"
+                onclick="showView('ai')"
+              >
+                شروع رایگان
+              </button>
+            `
+            : `
+              <button
+                class="btn btn-primary"
+                style="width:100%;"
+                onclick="buyPlan('${escapeHtml(
+                  plan.id
+                )}')"
+              >
+                خرید اشتراک
+              </button>
+            `
+        }
+
+      `;
+
+      container.appendChild(
+        div
       );
 
-    const data =
-      await res.json();
+    }
+  );
 
-    cachedPlansData =
-      data;
-
-    renderPlansList();
-
-  } catch (err) {
-
-    document.getElementById(
-      'plans-list'
-    ).innerHTML =
-      '<div class="msg error">' +
-      t(
-        'error_fetching_plans',
-        {
-          message:
-            err.message
-        }
-      ) +
-      '</div>';
-  }
 }
-
-
-// =============================================================
-// Buy Plan
-// =============================================================
 
 async function buyPlan(
   planId
 ) {
 
-  if (!token) {
+  if (!authToken) {
 
-    showView(
-      'login'
-    );
+    showView("login");
 
     return;
+
   }
 
   try {
 
-    const res =
-      await fetch(
-        '/api/payment/request',
+    const data =
+      await api(
+        "/api/payment/request",
         {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            'Authorization':
-              'Bearer ' +
-              token
-          },
-
-          body:
-            JSON.stringify({
-              planId
-            })
+          method: "POST",
+          body: JSON.stringify({
+            planId
+          })
         }
       );
 
-    const data =
-      await res.json();
+    if (
+      data.payment_url
+    ) {
 
-    if (!res.ok) {
+      window.location.href =
+        data.payment_url;
+
+    } else {
 
       alert(
-        data.error ||
-        t(
-          'error_creating_payment'
-        )
+        "لینک پرداخت دریافت نشد."
       );
 
-      return;
     }
 
-    window.location.href =
-      data.payment_url;
-
-  } catch (err) {
+  } catch (error) {
 
     alert(
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      )
+      error.message
     );
+
   }
+
 }
-
-
-// =============================================================
-// AI Frontend
-// =============================================================
-
-async function sendAiMessage() {
-
-  if (!token) {
-
-    showView(
-      'login'
-    );
-
-    return;
-  }
-
-  const input =
-    document.getElementById(
-      'ai-input'
-    );
-
-  const message =
-    input.value.trim();
-
-  if (!message) {
-    return;
-  }
-
-  const chatBox =
-    document.getElementById(
-      'chat-box'
-    );
-
-  chatBox.innerHTML +=
-    '<div class="bubble user">' +
-    escapeHtml(
-      message
-    ) +
-    '</div>';
-
-  input.value =
-    '';
-
-  document.getElementById(
-    'ai-msg'
-  ).innerHTML =
-    '';
-
-  const sendButton =
-    document.querySelector(
-      '#view-ai .btn-primary'
-    );
-
-  if (sendButton) {
-
-    sendButton.disabled =
-      true;
-
-    sendButton.textContent =
-      t(
-        'sending_button'
-      );
-  }
-
-  try {
-
-    const res =
-      await fetch(
-        '/api/ai/chat',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            'Authorization':
-              'Bearer ' +
-              token
-          },
-
-          body:
-            JSON.stringify({
-              message
-            })
-        }
-      );
-
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'ai-msg',
-        data.error ||
-          t(
-            'unknown_error',
-            {
-              status:
-                res.status
-            }
-          ),
-        'error'
-      );
-
-      return;
-    }
-
-    chatBox.innerHTML +=
-      '<div class="bubble ai">' +
-      escapeHtml(
-        data.reply ||
-        t('no_reply')
-      ) +
-      '</div>';
-
-    chatBox.scrollTop =
-      chatBox.scrollHeight;
-
-  } catch (err) {
-
-    showMsg(
-      'ai-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
-    );
-
-  } finally {
-
-    if (sendButton) {
-
-      sendButton.disabled =
-        false;
-
-      sendButton.textContent =
-        t(
-          'send_button'
-        );
-    }
-  }
-}
-
-
-// =============================================================
-// Admin Login Frontend
-// =============================================================
 
 async function doAdminLogin() {
 
   const password =
-    document.getElementById(
-      'admin-password'
-    ).value;
+    $("admin-password").value;
+
+  setMessage(
+    "admin-login-message",
+    ""
+  );
 
   try {
 
-    const res =
+    const response =
       await fetch(
-        '/api/admin/login',
+        "/api/admin/login",
         {
-          method: 'POST',
-
+          method: "POST",
           headers: {
-            'Content-Type':
-              'application/json'
+            "Content-Type":
+              "application/json"
           },
-
-          body:
-            JSON.stringify({
-              password
-            })
+          body: JSON.stringify({
+            password
+          })
         }
       );
 
     const data =
-      await res.json();
+      await response.json();
 
-    if (!res.ok) {
-
-      showMsg(
-        'admin-login-msg',
+    if (!response.ok) {
+      throw new Error(
         data.error ||
-          t('generic_error'),
-        'error'
+        "خطا در ورود مدیریت"
       );
-
-      return;
     }
 
     adminToken =
       data.token;
 
     localStorage.setItem(
-      'adminToken',
+      "abzarak_admin_token",
       adminToken
     );
 
-    showView(
-      'admin-panel'
+    showView("admin");
+
+    loadAdminUsers();
+
+  } catch (error) {
+
+    setMessage(
+      "admin-login-message",
+      error.message,
+      "error"
     );
 
-  } catch (err) {
+  }
 
-    showMsg(
-      'admin-login-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
+}
+
+async function adminApi(
+  path,
+  options = {}
+) {
+
+  const headers = {
+    ...(options.headers || {}),
+    Authorization:
+      "Bearer " +
+      adminToken
+  };
+
+  if (
+    options.body &&
+    !headers["Content-Type"]
+  ) {
+    headers["Content-Type"] =
+      "application/json";
+  }
+
+  const response =
+    await fetch(
+      path,
+      {
+        ...options,
+        headers
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      "خطای مدیریت"
     );
   }
+
+  return data;
+
 }
-
-
-// =============================================================
-// Admin Logout
-// =============================================================
-
-function adminLogout() {
-
-  adminToken =
-    null;
-
-  localStorage.removeItem(
-    'adminToken'
-  );
-
-  showView(
-    'login'
-  );
-}
-
-
-// =============================================================
-// Admin Users
-// =============================================================
 
 async function loadAdminUsers() {
 
-  const content =
-    document.getElementById(
-      'admin-content'
-    );
+  const container =
+    $("admin-content");
 
-  content.innerHTML =
-    t('loading');
+  container.innerHTML =
+    '<div class="loading">در حال دریافت کاربران...</div>';
 
   try {
 
-    const res =
-      await fetch(
-        '/api/admin/users',
-        {
-          headers: {
-            'Authorization':
-              'Bearer ' +
-              adminToken
-          }
-        }
+    const data =
+      await adminApi(
+        "/api/admin/users"
       );
 
-    const data =
-      await res.json();
+    const users =
+      data.users || [];
 
-    if (!res.ok) {
+    if (!users.length) {
 
-      content.innerHTML =
-        '<div class="msg error">' +
-        escapeHtml(
-          data.error ||
-          t('generic_error')
-        ) +
-        '</div>';
+      container.innerHTML =
+        '<div class="notice">کاربری وجود ندارد.</div>';
 
       return;
+
     }
 
-    content.innerHTML =
+    container.innerHTML = `
+      <h3>👥 کاربران</h3>
 
-      '<table>' +
+      <div style="overflow:auto;">
 
-      '<tr>' +
+      <table class="admin-table">
 
-      '<th>' +
-      t('label_name') +
-      '</th>' +
+        <thead>
+          <tr>
+            <th>نام</th>
+            <th>ایمیل</th>
+            <th>موجودی</th>
+          </tr>
+        </thead>
 
-      '<th>' +
-      t('label_email') +
-      '</th>' +
+        <tbody>
 
-      '<th>' +
-      t('label_balance') +
-      '</th>' +
+          ${users.map(
+            user => `
+              <tr>
+                <td>
+                  ${escapeHtml(
+                    user.name || "-"
+                  )}
+                </td>
 
-      '<th>' +
-      t('label_signup_date') +
-      '</th>' +
+                <td>
+                  ${escapeHtml(
+                    user.email
+                  )}
+                </td>
 
-      '<th>ID</th>' +
+                <td>
+                  ${Number(
+                    user.balance || 0
+                  ).toLocaleString(
+                    "fa-IR"
+                  )}
+                </td>
+              </tr>
+            `
+          ).join("")}
 
-      '</tr>' +
+        </tbody>
 
-      data.users
-        .map(
-          (u) =>
+      </table>
 
-            '<tr>' +
+      </div>
+    `;
 
-            '<td>' +
-            escapeHtml(
-              u.name ||
-              '-'
-            ) +
-            '</td>' +
+  } catch (error) {
 
-            '<td>' +
-            escapeHtml(
-              u.email
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              u.balance
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              u.created_at
-            ) +
-            '</td>' +
-
-            '<td style="font-size:0.7rem;">' +
-            escapeHtml(
-              u.id
-            ) +
-            '</td>' +
-
-            '</tr>'
-        )
-        .join('') +
-
-      '</table>';
-
-  } catch (err) {
-
-    content.innerHTML =
-      '<div class="msg error">' +
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
+    container.innerHTML =
+      '<div class="notice error">' +
+      escapeHtml(
+        error.message
       ) +
-      '</div>';
+      "</div>";
+
   }
+
 }
-
-
-// =============================================================
-// Admin Payments
-// =============================================================
 
 async function loadAdminPayments() {
 
-  const content =
-    document.getElementById(
-      'admin-content'
-    );
+  const container =
+    $("admin-content");
 
-  content.innerHTML =
-    t('loading');
+  container.innerHTML =
+    '<div class="loading">در حال دریافت تراکنش‌ها...</div>';
 
   try {
 
-    const res =
-      await fetch(
-        '/api/admin/payments',
-        {
-          headers: {
-            'Authorization':
-              'Bearer ' +
-              adminToken
-          }
-        }
+    const data =
+      await adminApi(
+        "/api/admin/payments"
       );
 
-    const data =
-      await res.json();
+    const payments =
+      data.payments || [];
 
-    if (!res.ok) {
+    container.innerHTML = `
+      <h3>💳 تراکنش‌ها</h3>
 
-      content.innerHTML =
-        '<div class="msg error">' +
-        escapeHtml(
-          data.error ||
-          t('generic_error')
-        ) +
-        '</div>';
+      <div style="overflow:auto;">
 
-      return;
-    }
+      <table class="admin-table">
 
-    content.innerHTML =
+        <thead>
+          <tr>
+            <th>ایمیل</th>
+            <th>پلن</th>
+            <th>مبلغ</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
 
-      '<table>' +
+        <tbody>
 
-      '<tr>' +
+          ${payments.map(
+            payment => `
+              <tr>
+                <td>
+                  ${escapeHtml(
+                    payment.email
+                  )}
+                </td>
 
-      '<th>' +
-      t('label_email') +
-      '</th>' +
+                <td>
+                  ${escapeHtml(
+                    payment.plan_id
+                  )}
+                </td>
 
-      '<th>' +
-      t('label_plan') +
-      '</th>' +
+                <td>
+                  ${Number(
+                    payment.amount_toman || 0
+                  ).toLocaleString(
+                    "fa-IR"
+                  )}
+                  تومان
+                </td>
 
-      '<th>' +
-      t('label_amount_toman') +
-      '</th>' +
+                <td>
+                  ${escapeHtml(
+                    payment.status
+                  )}
+                </td>
+              </tr>
+            `
+          ).join("")}
 
-      '<th>' +
-      t('label_status') +
-      '</th>' +
+        </tbody>
 
-      '<th>' +
-      t('label_date') +
-      '</th>' +
+      </table>
 
-      '</tr>' +
+      </div>
+    `;
 
-      data.payments
-        .map(
-          (p) =>
+  } catch (error) {
 
-            '<tr>' +
-
-            '<td>' +
-            escapeHtml(
-              p.email
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              p.plan_id
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              p.amount_toman
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              p.status
-            ) +
-            '</td>' +
-
-            '<td>' +
-            escapeHtml(
-              p.created_at
-            ) +
-            '</td>' +
-
-            '</tr>'
-        )
-        .join('') +
-
-      '</table>';
-
-  } catch (err) {
-
-    content.innerHTML =
-      '<div class="msg error">' +
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
+    container.innerHTML =
+      '<div class="notice error">' +
+      escapeHtml(
+        error.message
       ) +
-      '</div>';
+      "</div>";
+
   }
+
 }
-
-
-// =============================================================
-// Admin Balance Adjustment
-// =============================================================
 
 function showAdjustBalanceForm() {
 
-  const content =
-    document.getElementById(
-      'admin-content'
-    );
+  $("admin-content").innerHTML = `
 
-  content.innerHTML =
+    <h3>
+      💰 تعدیل موجودی
+    </h3>
 
-    '<h3>' +
-    t(
-      'adjust_balance_title'
-    ) +
-    '</h3>' +
+    <input
+      id="adjust-user-id"
+      class="input"
+      placeholder="شناسه کاربر"
+    >
 
-    '<p class="note">' +
-    t(
-      'adjust_balance_hint'
-    ) +
-    '</p>' +
+    <input
+      id="adjust-amount"
+      class="input"
+      type="number"
+      placeholder="مبلغ به تومان - برای کسر منفی وارد کنید"
+    >
 
-    '<input id="adjust-user-id" type="text" placeholder="' +
-    t(
-      'adjust_balance_user_id_placeholder'
-    ) +
-    '">' +
+    <input
+      id="adjust-reason"
+      class="input"
+      placeholder="دلیل"
+    >
 
-    '<input id="adjust-amount" type="number" placeholder="' +
-    t(
-      'adjust_balance_amount_placeholder'
-    ) +
-    '">' +
+    <button
+      class="btn btn-primary"
+      onclick="adjustBalance()"
+    >
+      ثبت
+    </button>
 
-    '<input id="adjust-reason" type="text" placeholder="' +
-    t(
-      'adjust_balance_reason_placeholder'
-    ) +
-    '">' +
+    <div
+      id="adjust-message"
+      style="margin-top:12px;"
+    ></div>
 
-    '<div class="actions">' +
+  `;
 
-    '<button class="btn-primary" onclick="submitAdjustBalance()">' +
-
-    t(
-      'adjust_balance_submit'
-    ) +
-
-    '</button>' +
-
-    '</div>' +
-
-    '<div id="adjust-balance-msg"></div>';
 }
 
-
-async function submitAdjustBalance() {
+async function adjustBalance() {
 
   const userId =
-    document.getElementById(
-      'adjust-user-id'
-    ).value.trim();
+    $("adjust-user-id").value.trim();
 
   const amount =
     Number(
-      document.getElementById(
-        'adjust-amount'
-      ).value
+      $("adjust-amount").value
     );
 
   const reason =
-    document.getElementById(
-      'adjust-reason'
-    ).value.trim();
-
-  if (
-    !userId ||
-    !amount
-  ) {
-
-    showMsg(
-      'adjust-balance-msg',
-      t('generic_error'),
-      'error'
-    );
-
-    return;
-  }
+    $("adjust-reason").value.trim();
 
   try {
 
-    const res =
-      await fetch(
-        '/api/admin/adjust-balance',
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            'Authorization':
-              'Bearer ' +
-              adminToken
-          },
-
-          body:
-            JSON.stringify({
-              userId,
-              amount,
-              reason
-            })
-        }
-      );
-
     const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      showMsg(
-        'adjust-balance-msg',
-        data.error ||
-          t('generic_error'),
-        'error'
+      await adminApi(
+        "/api/admin/adjust-balance",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            userId,
+            amount,
+            reason
+          })
+        }
       );
 
-      return;
-    }
+    $("adjust-message").innerHTML =
+      '<div class="notice success">' +
+      "موجودی جدید: " +
+      Number(
+        data.new_balance
+      ).toLocaleString("fa-IR") +
+      " تومان" +
+      "</div>";
 
-    showMsg(
-      'adjust-balance-msg',
-      t(
-        'adjust_balance_success',
-        {
-          balance:
-            data.new_balance
-        }
-      ),
-      'success'
-    );
+  } catch (error) {
 
-  } catch (err) {
+    $("adjust-message").innerHTML =
+      '<div class="notice error">' +
+      escapeHtml(
+        error.message
+      ) +
+      "</div>";
 
-    showMsg(
-      'adjust-balance-msg',
-      t(
-        'technical_error',
-        {
-          message:
-            err.message
-        }
-      ),
-      'error'
-    );
   }
+
 }
 
+function adminLogout() {
 
-// =============================================================
-// Initial setup
-// =============================================================
+  adminToken = "";
 
-applyTranslations();
+  localStorage.removeItem(
+    "abzarak_admin_token"
+  );
 
-showView(
-  token
-    ? 'account'
-    : 'login'
+  showView(
+    "admin-login"
+  );
+
+}
+
+function toggleLang() {
+
+  const button =
+    $("lang-button");
+
+  const current =
+    document.documentElement.lang;
+
+  if (current === "fa") {
+
+    document.documentElement.lang =
+      "en";
+
+    document.documentElement.dir =
+      "ltr";
+
+    button.textContent =
+      "فارسی";
+
+    document
+      .querySelector(".hero h1")
+      .textContent =
+      "Your Smart AI Assistant";
+
+    document
+      .querySelector(".hero p")
+      .textContent =
+      "Chat with AI, ask questions, translate, create content and get help with everyday tasks.";
+
+  } else {
+
+    document.documentElement.lang =
+      "fa";
+
+    document.documentElement.dir =
+      "rtl";
+
+    button.textContent =
+      "English";
+
+    document
+      .querySelector(".hero h1")
+      .textContent =
+      "دستیار هوشمند شما، همیشه آماده";
+
+    document
+      .querySelector(".hero p")
+      .textContent =
+      "با ابزارک گفتگو کنید، سؤال بپرسید، ترجمه کنید، محتوا بسازید و کارهای روزمره خود را سریع‌تر انجام دهید.";
+
+  }
+
+}
+
+function initInstallPrompt() {
+
+  window.addEventListener(
+    "beforeinstallprompt",
+    event => {
+
+      event.preventDefault();
+
+      deferredInstallPrompt =
+        event;
+
+      $("install-app-btn")
+        .classList.remove(
+          "hidden"
+        );
+
+    }
+  );
+
+  window.addEventListener(
+    "appinstalled",
+    () => {
+
+      deferredInstallPrompt =
+        null;
+
+      $("install-app-btn")
+        .classList.add(
+          "hidden"
+        );
+
+    }
+  );
+
+}
+
+async function installPwa() {
+
+  if (!deferredInstallPrompt) {
+
+    alert(
+      "اگر گزینه نصب نمایش داده نمی‌شود، از منوی Chrome گزینه «افزودن به صفحه اصلی» یا «Install app» را انتخاب کنید."
+    );
+
+    return;
+
+  }
+
+  deferredInstallPrompt.prompt();
+
+  await deferredInstallPrompt.userChoice;
+
+  deferredInstallPrompt =
+    null;
+
+  $("install-app-btn")
+    .classList.add(
+      "hidden"
+    );
+
+}
+
+function handlePaymentResult() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const payment =
+    params.get("payment");
+
+  if (!payment) return;
+
+  let message = "";
+
+  if (
+    payment === "success"
+  ) {
+
+    message =
+      "پرداخت با موفقیت انجام شد.";
+
+  } else if (
+    payment === "cancel"
+  ) {
+
+    message =
+      "پرداخت لغو شد.";
+
+  } else if (
+    payment === "failed"
+  ) {
+
+    message =
+      "پرداخت ناموفق بود.";
+
+  } else if (
+    payment === "error"
+  ) {
+
+    message =
+      "خطا در پرداخت.";
+
+  }
+
+  if (message) {
+
+    setTimeout(
+      () => {
+        alert(message);
+        history.replaceState(
+          {},
+          "",
+          "/"
+        );
+      },
+      300
+    );
+
+  }
+
+}
+
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    initInstallPrompt();
+
+    handlePaymentResult();
+
+    loadPlans();
+
+    if (authToken) {
+      loadAccount();
+    }
+
+  }
 );
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener(
+    "load",
+    () => {
+
+      navigator.serviceWorker
+        .register(
+          "/sw.js"
+        )
+        .catch(
+          error =>
+            console.log(
+              "Service Worker:",
+              error
+            )
+        );
+
+    }
+  );
+
+}
 
 </script>
 
 </body>
-</html>`;
+</html>
+`;
 }
 
-
 // =============================================================
-// robots.txt
+// ROBOTS
 // =============================================================
 
 function renderRobotsTxt(
@@ -5786,16 +4944,16 @@ Sitemap: ${baseUrl}/sitemap.xml
 `;
 }
 
-
 // =============================================================
-// sitemap.xml
+// SITEMAP
 // =============================================================
 
 function renderSitemapXml(
   baseUrl
 ) {
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
     <loc>${baseUrl}/</loc>
@@ -5803,13 +4961,11 @@ function renderSitemapXml(
     <priority>1.0</priority>
   </url>
 
-</urlset>
-`;
+</urlset>`;
 }
 
-
 // =============================================================
-// Router
+// ROUTER
 // =============================================================
 
 export default {
@@ -5822,6 +4978,10 @@ export default {
     const url =
       new URL(request.url);
 
+    // ---------------------------------------------------------
+    // OPTIONS
+    // ---------------------------------------------------------
+
     if (
       request.method ===
       "OPTIONS"
@@ -5832,15 +4992,15 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // PWA manifest
-    // =========================================================
+    // ---------------------------------------------------------
+    // MANIFEST
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/manifest.json" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       const baseUrl =
@@ -5857,23 +5017,23 @@ export default {
           headers: {
             "Content-Type":
               "application/manifest+json; charset=utf-8",
-
             "Cache-Control":
               "public, max-age=3600"
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // PWA Service Worker
-    // =========================================================
+    // ---------------------------------------------------------
+    // SERVICE WORKER
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/sw.js" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       return new Response(
@@ -5882,26 +5042,25 @@ export default {
           headers: {
             "Content-Type":
               "application/javascript; charset=utf-8",
-
             "Cache-Control":
               "no-cache",
-
             "Service-Worker-Allowed":
               "/"
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // PWA Icon
-    // =========================================================
+    // ---------------------------------------------------------
+    // ICON
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/icon.svg" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       return new Response(
@@ -5910,61 +5069,62 @@ export default {
           headers: {
             "Content-Type":
               "image/svg+xml; charset=utf-8",
-
             "Cache-Control":
               "public, max-age=86400"
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // Homepage
-    // =========================================================
+    // ---------------------------------------------------------
+    // HOME
+    // ---------------------------------------------------------
 
     if (
       url.pathname === "/" &&
       request.method === "GET"
     ) {
+
       return html(
         renderHomepage()
       );
+
     }
 
-
-    // =========================================================
-    // eNamad verification
-    // =========================================================
+    // ---------------------------------------------------------
+    // ENAMAD
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/36032134.txt" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       return new Response(
         "",
         {
           status: 200,
-
           headers: {
             "Content-Type":
               "text/plain; charset=utf-8"
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // robots.txt
-    // =========================================================
+    // ---------------------------------------------------------
+    // ROBOTS
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/robots.txt" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       const baseUrl =
@@ -5984,17 +5144,18 @@ export default {
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // sitemap.xml
-    // =========================================================
+    // ---------------------------------------------------------
+    // SITEMAP
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/sitemap.xml" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
 
       const baseUrl =
@@ -6014,17 +5175,18 @@ export default {
           }
         }
       );
+
     }
 
-
-    // =========================================================
-    // Signup
-    // =========================================================
+    // ---------------------------------------------------------
+    // AUTH
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/api/signup" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleSignup(
         request,
@@ -6032,15 +5194,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Login
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/login" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleLogin(
         request,
@@ -6048,15 +5206,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Me
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/me" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
       return handleMe(
         request,
@@ -6064,15 +5218,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Forgot password
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/forgot-password" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleForgotPassword(
         request,
@@ -6080,15 +5230,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Reset password
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/reset-password" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleResetPassword(
         request,
@@ -6096,31 +5242,28 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Plans
-    // =========================================================
+    // ---------------------------------------------------------
+    // PLANS
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/api/plans" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
-      return handlePlans(
-        request,
-        env
-      );
+      return handlePlans();
     }
 
-
-    // =========================================================
-    // AI Chat
-    // =========================================================
+    // ---------------------------------------------------------
+    // AI
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/api/ai/chat" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleAiChat(
         request,
@@ -6128,15 +5271,15 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Payment request
-    // =========================================================
+    // ---------------------------------------------------------
+    // PAYMENT
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/api/payment/request" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleCreatePayment(
         request,
@@ -6144,15 +5287,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Payment verification
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/payment/verify" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
       return handleVerifyPayment(
         request,
@@ -6160,15 +5299,15 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Admin login
-    // =========================================================
+    // ---------------------------------------------------------
+    // ADMIN
+    // ---------------------------------------------------------
 
     if (
       url.pathname ===
         "/api/admin/login" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleAdminLogin(
         request,
@@ -6176,15 +5315,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Admin users
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/admin/users" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
       return handleAdminUsers(
         request,
@@ -6192,15 +5327,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Admin payments
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/admin/payments" &&
-      request.method === "GET"
+      request.method ===
+        "GET"
     ) {
       return handleAdminPayments(
         request,
@@ -6208,15 +5339,11 @@ export default {
       );
     }
 
-
-    // =========================================================
-    // Admin balance adjustment
-    // =========================================================
-
     if (
       url.pathname ===
         "/api/admin/adjust-balance" &&
-      request.method === "POST"
+      request.method ===
+        "POST"
     ) {
       return handleAdminAdjustBalance(
         request,
@@ -6224,13 +5351,18 @@ export default {
       );
     }
 
+    // ---------------------------------------------------------
+    // 404
+    // ---------------------------------------------------------
 
     return json(
       {
         error:
-          "مسیر یافت نشد"
+          "مسیر یافت نشد."
       },
       404
     );
-  },
-};     
+
+  }
+
+};
