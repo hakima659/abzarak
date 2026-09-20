@@ -1,5 +1,5 @@
 // =============================================================
-// HOMEPAGE — SEO OPTIMIZED + COLORFUL ADS + LIMITED FREE PLAN
+// HOMEPAGE — SEO OPTIMIZED + IMAGE ADS + LIMITED FREE PLAN
 // =============================================================
 
 function renderHomepage() {
@@ -44,10 +44,7 @@ name="keywords"
 content="دستیار هوش مصنوعی فارسی, هوش مصنوعی فارسی, چت با هوش مصنوعی فارسی, چت بات فارسی, هوش مصنوعی آنلاین, دستیار هوشمند فارسی, تولید محتوا با هوش مصنوعی, ترجمه با هوش مصنوعی, ابزار هوش مصنوعی, ابزارک"
 >
 
-<meta
-name="author"
-content="ابزارک"
->
+<meta name="author" content="ابزارک">
 
 <meta
 name="robots"
@@ -59,18 +56,10 @@ name="googlebot"
 content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
 >
 
-<!-- =========================================================
-     CANONICAL
-========================================================= -->
-
 <link
 rel="canonical"
 href="https://abzarakai.ir/"
 >
-
-<!-- =========================================================
-     LANGUAGE
-========================================================= -->
 
 <link
 rel="alternate"
@@ -94,15 +83,8 @@ href="https://abzarakai.ir/"
      OPEN GRAPH
 ========================================================= -->
 
-<meta
-property="og:type"
-content="website"
->
-
-<meta
-property="og:site_name"
-content="ابزارک"
->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ابزارک">
 
 <meta
 property="og:title"
@@ -114,20 +96,9 @@ property="og:description"
 content="دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره با سهمیه رایگان محدود."
 >
 
-<meta
-property="og:url"
-content="https://abzarakai.ir/"
->
-
-<meta
-property="og:locale"
-content="fa_IR"
->
-
-<meta
-property="og:locale:alternate"
-content="en_US"
->
+<meta property="og:url" content="https://abzarakai.ir/">
+<meta property="og:locale" content="fa_IR">
+<meta property="og:locale:alternate" content="en_US">
 
 <meta
 property="og:image"
@@ -138,10 +109,7 @@ content="https://abzarakai.ir/icon.svg"
      TWITTER
 ========================================================= -->
 
-<meta
-name="twitter:card"
-content="summary"
->
+<meta name="twitter:card" content="summary">
 
 <meta
 name="twitter:title"
@@ -162,10 +130,7 @@ content="https://abzarakai.ir/icon.svg"
      PWA
 ========================================================= -->
 
-<link
-rel="manifest"
-href="/manifest.json"
->
+<link rel="manifest" href="/manifest.json">
 
 <link
 rel="icon"
@@ -549,7 +514,7 @@ font-size:13px;
 }
 
 /* =========================================================
-   COLORFUL ADVERTISEMENT
+   ADVERTISEMENT + SVG IMAGE
 ========================================================= */
 
 .ad-slot{
@@ -572,7 +537,7 @@ position:absolute;
 top:10px;
 right:12px;
 
-z-index:2;
+z-index:5;
 
 font-size:11px;
 
@@ -583,142 +548,130 @@ padding:5px 9px;
 border-radius:999px;
 
 background:
-rgba(255,255,255,.82);
+rgba(255,255,255,.88);
 
 color:#475569;
 
 backdrop-filter:blur(8px);
 }
 
-.ad-inner{
-min-height:145px;
+.ad-image{
+width:100%;
 
-display:flex;
+display:block;
 
-align-items:center;
+line-height:0;
 
-justify-content:space-between;
-
-gap:20px;
-
-padding:28px 30px;
-
-color:#fff;
-
-background:
-linear-gradient(
-135deg,
-#7c3aed,
-#4f46e5 45%,
-#2563eb
-);
-
-position:relative;
-
-overflow:hidden;
+background:#312e81;
 }
 
-.ad-inner::before{
-content:"";
+.ad-image svg{
+display:block;
 
-position:absolute;
+width:100%;
 
-width:180px;
-height:180px;
-
-border-radius:50%;
-
-background:
-rgba(255,255,255,.12);
-
-left:-50px;
-top:-80px;
-}
-
-.ad-inner::after{
-content:"";
-
-position:absolute;
-
-width:140px;
-height:140px;
-
-border-radius:50%;
-
-background:
-rgba(255,255,255,.09);
-
-right:35%;
-bottom:-90px;
+height:auto;
 }
 
 .ad-content{
-position:relative;
-z-index:1;
+padding:18px 20px 22px;
 
-max-width:760px;
+text-align:center;
+
+background:#fff;
 }
 
 .ad-content h3{
 margin:0 0 8px;
 
-font-size:22px;
+font-size:21px;
+
+color:#1e1b4b;
 }
 
 .ad-content p{
-margin:0;
+margin:0 auto 14px;
+
+max-width:700px;
 
 line-height:1.9;
 
-color:#eef2ff;
+font-size:14px;
+
+color:#64748b;
+}
+
+.ad-free{
+display:inline-block;
+
+padding:9px 15px;
+
+margin-bottom:14px;
+
+border-radius:14px;
+
+background:#ecfeff;
+
+border:1px solid #a5f3fc;
+
+color:#155e75;
+
+font-size:14px;
+
+font-weight:800;
 }
 
 .ad-cta{
-position:relative;
-z-index:1;
-
 border:0;
 
 border-radius:13px;
 
-padding:12px 18px;
+padding:12px 22px;
 
 font-weight:900;
 
-background:#fff;
-
-color:#3730a3;
-
-white-space:nowrap;
-}
-
-.ad-green .ad-inner{
 background:
 linear-gradient(
 135deg,
-#059669,
-#10b981 50%,
-#0ea5e9
+#4f46e5,
+#2563eb
+);
+
+color:#fff;
+
+box-shadow:
+0 8px 20px
+rgba(79,70,229,.22);
+}
+
+.ad-cta:hover{
+transform:translateY(-1px);
+}
+
+.ad-blue .ad-content{
+background:
+linear-gradient(
+180deg,
+#ffffff,
+#f5f3ff
 );
 }
 
-.ad-orange .ad-inner{
+.ad-green .ad-content{
 background:
 linear-gradient(
-135deg,
-#ea580c,
-#f97316 50%,
-#eab308
+180deg,
+#ffffff,
+#ecfdf5
 );
 }
 
-.ad-blue .ad-inner{
+.ad-orange .ad-content{
 background:
 linear-gradient(
-135deg,
-#1d4ed8,
-#2563eb 50%,
-#7c3aed
+180deg,
+#ffffff,
+#fff7ed
 );
 }
 
@@ -1008,16 +961,6 @@ justify-content:center;
 margin:0;
 }
 
-.ad-inner{
-flex-direction:column;
-
-align-items:flex-start;
-}
-
-.ad-cta{
-align-self:flex-start;
-}
-
 }
 
 @media(max-width:600px){
@@ -1066,18 +1009,16 @@ padding:8px;
 padding:22px;
 }
 
-.ad-inner{
-padding:24px 20px;
-
-min-height:175px;
+.ad-content{
+padding:16px 14px 20px;
 }
 
 .ad-content h3{
-font-size:19px;
+font-size:18px;
 }
 
 .ad-content p{
-font-size:14px;
+font-size:13px;
 }
 
 .ad-cta{
@@ -1120,33 +1061,23 @@ class="nav-links"
 aria-label="منوی اصلی"
 >
 
-<button
-onclick="showView('home')"
->
+<button onclick="showView('home')">
 🏠 خانه
 </button>
 
-<button
-onclick="showView('account')"
->
+<button onclick="showView('account')">
 👤 حساب
 </button>
 
-<button
-onclick="showView('ai')"
->
+<button onclick="showView('ai')">
 🤖 هوش مصنوعی
 </button>
 
-<button
-onclick="showView('plans')"
->
+<button onclick="showView('plans')">
 💰 پلن‌ها
 </button>
 
-<button
-onclick="showView('admin')"
->
+<button onclick="showView('admin')">
 🛠️ مدیریت
 </button>
 
@@ -1219,7 +1150,6 @@ onclick="showView('plans')"
 
 </div>
 
-<!-- LIMITED FREE -->
 <div class="free-limit">
 
 <div class="free-limit-icon">
@@ -1227,6 +1157,7 @@ onclick="showView('plans')"
 </div>
 
 <div>
+
 <strong>
 شروع با سهمیه رایگان محدود
 </strong>
@@ -1244,7 +1175,7 @@ onclick="showView('plans')"
 </div>
 
 <!-- =========================================================
-     AD 1
+     AD 1 — IMAGE BANNER
 ========================================================= -->
 
 <div class="ad-slot ad-blue">
@@ -1253,26 +1184,226 @@ onclick="showView('plans')"
 تبلیغات
 </div>
 
-<div class="ad-inner">
+<div class="ad-image">
+
+<svg
+viewBox="0 0 1000 430"
+xmlns="http://www.w3.org/2000/svg"
+role="img"
+aria-label="تبلیغ ابزارک AI"
+>
+
+<defs>
+
+<linearGradient
+id="adGradient1"
+x1="0%"
+y1="0%"
+x2="100%"
+y2="100%"
+>
+
+<stop
+offset="0%"
+stop-color="#111936"
+/>
+
+<stop
+offset="48%"
+stop-color="#4338ca"
+/>
+
+<stop
+offset="100%"
+stop-color="#7c3aed"
+/>
+
+</linearGradient>
+
+<linearGradient
+id="adGlow1"
+x1="0%"
+y1="0%"
+x2="100%"
+y2="0%"
+>
+
+<stop
+offset="0%"
+stop-color="#22d3ee"
+/>
+
+<stop
+offset="100%"
+stop-color="#a78bfa"
+/>
+
+</linearGradient>
+
+</defs>
+
+<rect
+width="1000"
+height="430"
+rx="32"
+fill="url(#adGradient1)"
+/>
+
+<circle
+cx="850"
+cy="70"
+r="180"
+fill="#ffffff"
+opacity=".07"
+/>
+
+<circle
+cx="80"
+cy="390"
+r="180"
+fill="#22d3ee"
+opacity=".07"
+/>
+
+<!-- AI CARD -->
+
+<rect
+x="700"
+y="105"
+width="190"
+height="175"
+rx="38"
+fill="#ffffff"
+opacity=".12"
+stroke="#ffffff"
+stroke-opacity=".25"
+/>
+
+<circle
+cx="760"
+cy="165"
+r="16"
+fill="#ffffff"
+/>
+
+<circle
+cx="830"
+cy="165"
+r="16"
+fill="#ffffff"
+/>
+
+<path
+d="M750 215 Q795 250 840 215"
+fill="none"
+stroke="#ffffff"
+stroke-width="11"
+stroke-linecap="round"
+/>
+
+<!-- TEXT -->
+
+<text
+x="650"
+y="100"
+text-anchor="end"
+fill="#ffffff"
+font-size="48"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+ابزارک AI
+</text>
+
+<text
+x="650"
+y="158"
+text-anchor="end"
+fill="#eef2ff"
+font-size="27"
+font-family="Tahoma, Arial, sans-serif"
+>
+دستیار هوش مصنوعی فارسی
+</text>
+
+<text
+x="650"
+y="200"
+text-anchor="end"
+fill="#ddd6fe"
+font-size="22"
+font-family="Tahoma, Arial, sans-serif"
+>
+گفتگو • ترجمه • تولید محتوا
+</text>
+
+<!-- FREE BADGE -->
+
+<rect
+x="305"
+y="245"
+width="345"
+height="72"
+rx="36"
+fill="#ffffff"
+opacity=".14"
+/>
+
+<text
+x="477"
+y="291"
+text-anchor="middle"
+fill="#ffffff"
+font-size="27"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🆓 ۱۰ پیام رایگان در روز
+</text>
+
+<!-- DECORATION -->
+
+<path
+d="M90 105 L230 105"
+stroke="url(#adGlow1)"
+stroke-width="8"
+stroke-linecap="round"
+/>
+
+<path
+d="M90 130 L190 130"
+stroke="#ffffff"
+stroke-opacity=".35"
+stroke-width="6"
+stroke-linecap="round"
+/>
+
+</svg>
+
+</div>
 
 <div class="ad-content">
 
 <h3>
-✨ یک فرصت جدید برای شما
+✨ ابزارک؛ دستیار هوشمند شما
 </h3>
 
 <p>
-این بخش برای نمایش تبلیغات رنگی و واکنش‌گرا
-در نسخه نهایی سایت آماده شده است.
+برای گفتگو، پرسش و پاسخ، ترجمه و تولید محتوا
+از هوش مصنوعی استفاده کنید.
 </p>
 
+<div class="ad-free">
+🆓 سهمیه رایگان: <strong>۱۰ پیام در روز</strong>
 </div>
+
+<br>
 
 <button
 class="ad-cta"
-onclick="showView('plans')"
+onclick="showView('ai')"
 >
-مشاهده بیشتر
+🤖 شروع گفتگو
 </button>
 
 </div>
@@ -1401,26 +1532,132 @@ onclick="showView('plans')"
 تبلیغات
 </div>
 
-<div class="ad-inner">
+<div class="ad-image">
+
+<svg
+viewBox="0 0 1000 350"
+xmlns="http://www.w3.org/2000/svg"
+role="img"
+aria-label="پلن رایگان ابزارک"
+>
+
+<defs>
+
+<linearGradient
+id="adGradient2"
+x1="0%"
+y1="0%"
+x2="100%"
+y2="100%"
+>
+
+<stop
+offset="0%"
+stop-color="#047857"
+/>
+
+<stop
+offset="50%"
+stop-color="#059669"
+/>
+
+<stop
+offset="100%"
+stop-color="#0284c7"
+/>
+
+</linearGradient>
+
+</defs>
+
+<rect
+width="1000"
+height="350"
+rx="30"
+fill="url(#adGradient2)"
+/>
+
+<circle
+cx="100"
+cy="70"
+r="150"
+fill="#ffffff"
+opacity=".07"
+/>
+
+<circle
+cx="900"
+cy="300"
+r="190"
+fill="#ffffff"
+opacity=".06"
+/>
+
+<text
+x="500"
+y="100"
+text-anchor="middle"
+fill="#ffffff"
+font-size="43"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🚀 امکانات بیشتر با ابزارک
+</text>
+
+<text
+x="500"
+y="155"
+text-anchor="middle"
+fill="#ecfdf5"
+font-size="25"
+font-family="Tahoma, Arial, sans-serif"
+>
+برای شروع، سهمیه رایگان روزانه در اختیار شماست
+</text>
+
+<rect
+x="300"
+y="205"
+width="400"
+height="75"
+rx="37"
+fill="#ffffff"
+opacity=".15"
+/>
+
+<text
+x="500"
+y="254"
+text-anchor="middle"
+fill="#ffffff"
+font-size="29"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🆓 ۱۰ پیام رایگان در روز
+</text>
+
+</svg>
+
+</div>
 
 <div class="ad-content">
 
 <h3>
-🚀 امکانات بیشتر با پلن‌های حرفه‌ای
+🚀 استفاده بیشتر با پلن‌های اشتراکی
 </h3>
 
 <p>
-با پایان سهمیه رایگان روزانه، می‌توانید
-برای استفاده بیشتر پلن مناسب خود را انتخاب کنید.
+اگر سهمیه روزانه شما تمام شد،
+می‌توانید پلن مناسب خود را انتخاب کنید.
 </p>
-
-</div>
 
 <button
 class="ad-cta"
 onclick="showView('plans')"
 >
-مشاهده پلن‌ها
+💎 مشاهده پلن‌ها
 </button>
 
 </div>
@@ -1477,37 +1714,21 @@ id="seo-content"
 
 <ul>
 
-<li>
-گفتگو با هوش مصنوعی فارسی
-</li>
+<li>گفتگو با هوش مصنوعی فارسی</li>
 
-<li>
-پاسخ به سوالات و درخواست‌های روزمره
-</li>
+<li>پاسخ به سوالات و درخواست‌های روزمره</li>
 
-<li>
-تولید محتوای متنی
-</li>
+<li>تولید محتوای متنی</li>
 
-<li>
-بازنویسی و بهبود متن
-</li>
+<li>بازنویسی و بهبود متن</li>
 
-<li>
-خلاصه‌سازی و ایده‌پردازی
-</li>
+<li>خلاصه‌سازی و ایده‌پردازی</li>
 
-<li>
-کمک در ترجمه و کار با زبان‌های مختلف
-</li>
+<li>کمک در ترجمه و کار با زبان‌های مختلف</li>
 
-<li>
-حساب کاربری و مدیریت اشتراک
-</li>
+<li>حساب کاربری و مدیریت اشتراک</li>
 
-<li>
-استفاده در موبایل، تبلت و کامپیوتر
-</li>
+<li>استفاده در موبایل، تبلت و کامپیوتر</li>
 
 </ul>
 
@@ -1578,7 +1799,115 @@ id="seo-content"
 تبلیغات
 </div>
 
-<div class="ad-inner">
+<div class="ad-image">
+
+<svg
+viewBox="0 0 1000 350"
+xmlns="http://www.w3.org/2000/svg"
+role="img"
+aria-label="تبلیغات ابزارک"
+>
+
+<defs>
+
+<linearGradient
+id="adGradient3"
+x1="0%"
+y1="0%"
+x2="100%"
+y2="100%"
+>
+
+<stop
+offset="0%"
+stop-color="#c2410c"
+/>
+
+<stop
+offset="50%"
+stop-color="#ea580c"
+/>
+
+<stop
+offset="100%"
+stop-color="#ca8a04"
+/>
+
+</linearGradient>
+
+</defs>
+
+<rect
+width="1000"
+height="350"
+rx="30"
+fill="url(#adGradient3)"
+/>
+
+<circle
+cx="880"
+cy="80"
+r="150"
+fill="#ffffff"
+opacity=".08"
+/>
+
+<circle
+cx="100"
+cy="300"
+r="140"
+fill="#ffffff"
+opacity=".06"
+/>
+
+<text
+x="500"
+y="105"
+text-anchor="middle"
+fill="#ffffff"
+font-size="43"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+💡 یک ابزار جدید را کشف کنید
+</text>
+
+<text
+x="500"
+y="165"
+text-anchor="middle"
+fill="#fff7ed"
+font-size="25"
+font-family="Tahoma, Arial, sans-serif"
+>
+ابزارک؛ دستیار هوش مصنوعی فارسی و چندزبانه
+</text>
+
+<rect
+x="350"
+y="215"
+width="300"
+height="65"
+rx="32"
+fill="#ffffff"
+opacity=".16"
+/>
+
+<text
+x="500"
+y="258"
+text-anchor="middle"
+fill="#ffffff"
+font-size="26"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🤖 شروع گفتگو
+</text>
+
+</svg>
+
+</div>
 
 <div class="ad-content">
 
@@ -1587,17 +1916,15 @@ id="seo-content"
 </h3>
 
 <p>
-این جایگاه برای تبلیغات واقعی شبکه تبلیغاتی
-پس از اتصال سرویس تبلیغات استفاده خواهد شد.
+با ابزارک گفتگو کنید، سؤال بپرسید و از هوش مصنوعی
+برای کارهای روزمره کمک بگیرید.
 </p>
-
-</div>
 
 <button
 class="ad-cta"
 onclick="showView('ai')"
 >
-ادامه
+🤖 ادامه
 </button>
 
 </div>
@@ -1847,6 +2174,144 @@ class="view"
 <h2>
 🤖 گفتگو با هوش مصنوعی فارسی
 </h2>
+
+<!-- =======================================================
+     AI AD — DIRECTLY UNDER AI TITLE
+======================================================= -->
+
+<div class="ad-slot ad-blue">
+
+<div class="ad-label">
+تبلیغات
+</div>
+
+<div class="ad-image">
+
+<svg
+viewBox="0 0 1000 300"
+xmlns="http://www.w3.org/2000/svg"
+role="img"
+aria-label="تبلیغ ابزارک زیر بخش هوش مصنوعی"
+>
+
+<defs>
+
+<linearGradient
+id="aiAdGradient"
+x1="0%"
+y1="0%"
+x2="100%"
+y2="100%"
+>
+
+<stop
+offset="0%"
+stop-color="#1e1b4b"
+/>
+
+<stop
+offset="50%"
+stop-color="#4338ca"
+/>
+
+<stop
+offset="100%"
+stop-color="#2563eb"
+/>
+
+</linearGradient>
+
+</defs>
+
+<rect
+width="1000"
+height="300"
+rx="28"
+fill="url(#aiAdGradient)"
+/>
+
+<circle
+cx="880"
+cy="50"
+r="150"
+fill="#ffffff"
+opacity=".07"
+/>
+
+<circle
+cx="100"
+cy="280"
+r="130"
+fill="#22d3ee"
+opacity=".06"
+/>
+
+<text
+x="500"
+y="85"
+text-anchor="middle"
+fill="#ffffff"
+font-size="38"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🤖 ابزارک AI
+</text>
+
+<text
+x="500"
+y="135"
+text-anchor="middle"
+fill="#e0e7ff"
+font-size="23"
+font-family="Tahoma, Arial, sans-serif"
+>
+دستیار هوش مصنوعی فارسی و چندزبانه
+</text>
+
+<rect
+x="300"
+y="175"
+width="400"
+height="65"
+rx="32"
+fill="#ffffff"
+opacity=".14"
+/>
+
+<text
+x="500"
+y="217"
+text-anchor="middle"
+fill="#ffffff"
+font-size="25"
+font-weight="700"
+font-family="Tahoma, Arial, sans-serif"
+>
+🆓 ۱۰ پیام رایگان در روز
+</text>
+
+</svg>
+
+</div>
+
+<div class="ad-content">
+
+<h3>
+✨ شروع رایگان با ابزارک
+</h3>
+
+<p>
+روزانه تا ۱۰ پیام رایگان برای گفتگو با هوش مصنوعی.
+</p>
+
+<div class="ad-free">
+🆓 سهمیه امروز: <strong>۱۰ پیام رایگان</strong>
+</div>
+
+</div>
+
+</div>
 
 <div class="notice">
 
@@ -3958,4 +4423,4 @@ navigator.serviceWorker
 
 </body>
 </html>`;
-}
+    }
