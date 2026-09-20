@@ -1,5 +1,5 @@
 // =============================================================
-// HOMEPAGE — SEO OPTIMIZED
+// HOMEPAGE — SEO OPTIMIZED + COLORFUL ADS + LIMITED FREE PLAN
 // =============================================================
 
 function renderHomepage() {
@@ -36,7 +36,7 @@ content="ابزارک">
 
 <meta
 name="description"
-content="ابزارک، دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره. چت با هوش مصنوعی فارسی را آنلاین و رایگان امتحان کنید."
+content="ابزارک، دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره. با سهمیه رایگان محدود شروع کنید و در صورت نیاز پلن خود را ارتقا دهید."
 >
 
 <meta
@@ -111,7 +111,7 @@ content="ابزارک | دستیار هوش مصنوعی فارسی"
 
 <meta
 property="og:description"
-content="دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره."
+content="دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره با سهمیه رایگان محدود."
 >
 
 <meta
@@ -234,7 +234,8 @@ content="36032134"
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "IRR",
-        "availability": "https://schema.org/InStock"
+        "availability": "https://schema.org/InStock",
+        "description": "پلن رایگان محدود با ۱۰ پیام در روز"
       }
     }
 
@@ -500,6 +501,231 @@ background:#fff;
 color:#202657;
 }
 
+/* =========================================================
+   LIMITED FREE PLAN
+========================================================= */
+
+.free-limit{
+margin-top:22px;
+
+display:flex;
+align-items:center;
+
+gap:12px;
+
+flex-wrap:wrap;
+
+padding:15px 18px;
+
+border-radius:18px;
+
+background:
+linear-gradient(
+135deg,
+rgba(255,255,255,.18),
+rgba(255,255,255,.08)
+);
+
+border:
+1px solid rgba(255,255,255,.25);
+
+color:#fff;
+
+font-weight:800;
+}
+
+.free-limit-icon{
+font-size:25px;
+}
+
+.free-limit strong{
+color:#fff;
+}
+
+.free-limit small{
+color:#dfe5ff;
+
+font-size:13px;
+}
+
+/* =========================================================
+   COLORFUL ADVERTISEMENT
+========================================================= */
+
+.ad-slot{
+position:relative;
+
+margin:25px 0;
+
+border-radius:24px;
+
+overflow:hidden;
+
+box-shadow:
+0 15px 45px
+rgba(30,41,90,.12);
+}
+
+.ad-label{
+position:absolute;
+
+top:10px;
+right:12px;
+
+z-index:2;
+
+font-size:11px;
+
+font-weight:900;
+
+padding:5px 9px;
+
+border-radius:999px;
+
+background:
+rgba(255,255,255,.82);
+
+color:#475569;
+
+backdrop-filter:blur(8px);
+}
+
+.ad-inner{
+min-height:145px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
+gap:20px;
+
+padding:28px 30px;
+
+color:#fff;
+
+background:
+linear-gradient(
+135deg,
+#7c3aed,
+#4f46e5 45%,
+#2563eb
+);
+
+position:relative;
+
+overflow:hidden;
+}
+
+.ad-inner::before{
+content:"";
+
+position:absolute;
+
+width:180px;
+height:180px;
+
+border-radius:50%;
+
+background:
+rgba(255,255,255,.12);
+
+left:-50px;
+top:-80px;
+}
+
+.ad-inner::after{
+content:"";
+
+position:absolute;
+
+width:140px;
+height:140px;
+
+border-radius:50%;
+
+background:
+rgba(255,255,255,.09);
+
+right:35%;
+bottom:-90px;
+}
+
+.ad-content{
+position:relative;
+z-index:1;
+
+max-width:760px;
+}
+
+.ad-content h3{
+margin:0 0 8px;
+
+font-size:22px;
+}
+
+.ad-content p{
+margin:0;
+
+line-height:1.9;
+
+color:#eef2ff;
+}
+
+.ad-cta{
+position:relative;
+z-index:1;
+
+border:0;
+
+border-radius:13px;
+
+padding:12px 18px;
+
+font-weight:900;
+
+background:#fff;
+
+color:#3730a3;
+
+white-space:nowrap;
+}
+
+.ad-green .ad-inner{
+background:
+linear-gradient(
+135deg,
+#059669,
+#10b981 50%,
+#0ea5e9
+);
+}
+
+.ad-orange .ad-inner{
+background:
+linear-gradient(
+135deg,
+#ea580c,
+#f97316 50%,
+#eab308
+);
+}
+
+.ad-blue .ad-inner{
+background:
+linear-gradient(
+135deg,
+#1d4ed8,
+#2563eb 50%,
+#7c3aed
+);
+}
+
+/* =========================================================
+   SECTIONS
+========================================================= */
+
 .section{
 padding:42px 0;
 }
@@ -761,6 +987,10 @@ padding:30px 0 50px;
 color:#64748b;
 }
 
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
 @media(max-width:850px){
 
 .features,
@@ -776,6 +1006,16 @@ width:100%;
 justify-content:center;
 
 margin:0;
+}
+
+.ad-inner{
+flex-direction:column;
+
+align-items:flex-start;
+}
+
+.ad-cta{
+align-self:flex-start;
 }
 
 }
@@ -824,6 +1064,28 @@ padding:8px;
 
 #seo-content{
 padding:22px;
+}
+
+.ad-inner{
+padding:24px 20px;
+
+min-height:175px;
+}
+
+.ad-content h3{
+font-size:19px;
+}
+
+.ad-content p{
+font-size:14px;
+}
+
+.ad-cta{
+width:100%;
+}
+
+.free-limit{
+font-size:14px;
 }
 
 }
@@ -957,6 +1219,64 @@ onclick="showView('plans')"
 
 </div>
 
+<!-- LIMITED FREE -->
+<div class="free-limit">
+
+<div class="free-limit-icon">
+🆓
+</div>
+
+<div>
+<strong>
+شروع با سهمیه رایگان محدود
+</strong>
+
+<br>
+
+<small>
+۱۰ پیام رایگان در روز؛ برای استفاده بیشتر، پلن خود را ارتقا دهید.
+</small>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =========================================================
+     AD 1
+========================================================= -->
+
+<div class="ad-slot ad-blue">
+
+<div class="ad-label">
+تبلیغات
+</div>
+
+<div class="ad-inner">
+
+<div class="ad-content">
+
+<h3>
+✨ یک فرصت جدید برای شما
+</h3>
+
+<p>
+این بخش برای نمایش تبلیغات رنگی و واکنش‌گرا
+در نسخه نهایی سایت آماده شده است.
+</p>
+
+</div>
+
+<button
+class="ad-cta"
+onclick="showView('plans')"
+>
+مشاهده بیشتر
+</button>
+
+</div>
+
 </div>
 
 <!-- =========================================================
@@ -1072,6 +1392,42 @@ onclick="showView('plans')"
 </div>
 
 <!-- =========================================================
+     AD 2
+========================================================= -->
+
+<div class="ad-slot ad-green">
+
+<div class="ad-label">
+تبلیغات
+</div>
+
+<div class="ad-inner">
+
+<div class="ad-content">
+
+<h3>
+🚀 امکانات بیشتر با پلن‌های حرفه‌ای
+</h3>
+
+<p>
+با پایان سهمیه رایگان روزانه، می‌توانید
+برای استفاده بیشتر پلن مناسب خود را انتخاب کنید.
+</p>
+
+</div>
+
+<button
+class="ad-cta"
+onclick="showView('plans')"
+>
+مشاهده پلن‌ها
+</button>
+
+</div>
+
+</div>
+
+<!-- =========================================================
      SEO CONTENT
 ========================================================= -->
 
@@ -1178,13 +1534,15 @@ id="seo-content"
 </p>
 
 <h2>
-پلن رایگان ابزارک
+پلن رایگان محدود ابزارک
 </h2>
 
 <p>
-کاربران می‌توانند با پلن رایگان ابزارک از تعداد
-مشخصی پیام روزانه استفاده کنند و در صورت نیاز
-به استفاده بیشتر، یکی از پلن‌های اشتراکی را انتخاب کنند.
+کاربران جدید و کاربران بدون اشتراک می‌توانند هر روز
+تا ۱۰ پیام از هوش مصنوعی استفاده کنند. این سهمیه
+رایگان محدود است و پس از رسیدن به سقف روزانه،
+کاربر می‌تواند برای ادامه استفاده یکی از پلن‌های
+اشتراکی را انتخاب کند.
 </p>
 
 <h2>
@@ -1209,6 +1567,42 @@ id="seo-content"
 </p>
 
 </section>
+
+<!-- =========================================================
+     AD 3
+========================================================= -->
+
+<div class="ad-slot ad-orange">
+
+<div class="ad-label">
+تبلیغات
+</div>
+
+<div class="ad-inner">
+
+<div class="ad-content">
+
+<h3>
+💡 یک ابزار جدید را کشف کنید
+</h3>
+
+<p>
+این جایگاه برای تبلیغات واقعی شبکه تبلیغاتی
+پس از اتصال سرویس تبلیغات استفاده خواهد شد.
+</p>
+
+</div>
+
+<button
+class="ad-cta"
+onclick="showView('ai')"
+>
+ادامه
+</button>
+
+</div>
+
+</div>
 
 </section>
 
@@ -1454,6 +1848,20 @@ class="view"
 🤖 گفتگو با هوش مصنوعی فارسی
 </h2>
 
+<div class="notice">
+
+🆓 پلن رایگان محدود:
+
+<strong>
+۱۰ پیام در روز
+</strong>
+
+<br>
+
+💎 برای استفاده بیشتر می‌توانید پلن اشتراکی انتخاب کنید.
+
+</div>
+
 <p class="muted">
 هر زبانی که استفاده کنید، ابزارک تلاش می‌کند
 به همان زبان پاسخ دهد.
@@ -1500,6 +1908,19 @@ class="view"
 <h2>
 💰 پلن‌های اشتراک ابزارک
 </h2>
+
+<div class="notice">
+
+🆓
+<strong>
+پلن رایگان محدود: ۱۰ پیام در روز
+</strong>
+
+<br>
+
+برای استفاده بیشتر، یکی از پلن‌های اشتراکی را انتخاب کنید.
+
+</div>
 
 <p class="muted">
 پلن موردنظر خود را انتخاب کنید.
@@ -1631,6 +2052,12 @@ onclick="adminLogout()"
 <br>
 
 دستیار هوش مصنوعی فارسی و چندزبانه
+
+<br><br>
+
+<span>
+🆓 سهمیه رایگان محدود: ۱۰ پیام در روز
+</span>
 
 <br><br>
 
@@ -1988,7 +2415,7 @@ subscriptionHtml=`
 
 <div class="notice">
 
-🆓 پلن رایگان
+🆓 پلن رایگان محدود
 
 <br>
 
@@ -2005,6 +2432,10 @@ ${usage.limit}
 </strong>
 
 پیام
+
+<br>
+
+💎 برای استفاده بیشتر، پلن اشتراکی انتخاب کنید.
 
 </div>
 
@@ -2513,7 +2944,12 @@ if(data.upgrade_required){
 
 addMessage(
 "ai",
-"⚠️ سقف ۱۰ پیام روزانه پلن رایگان شما تمام شده است. برای ادامه استفاده، یکی از پلن‌های اشتراکی را انتخاب کنید."
+"⚠️ سهمیه ۱۰ پیام روزانه پلن رایگان شما تمام شده است. برای ادامه استفاده، یکی از پلن‌های اشتراکی را انتخاب کنید."
+);
+
+addMessage(
+"ai",
+"💎 برای مشاهده پلن‌ها، از منوی «پلن‌ها» استفاده کنید."
 );
 
 }else{
