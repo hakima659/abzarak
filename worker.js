@@ -3,7 +3,10 @@
 // =============================================================
 
 function renderHomepage() {
-  return `<!DOCTYPE html>
+
+  const page = String.raw;
+
+  return page`<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
 <head>
@@ -27,10 +30,6 @@ content="ابزارک">
 
 <meta name="application-name"
 content="ابزارک">
-
-<!-- =========================================================
-     SEO — GOOGLE
-========================================================= -->
 
 <title>ابزارک | دستیار هوش مصنوعی فارسی و چت هوشمند آنلاین</title>
 
@@ -56,10 +55,7 @@ name="googlebot"
 content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
 >
 
-<link
-rel="canonical"
-href="https://abzarakai.ir/"
->
+<link rel="canonical" href="https://abzarakai.ir/">
 
 <link
 rel="alternate"
@@ -78,10 +74,6 @@ rel="alternate"
 hreflang="x-default"
 href="https://abzarakai.ir/"
 >
-
-<!-- =========================================================
-     OPEN GRAPH
-========================================================= -->
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ابزارک">
@@ -105,10 +97,6 @@ property="og:image"
 content="https://abzarakai.ir/icon.svg"
 >
 
-<!-- =========================================================
-     TWITTER
-========================================================= -->
-
 <meta name="twitter:card" content="summary">
 
 <meta
@@ -126,10 +114,6 @@ name="twitter:image"
 content="https://abzarakai.ir/icon.svg"
 >
 
-<!-- =========================================================
-     PWA
-========================================================= -->
-
 <link rel="manifest" href="/manifest.json">
 
 <link
@@ -143,24 +127,12 @@ rel="apple-touch-icon"
 href="/icon.svg"
 >
 
-<!-- =========================================================
-     ENAMAD
-========================================================= -->
-
-<meta
-name="enamad"
-content="36032134"
->
-
-<!-- =========================================================
-     STRUCTURED DATA
-========================================================= -->
+<meta name="enamad" content="36032134">
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
-
     {
       "@type": "WebSite",
       "@id": "https://abzarakai.ir/#website",
@@ -169,7 +141,6 @@ content="36032134"
       "description": "دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا و انجام کارهای روزمره.",
       "inLanguage": "fa-IR"
     },
-
     {
       "@type": "Organization",
       "@id": "https://abzarakai.ir/#organization",
@@ -180,7 +151,6 @@ content="36032134"
         "url": "https://abzarakai.ir/icon.svg"
       }
     },
-
     {
       "@type": "WebApplication",
       "@id": "https://abzarakai.ir/#application",
@@ -203,50 +173,28 @@ content="36032134"
         "description": "پلن رایگان محدود با ۱۰ پیام در روز"
       }
     }
-
   ]
 }
 </script>
 
 <style>
 
-*{
-box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
-html{
-scroll-behavior:smooth;
-}
+html{scroll-behavior:smooth}
 
 body{
 margin:0;
-font-family:
-Tahoma,
-Arial,
-sans-serif;
-
-background:
-linear-gradient(
-180deg,
-#f6f8ff,
-#eef2ff
-);
-
+font-family:Tahoma,Arial,sans-serif;
+background:linear-gradient(180deg,#f6f8ff,#eef2ff);
 color:#17203a;
 }
 
-button,
-input{
-font:inherit;
-}
+button,input{font:inherit}
 
-button{
-cursor:pointer;
-}
+button{cursor:pointer}
 
-.hidden{
-display:none!important;
-}
+.hidden{display:none!important}
 
 .container{
 width:min(1180px,94%);
@@ -257,26 +205,17 @@ header{
 position:sticky;
 top:0;
 z-index:50;
-
-background:
-rgba(255,255,255,.94);
-
+background:rgba(255,255,255,.94);
 backdrop-filter:blur(15px);
-
-border-bottom:
-1px solid #e5e7eb;
+border-bottom:1px solid #e5e7eb;
 }
 
 .nav{
 min-height:72px;
-
 display:flex;
 align-items:center;
-
 gap:8px;
-
 flex-wrap:wrap;
-
 padding:10px 0;
 }
 
@@ -284,44 +223,32 @@ padding:10px 0;
 display:flex;
 align-items:center;
 gap:8px;
-
 color:#12163a;
-
 font-size:20px;
 font-weight:900;
-
 margin-left:auto;
-
 text-decoration:none;
 }
 
 .brand img{
 width:42px;
 height:42px;
-
 border-radius:13px;
 }
 
 .nav-links{
 display:flex;
 gap:4px;
-
 flex-wrap:wrap;
-
 justify-content:center;
 }
 
 .nav-links button{
 border:0;
-
 background:transparent;
-
 padding:10px 11px;
-
 border-radius:12px;
-
 font-weight:800;
-
 color:#475569;
 }
 
@@ -332,11 +259,8 @@ color:#3730a3;
 
 .top-btn{
 border:0;
-
 border-radius:12px;
-
 padding:10px 13px;
-
 font-weight:900;
 }
 
@@ -352,102 +276,59 @@ color:#312e81;
 
 .view{
 display:none;
-
-padding:
-35px 0 60px;
+padding:35px 0 60px;
 }
 
-.view.active{
-display:block;
-}
+.view.active{display:block}
 
 .hero{
 margin-top:25px;
-
 padding:70px 35px;
-
 border-radius:32px;
-
 color:#fff;
-
 background:
-radial-gradient(
-circle at 85% 10%,
-rgba(255,255,255,.3),
-transparent 25%
-),
-linear-gradient(
-135deg,
-#111936,
-#4338ca 55%,
-#2563eb
-);
-
-box-shadow:
-0 25px 80px
-rgba(37,48,120,.22);
+radial-gradient(circle at 85% 10%,rgba(255,255,255,.3),transparent 25%),
+linear-gradient(135deg,#111936,#4338ca 55%,#2563eb);
+box-shadow:0 25px 80px rgba(37,48,120,.22);
 }
 
 .hero h1{
-font-size:
-clamp(34px,6vw,62px);
-
+font-size:clamp(34px,6vw,62px);
 line-height:1.15;
-
 margin:20px 0;
 }
 
 .hero p{
 font-size:18px;
-
 line-height:2;
-
 color:#e8ebff;
-
 max-width:750px;
 }
 
 .badge{
 display:inline-block;
-
 padding:9px 14px;
-
 border-radius:999px;
-
-background:
-rgba(255,255,255,.12);
-
+background:rgba(255,255,255,.12);
 font-weight:900;
 }
 
 .actions{
 display:flex;
-
 gap:10px;
-
 flex-wrap:wrap;
-
 margin-top:20px;
 }
 
 .btn{
 border:0;
-
 border-radius:14px;
-
 padding:13px 18px;
-
 font-weight:900;
 }
 
 .primary{
-background:
-linear-gradient(
-135deg,
-#4f46e5,
-#2563eb
-);
-
+background:linear-gradient(135deg,#4f46e5,#2563eb);
 color:#fff;
 }
 
@@ -466,249 +347,136 @@ background:#fff;
 color:#202657;
 }
 
-/* =========================================================
-   LIMITED FREE PLAN
-========================================================= */
-
 .free-limit{
 margin-top:22px;
-
 display:flex;
 align-items:center;
-
 gap:12px;
-
 flex-wrap:wrap;
-
 padding:15px 18px;
-
 border-radius:18px;
-
-background:
-linear-gradient(
-135deg,
-rgba(255,255,255,.18),
-rgba(255,255,255,.08)
-);
-
-border:
-1px solid rgba(255,255,255,.25);
-
+background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.08));
+border:1px solid rgba(255,255,255,.25);
 color:#fff;
-
 font-weight:800;
 }
 
-.free-limit-icon{
-font-size:25px;
-}
+.free-limit-icon{font-size:25px}
 
-.free-limit strong{
-color:#fff;
-}
+.free-limit strong{color:#fff}
 
 .free-limit small{
 color:#dfe5ff;
-
 font-size:13px;
 }
 
-/* =========================================================
-   ADVERTISEMENT + SVG IMAGE
-========================================================= */
-
 .ad-slot{
 position:relative;
-
 margin:25px 0;
-
 border-radius:24px;
-
 overflow:hidden;
-
-box-shadow:
-0 15px 45px
-rgba(30,41,90,.12);
+box-shadow:0 15px 45px rgba(30,41,90,.12);
 }
 
 .ad-label{
 position:absolute;
-
 top:10px;
 right:12px;
-
 z-index:5;
-
 font-size:11px;
-
 font-weight:900;
-
 padding:5px 9px;
-
 border-radius:999px;
-
-background:
-rgba(255,255,255,.88);
-
+background:rgba(255,255,255,.88);
 color:#475569;
-
 backdrop-filter:blur(8px);
 }
 
 .ad-image{
 width:100%;
-
 display:block;
-
 line-height:0;
-
 background:#312e81;
 }
 
 .ad-image svg{
 display:block;
-
 width:100%;
-
 height:auto;
 }
 
 .ad-content{
 padding:18px 20px 22px;
-
 text-align:center;
-
 background:#fff;
 }
 
 .ad-content h3{
 margin:0 0 8px;
-
 font-size:21px;
-
 color:#1e1b4b;
 }
 
 .ad-content p{
 margin:0 auto 14px;
-
 max-width:700px;
-
 line-height:1.9;
-
 font-size:14px;
-
 color:#64748b;
 }
 
 .ad-free{
 display:inline-block;
-
 padding:9px 15px;
-
 margin-bottom:14px;
-
 border-radius:14px;
-
 background:#ecfeff;
-
 border:1px solid #a5f3fc;
-
 color:#155e75;
-
 font-size:14px;
-
 font-weight:800;
 }
 
 .ad-cta{
 border:0;
-
 border-radius:13px;
-
 padding:12px 22px;
-
 font-weight:900;
-
-background:
-linear-gradient(
-135deg,
-#4f46e5,
-#2563eb
-);
-
+background:linear-gradient(135deg,#4f46e5,#2563eb);
 color:#fff;
-
-box-shadow:
-0 8px 20px
-rgba(79,70,229,.22);
-}
-
-.ad-cta:hover{
-transform:translateY(-1px);
+box-shadow:0 8px 20px rgba(79,70,229,.22);
 }
 
 .ad-blue .ad-content{
-background:
-linear-gradient(
-180deg,
-#ffffff,
-#f5f3ff
-);
+background:linear-gradient(180deg,#fff,#f5f3ff);
 }
 
 .ad-green .ad-content{
-background:
-linear-gradient(
-180deg,
-#ffffff,
-#ecfdf5
-);
+background:linear-gradient(180deg,#fff,#ecfdf5);
 }
 
 .ad-orange .ad-content{
-background:
-linear-gradient(
-180deg,
-#ffffff,
-#fff7ed
-);
+background:linear-gradient(180deg,#fff,#fff7ed);
 }
 
-/* =========================================================
-   SECTIONS
-========================================================= */
-
-.section{
-padding:42px 0;
-}
+.section{padding:42px 0}
 
 .features,
 .plans,
 .account-grid{
 display:grid;
-
-grid-template-columns:
-repeat(3,1fr);
-
+grid-template-columns:repeat(3,1fr);
 gap:18px;
-
 margin-top:20px;
 }
 
 .card,
 .plan{
 background:#fff;
-
 border:1px solid #e5e7eb;
-
 border-radius:22px;
-
 padding:23px;
-
-box-shadow:
-0 12px 35px
-rgba(15,23,42,.06);
+box-shadow:0 12px 35px rgba(15,23,42,.06);
 }
 
 .form{
@@ -718,103 +486,71 @@ margin:auto;
 
 .input{
 width:100%;
-
 border:1px solid #d7dce8;
-
 border-radius:14px;
-
 padding:14px;
-
 margin:6px 0;
-
 outline:none;
-
 background:#fff;
 }
 
 .input:focus{
 border-color:#6366f1;
-
-box-shadow:
-0 0 0 4px
-rgba(99,102,241,.1);
+box-shadow:0 0 0 4px rgba(99,102,241,.1);
 }
 
 .muted{
 color:#64748b;
-
 line-height:1.9;
 }
 
 .account-value{
 font-size:23px;
-
 font-weight:900;
-
 margin-top:7px;
 }
 
 .chat{
 height:420px;
-
 overflow:auto;
-
 background:#fff;
-
 border:1px solid #e5e7eb;
-
 border-radius:20px;
-
 padding:15px;
-
 margin:15px 0;
 }
 
 .message{
 padding:13px 15px;
-
 border-radius:16px;
-
 margin:8px 0;
-
 line-height:1.9;
-
 white-space:pre-wrap;
 }
 
 .message.user{
 background:#eef2ff;
-
 margin-right:12%;
 }
 
 .message.ai{
 background:#f8fafc;
-
 border:1px solid #e2e8f0;
-
 margin-left:12%;
 }
 
 .ai-row{
 display:flex;
-
 gap:8px;
 }
 
-.ai-row input{
-margin:0;
-}
+.ai-row input{margin:0}
 
-.ai-row button{
-white-space:nowrap;
-}
+.ai-row button{white-space:nowrap}
 
 .currency{
 display:flex;
-
 gap:8px;
-
 margin:20px 0;
 }
 
@@ -824,107 +560,70 @@ border:2px solid #6366f1;
 
 .plan h3{
 font-size:23px;
-
 margin:0 0 10px;
 }
 
 .price{
 font-size:30px;
-
 font-weight:950;
-
 color:#1e1b4b;
 }
 
 .plan ul{
 min-height:130px;
-
 line-height:2;
-
 color:#475569;
 }
 
 .notice{
 background:#eff6ff;
-
 border:1px solid #bfdbfe;
-
 color:#1e40af;
-
 border-radius:15px;
-
 padding:14px;
-
 line-height:1.9;
-
 margin:12px 0;
 }
 
 .table-wrap{
 overflow:auto;
-
 background:#fff;
-
 border:1px solid #e5e7eb;
-
 border-radius:16px;
 }
 
 table{
 width:100%;
-
 border-collapse:collapse;
-
 min-width:700px;
 }
 
-th,
-td{
+th,td{
 padding:11px;
-
-border-bottom:
-1px solid #edf0f5;
-
+border-bottom:1px solid #edf0f5;
 text-align:right;
 }
 
-th{
-background:#f8fafc;
-}
-
-/* =========================================================
-   SEO CONTENT
-========================================================= */
+th{background:#f8fafc}
 
 #seo-content{
 margin-top:25px;
-
 background:#fff;
-
-border:
-1px solid #e5e7eb;
-
+border:1px solid #e5e7eb;
 border-radius:24px;
-
 padding:30px;
-
-box-shadow:
-0 10px 30px
-rgba(15,23,42,.04);
+box-shadow:0 10px 30px rgba(15,23,42,.04);
 }
 
 #seo-content h2{
 color:#1e1b4b;
-
 margin-top:30px;
-
 line-height:1.6;
 }
 
 #seo-content p,
 #seo-content li{
 line-height:2;
-
 color:#475569;
 }
 
@@ -934,30 +633,21 @@ padding-right:25px;
 
 footer{
 text-align:center;
-
 padding:30px 0 50px;
-
 color:#64748b;
 }
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
 
 @media(max-width:850px){
 
 .features,
 .plans,
 .account-grid{
-grid-template-columns:
-repeat(2,1fr);
+grid-template-columns:repeat(2,1fr);
 }
 
 .brand{
 width:100%;
-
 justify-content:center;
-
 margin:0;
 }
 
@@ -965,13 +655,10 @@ margin:0;
 
 @media(max-width:600px){
 
-.container{
-width:94%;
-}
+.container{width:94%}
 
 .hero{
 padding:45px 22px;
-
 border-radius:25px;
 }
 
@@ -991,9 +678,7 @@ margin-left:0;
 margin-right:0;
 }
 
-.nav{
-justify-content:center;
-}
+.nav{justify-content:center}
 
 .nav-links{
 width:100%;
@@ -1001,33 +686,22 @@ width:100%;
 
 .nav-links button{
 font-size:13px;
-
 padding:8px;
 }
 
-#seo-content{
-padding:22px;
-}
+#seo-content{padding:22px}
 
 .ad-content{
 padding:16px 14px 20px;
 }
 
-.ad-content h3{
-font-size:18px;
-}
+.ad-content h3{font-size:18px}
 
-.ad-content p{
-font-size:13px;
-}
+.ad-content p{font-size:13px}
 
-.ad-cta{
-width:100%;
-}
+.ad-cta{width:100%}
 
-.free-limit{
-font-size:14px;
-}
+.free-limit{font-size:14px}
 
 }
 
@@ -1056,30 +730,13 @@ alt="لوگوی ابزارک - دستیار هوش مصنوعی فارسی"
 
 </a>
 
-<nav
-class="nav-links"
-aria-label="منوی اصلی"
->
+<nav class="nav-links" aria-label="منوی اصلی">
 
-<button onclick="showView('home')">
-🏠 خانه
-</button>
-
-<button onclick="showView('account')">
-👤 حساب
-</button>
-
-<button onclick="showView('ai')">
-🤖 هوش مصنوعی
-</button>
-
-<button onclick="showView('plans')">
-💰 پلن‌ها
-</button>
-
-<button onclick="showView('admin')">
-🛠️ مدیریت
-</button>
+<button onclick="showView('home')">🏠 خانه</button>
+<button onclick="showView('account')">👤 حساب</button>
+<button onclick="showView('ai')">🤖 هوش مصنوعی</button>
+<button onclick="showView('plans')">💰 پلن‌ها</button>
+<button onclick="showView('admin')">🛠️ مدیریت</button>
 
 </nav>
 
@@ -1105,14 +762,7 @@ English
 
 <main class="container">
 
-<!-- =========================================================
-     HOME
-========================================================= -->
-
-<section
-id="view-home"
-class="view active"
->
+<section id="view-home" class="view active">
 
 <div class="hero">
 
@@ -1152,15 +802,11 @@ onclick="showView('plans')"
 
 <div class="free-limit">
 
-<div class="free-limit-icon">
-🆓
-</div>
+<div class="free-limit-icon">🆓</div>
 
 <div>
 
-<strong>
-شروع با سهمیه رایگان محدود
-</strong>
+<strong>شروع با سهمیه رایگان محدود</strong>
 
 <br>
 
@@ -1174,15 +820,9 @@ onclick="showView('plans')"
 
 </div>
 
-<!-- =========================================================
-     AD 1 — IMAGE BANNER
-========================================================= -->
-
 <div class="ad-slot ad-blue">
 
-<div class="ad-label">
-تبلیغات
-</div>
+<div class="ad-label">تبلیغات</div>
 
 <div class="ad-image">
 
@@ -1203,20 +843,9 @@ x2="100%"
 y2="100%"
 >
 
-<stop
-offset="0%"
-stop-color="#111936"
-/>
-
-<stop
-offset="48%"
-stop-color="#4338ca"
-/>
-
-<stop
-offset="100%"
-stop-color="#7c3aed"
-/>
+<stop offset="0%" stop-color="#111936"/>
+<stop offset="48%" stop-color="#4338ca"/>
+<stop offset="100%" stop-color="#7c3aed"/>
 
 </linearGradient>
 
@@ -1228,15 +857,8 @@ x2="100%"
 y2="0%"
 >
 
-<stop
-offset="0%"
-stop-color="#22d3ee"
-/>
-
-<stop
-offset="100%"
-stop-color="#a78bfa"
-/>
+<stop offset="0%" stop-color="#22d3ee"/>
+<stop offset="100%" stop-color="#a78bfa"/>
 
 </linearGradient>
 
@@ -1265,8 +887,6 @@ fill="#22d3ee"
 opacity=".07"
 />
 
-<!-- AI CARD -->
-
 <rect
 x="700"
 y="105"
@@ -1279,19 +899,8 @@ stroke="#ffffff"
 stroke-opacity=".25"
 />
 
-<circle
-cx="760"
-cy="165"
-r="16"
-fill="#ffffff"
-/>
-
-<circle
-cx="830"
-cy="165"
-r="16"
-fill="#ffffff"
-/>
+<circle cx="760" cy="165" r="16" fill="#ffffff"/>
+<circle cx="830" cy="165" r="16" fill="#ffffff"/>
 
 <path
 d="M750 215 Q795 250 840 215"
@@ -1300,8 +909,6 @@ stroke="#ffffff"
 stroke-width="11"
 stroke-linecap="round"
 />
-
-<!-- TEXT -->
 
 <text
 x="650"
@@ -1337,8 +944,6 @@ font-family="Tahoma, Arial, sans-serif"
 گفتگو • ترجمه • تولید محتوا
 </text>
 
-<!-- FREE BADGE -->
-
 <rect
 x="305"
 y="245"
@@ -1361,8 +966,6 @@ font-family="Tahoma, Arial, sans-serif"
 🆓 ۱۰ پیام رایگان در روز
 </text>
 
-<!-- DECORATION -->
-
 <path
 d="M90 105 L230 105"
 stroke="url(#adGlow1)"
@@ -1384,9 +987,7 @@ stroke-linecap="round"
 
 <div class="ad-content">
 
-<h3>
-✨ ابزارک؛ دستیار هوشمند شما
-</h3>
+<h3>✨ ابزارک؛ دستیار هوشمند شما</h3>
 
 <p>
 برای گفتگو، پرسش و پاسخ، ترجمه و تولید محتوا
@@ -1410,10 +1011,6 @@ onclick="showView('ai')"
 
 </div>
 
-<!-- =========================================================
-     FEATURES
-========================================================= -->
-
 <div class="section">
 
 <h2>
@@ -1429,108 +1026,66 @@ onclick="showView('ai')"
 <div class="features">
 
 <div class="card">
-
 <h2>🤖</h2>
-
-<h3>
-گفتگو با هوش مصنوعی فارسی
-</h3>
-
+<h3>گفتگو با هوش مصنوعی فارسی</h3>
 <p class="muted">
 سؤال‌های خود را به فارسی مطرح کنید و
 پاسخ‌های هوشمند دریافت کنید.
 </p>
-
 </div>
 
 <div class="card">
-
 <h2>✍️</h2>
-
-<h3>
-تولید و بازنویسی متن
-</h3>
-
+<h3>تولید و بازنویسی متن</h3>
 <p class="muted">
 برای نوشتن، بازنویسی، خلاصه‌سازی و
 ایده‌پردازی از هوش مصنوعی کمک بگیرید.
 </p>
-
 </div>
 
 <div class="card">
-
 <h2>🌍</h2>
-
-<h3>
-دستیار هوش مصنوعی چندزبانه
-</h3>
-
+<h3>دستیار هوش مصنوعی چندزبانه</h3>
 <p class="muted">
 پیام خود را به زبان موردنظر بنویسید و
 برای کارهای مختلف از ابزارک کمک بگیرید.
 </p>
-
 </div>
 
 <div class="card">
-
 <h2>📱</h2>
-
-<h3>
-هوش مصنوعی برای موبایل و کامپیوتر
-</h3>
-
+<h3>هوش مصنوعی برای موبایل و کامپیوتر</h3>
 <p class="muted">
 ابزارک برای استفاده راحت در موبایل،
 تبلت و کامپیوتر طراحی شده است.
 </p>
-
 </div>
 
 <div class="card">
-
 <h2>🔐</h2>
-
-<h3>
-حساب کاربری و اشتراک
-</h3>
-
+<h3>حساب کاربری و اشتراک</h3>
 <p class="muted">
 حساب کاربری، اشتراک‌ها و سوابق استفاده
 خود را مدیریت کنید.
 </p>
-
 </div>
 
 <div class="card">
-
 <h2>💎</h2>
-
-<h3>
-پلن‌های اشتراکی هوش مصنوعی
-</h3>
-
+<h3>پلن‌های اشتراکی هوش مصنوعی</h3>
 <p class="muted">
 برای استفاده بیشتر از امکانات هوش مصنوعی،
 پلن مناسب خود را انتخاب کنید.
 </p>
-
 </div>
 
 </div>
 
 </div>
-
-<!-- =========================================================
-     AD 2
-========================================================= -->
 
 <div class="ad-slot ad-green">
 
-<div class="ad-label">
-تبلیغات
-</div>
+<div class="ad-label">تبلیغات</div>
 
 <div class="ad-image">
 
@@ -1551,20 +1106,9 @@ x2="100%"
 y2="100%"
 >
 
-<stop
-offset="0%"
-stop-color="#047857"
-/>
-
-<stop
-offset="50%"
-stop-color="#059669"
-/>
-
-<stop
-offset="100%"
-stop-color="#0284c7"
-/>
+<stop offset="0%" stop-color="#047857"/>
+<stop offset="50%" stop-color="#059669"/>
+<stop offset="100%" stop-color="#0284c7"/>
 
 </linearGradient>
 
@@ -1644,9 +1188,7 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>
-🚀 استفاده بیشتر با پلن‌های اشتراکی
-</h3>
+<h3>🚀 استفاده بیشتر با پلن‌های اشتراکی</h3>
 
 <p>
 اگر سهمیه روزانه شما تمام شد،
@@ -1664,17 +1206,9 @@ onclick="showView('plans')"
 
 </div>
 
-<!-- =========================================================
-     SEO CONTENT
-========================================================= -->
+<section id="seo-content">
 
-<section
-id="seo-content"
->
-
-<h2>
-ابزارک؛ دستیار هوش مصنوعی فارسی
-</h2>
+<h2>ابزارک؛ دستیار هوش مصنوعی فارسی</h2>
 
 <p>
 ابزارک یک دستیار هوش مصنوعی فارسی و چندزبانه
@@ -1684,9 +1218,7 @@ id="seo-content"
 برای کاربران فارسی‌زبان ساده، سریع و کاربردی کند.
 </p>
 
-<h2>
-چت با هوش مصنوعی فارسی
-</h2>
+<h2>چت با هوش مصنوعی فارسی</h2>
 
 <p>
 با ابزارک می‌توانید با هوش مصنوعی فارسی گفتگو کنید،
@@ -1695,9 +1227,7 @@ id="seo-content"
 از یک دستیار هوشمند آنلاین کمک بگیرید.
 </p>
 
-<h2>
-هوش مصنوعی فارسی چیست؟
-</h2>
+<h2>هوش مصنوعی فارسی چیست؟</h2>
 
 <p>
 هوش مصنوعی فارسی به ابزارهایی گفته می‌شود که
@@ -1708,33 +1238,22 @@ id="seo-content"
 روزمره استفاده شود.
 </p>
 
-<h2>
-امکانات دستیار هوشمند ابزارک
-</h2>
+<h2>امکانات دستیار هوشمند ابزارک</h2>
 
 <ul>
 
 <li>گفتگو با هوش مصنوعی فارسی</li>
-
 <li>پاسخ به سوالات و درخواست‌های روزمره</li>
-
 <li>تولید محتوای متنی</li>
-
 <li>بازنویسی و بهبود متن</li>
-
 <li>خلاصه‌سازی و ایده‌پردازی</li>
-
 <li>کمک در ترجمه و کار با زبان‌های مختلف</li>
-
 <li>حساب کاربری و مدیریت اشتراک</li>
-
 <li>استفاده در موبایل، تبلت و کامپیوتر</li>
 
 </ul>
 
-<h2>
-دستیار هوش مصنوعی آنلاین برای موبایل و کامپیوتر
-</h2>
+<h2>دستیار هوش مصنوعی آنلاین برای موبایل و کامپیوتر</h2>
 
 <p>
 ابزارک به صورت آنلاین در مرورگر قابل استفاده است
@@ -1743,9 +1262,7 @@ id="seo-content"
 را نیز روی دستگاه خود نصب کنند.
 </p>
 
-<h2>
-تولید محتوا با هوش مصنوعی
-</h2>
+<h2>تولید محتوا با هوش مصنوعی</h2>
 
 <p>
 دستیار هوش مصنوعی ابزارک می‌تواند برای ایده‌پردازی،
@@ -1754,9 +1271,7 @@ id="seo-content"
 محتوا و کاهش زمان انجام کارهای نوشتاری است.
 </p>
 
-<h2>
-پلن رایگان محدود ابزارک
-</h2>
+<h2>پلن رایگان محدود ابزارک</h2>
 
 <p>
 کاربران جدید و کاربران بدون اشتراک می‌توانند هر روز
@@ -1766,9 +1281,7 @@ id="seo-content"
 اشتراکی را انتخاب کند.
 </p>
 
-<h2>
-پلن‌های اشتراکی ابزارک
-</h2>
+<h2>پلن‌های اشتراکی ابزارک</h2>
 
 <p>
 پلن‌های اشتراکی برای کاربرانی طراحی شده‌اند که
@@ -1776,9 +1289,7 @@ id="seo-content"
 نیاز دارند.
 </p>
 
-<h2>
-چرا ابزارک؟
-</h2>
+<h2>چرا ابزارک؟</h2>
 
 <p>
 ابزارک تلاش می‌کند یک دستیار هوش مصنوعی ساده،
@@ -1789,15 +1300,9 @@ id="seo-content"
 
 </section>
 
-<!-- =========================================================
-     AD 3
-========================================================= -->
-
 <div class="ad-slot ad-orange">
 
-<div class="ad-label">
-تبلیغات
-</div>
+<div class="ad-label">تبلیغات</div>
 
 <div class="ad-image">
 
@@ -1818,20 +1323,9 @@ x2="100%"
 y2="100%"
 >
 
-<stop
-offset="0%"
-stop-color="#c2410c"
-/>
-
-<stop
-offset="50%"
-stop-color="#ea580c"
-/>
-
-<stop
-offset="100%"
-stop-color="#ca8a04"
-/>
+<stop offset="0%" stop-color="#c2410c"/>
+<stop offset="50%" stop-color="#ea580c"/>
+<stop offset="100%" stop-color="#ca8a04"/>
 
 </linearGradient>
 
@@ -1911,9 +1405,7 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>
-💡 یک ابزار جدید را کشف کنید
-</h3>
+<h3>💡 یک ابزار جدید را کشف کنید</h3>
 
 <p>
 با ابزارک گفتگو کنید، سؤال بپرسید و از هوش مصنوعی
@@ -1933,20 +1425,11 @@ onclick="showView('ai')"
 
 </section>
 
-<!-- =========================================================
-     LOGIN
-========================================================= -->
-
-<section
-id="view-login"
-class="view"
->
+<section id="view-login" class="view">
 
 <div class="card form">
 
-<h2>
-🔑 ورود به حساب
-</h2>
+<h2>🔑 ورود به حساب</h2>
 
 <input
 id="loginEmail"
@@ -1992,20 +1475,11 @@ onclick="showView('forgot')"
 
 </section>
 
-<!-- =========================================================
-     SIGNUP
-========================================================= -->
-
-<section
-id="view-signup"
-class="view"
->
+<section id="view-signup" class="view">
 
 <div class="card form">
 
-<h2>
-📝 ثبت‌نام
-</h2>
+<h2>📝 ثبت‌نام</h2>
 
 <input
 id="signupName"
@@ -2042,20 +1516,11 @@ onclick="signup()"
 
 </section>
 
-<!-- =========================================================
-     FORGOT
-========================================================= -->
-
-<section
-id="view-forgot"
-class="view"
->
+<section id="view-forgot" class="view">
 
 <div class="card form">
 
-<h2>
-🔐 بازیابی رمز عبور
-</h2>
+<h2>🔐 بازیابی رمز عبور</h2>
 
 <p class="muted">
 ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.
@@ -2088,20 +1553,11 @@ onclick="showView('reset')"
 
 </section>
 
-<!-- =========================================================
-     RESET
-========================================================= -->
-
-<section
-id="view-reset"
-class="view"
->
+<section id="view-reset" class="view">
 
 <div class="card form">
 
-<h2>
-🔑 تغییر رمز عبور
-</h2>
+<h2>🔑 تغییر رمز عبور</h2>
 
 <input
 id="resetEmail"
@@ -2137,20 +1593,11 @@ onclick="resetPassword()"
 
 </section>
 
-<!-- =========================================================
-     ACCOUNT
-========================================================= -->
-
-<section
-id="view-account"
-class="view"
->
+<section id="view-account" class="view">
 
 <div class="card">
 
-<h2>
-🏠 حساب من
-</h2>
+<h2>🏠 حساب من</h2>
 
 <div id="accountBox">
 در حال دریافت اطلاعات...
@@ -2160,30 +1607,15 @@ class="view"
 
 </section>
 
-<!-- =========================================================
-     AI
-========================================================= -->
-
-<section
-id="view-ai"
-class="view"
->
+<section id="view-ai" class="view">
 
 <div class="card">
 
-<h2>
-🤖 گفتگو با هوش مصنوعی فارسی
-</h2>
-
-<!-- =======================================================
-     AI AD — DIRECTLY UNDER AI TITLE
-======================================================= -->
+<h2>🤖 گفتگو با هوش مصنوعی فارسی</h2>
 
 <div class="ad-slot ad-blue">
 
-<div class="ad-label">
-تبلیغات
-</div>
+<div class="ad-label">تبلیغات</div>
 
 <div class="ad-image">
 
@@ -2204,20 +1636,9 @@ x2="100%"
 y2="100%"
 >
 
-<stop
-offset="0%"
-stop-color="#1e1b4b"
-/>
-
-<stop
-offset="50%"
-stop-color="#4338ca"
-/>
-
-<stop
-offset="100%"
-stop-color="#2563eb"
-/>
+<stop offset="0%" stop-color="#1e1b4b"/>
+<stop offset="50%" stop-color="#4338ca"/>
+<stop offset="100%" stop-color="#2563eb"/>
 
 </linearGradient>
 
@@ -2297,9 +1718,7 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>
-✨ شروع رایگان با ابزارک
-</h3>
+<h3>✨ شروع رایگان با ابزارک</h3>
 
 <p>
 روزانه تا ۱۰ پیام رایگان برای گفتگو با هوش مصنوعی.
@@ -2317,9 +1736,7 @@ font-family="Tahoma, Arial, sans-serif"
 
 🆓 پلن رایگان محدود:
 
-<strong>
-۱۰ پیام در روز
-</strong>
+<strong>۱۰ پیام در روز</strong>
 
 <br>
 
@@ -2361,18 +1778,9 @@ onclick="sendAi()"
 
 </section>
 
-<!-- =========================================================
-     PLANS
-========================================================= -->
+<section id="view-plans" class="view">
 
-<section
-id="view-plans"
-class="view"
->
-
-<h2>
-💰 پلن‌های اشتراک ابزارک
-</h2>
+<h2>💰 پلن‌های اشتراک ابزارک</h2>
 
 <div class="notice">
 
@@ -2418,23 +1826,14 @@ class="plans"
 
 </section>
 
-<!-- =========================================================
-     ADMIN
-========================================================= -->
-
-<section
-id="view-admin"
-class="view"
->
+<section id="view-admin" class="view">
 
 <div
 id="adminLogin"
 class="card form"
 >
 
-<h2>
-🛠️ مدیریت
-</h2>
+<h2>🛠️ مدیریت</h2>
 
 <input
 id="adminPassword"
@@ -2460,9 +1859,7 @@ class="hidden"
 
 <div class="card">
 
-<h2>
-🛠️ پنل مدیریت
-</h2>
+<h2>🛠️ پنل مدیریت</h2>
 
 <div class="actions">
 
@@ -2510,9 +1907,7 @@ onclick="adminLogout()"
 
 <div class="container">
 
-<strong>
-🤖 ابزارک
-</strong>
+<strong>🤖 ابزارک</strong>
 
 <br>
 
@@ -2641,9 +2036,7 @@ loadPlans();
 ============================================================ */
 
 function msg(text){
-
 alert(text);
-
 }
 
 /* ============================================================
@@ -2662,19 +2055,13 @@ method:"POST",
 body:JSON.stringify({
 
 name:
-document.getElementById(
-"signupName"
-).value.trim(),
+document.getElementById("signupName").value.trim(),
 
 email:
-document.getElementById(
-"signupEmail"
-).value.trim(),
+document.getElementById("signupEmail").value.trim(),
 
 password:
-document.getElementById(
-"signupPassword"
-).value
+document.getElementById("signupPassword").value
 
 })
 
@@ -2696,9 +2083,7 @@ localStorage.setItem(
 token
 );
 
-msg(
-"ثبت‌نام با موفقیت انجام شد."
-);
+msg("ثبت‌نام با موفقیت انجام شد.");
 
 showView("account");
 
@@ -2726,14 +2111,10 @@ method:"POST",
 body:JSON.stringify({
 
 email:
-document.getElementById(
-"loginEmail"
-).value.trim(),
+document.getElementById("loginEmail").value.trim(),
 
 password:
-document.getElementById(
-"loginPassword"
-).value
+document.getElementById("loginPassword").value
 
 })
 
@@ -2755,9 +2136,7 @@ localStorage.setItem(
 token
 );
 
-msg(
-"ورود موفق بود."
-);
+msg("ورود موفق بود.");
 
 showView("account");
 
@@ -2776,13 +2155,11 @@ msg(e.message);
 async function loadAccount(){
 
 const box =
-document.getElementById(
-"accountBox"
-);
+document.getElementById("accountBox");
 
 if(!token){
 
-box.innerHTML=`
+box.innerHTML=\`
 
 <p class="muted">
 برای مشاهده حساب وارد شوید.
@@ -2802,7 +2179,7 @@ onclick="showView('signup')"
 📝 ثبت‌نام
 </button>
 
-`;
+\`;
 
 return;
 
@@ -2844,14 +2221,14 @@ let subscriptionHtml = "";
 
 if(sub){
 
-subscriptionHtml=`
+subscriptionHtml=\`
 
 <div class="notice">
 
 💎 اشتراک فعال:
 
 <strong>
-${esc(sub.plan?.name || sub.plan_id)}
+\${esc(sub.plan?.name || sub.plan_id)}
 </strong>
 
 <br>
@@ -2859,7 +2236,7 @@ ${esc(sub.plan?.name || sub.plan_id)}
 📅 پایان اشتراک:
 
 <strong>
-${new Date(
+\${new Date(
 sub.expires_at
 ).toLocaleDateString("fa-IR")}
 </strong>
@@ -2872,11 +2249,11 @@ sub.expires_at
 
 </div>
 
-`;
+\`;
 
 }else{
 
-subscriptionHtml=`
+subscriptionHtml=\`
 
 <div class="notice">
 
@@ -2887,13 +2264,13 @@ subscriptionHtml=`
 📊 مصرف امروز:
 
 <strong>
-${usage.used}
+\${usage.used}
 </strong>
 
 از
 
 <strong>
-${usage.limit}
+\${usage.limit}
 </strong>
 
 پیام
@@ -2904,11 +2281,11 @@ ${usage.limit}
 
 </div>
 
-`;
+\`;
 
 }
 
-box.innerHTML=`
+box.innerHTML=\`
 
 <div class="account-grid">
 
@@ -2919,7 +2296,7 @@ box.innerHTML=`
 </div>
 
 <div class="account-value">
-${esc(user.name)}
+\${esc(user.name)}
 </div>
 
 </div>
@@ -2934,7 +2311,7 @@ ${esc(user.name)}
 class="account-value"
 style="font-size:16px"
 >
-${esc(user.email)}
+\${esc(user.email)}
 </div>
 
 </div>
@@ -2946,7 +2323,7 @@ ${esc(user.email)}
 </div>
 
 <div class="account-value">
-${num(user.balance)}
+\${num(user.balance)}
 تومان
 </div>
 
@@ -2954,7 +2331,7 @@ ${num(user.balance)}
 
 </div>
 
-${subscriptionHtml}
+\${subscriptionHtml}
 
 <div class="actions">
 
@@ -2997,17 +2374,17 @@ onclick="logout()"
 
 <div id="accountExtra"></div>
 
-`;
+\`;
 
 }catch(e){
 
-box.innerHTML=`
+box.innerHTML=\`
 
 <div class="notice">
-${esc(e.message)}
+\${esc(e.message)}
 </div>
 
-`;
+\`;
 
 }
 
@@ -3097,9 +2474,7 @@ async function myWithdrawals(){
 try{
 
 const response =
-await api(
-"/api/my-withdrawals"
-);
+await api("/api/my-withdrawals");
 
 const data =
 await response.json();
@@ -3113,20 +2488,16 @@ const rows =
 data.withdrawals || [];
 
 const box =
-document.getElementById(
-"accountExtra"
-);
+document.getElementById("accountExtra");
 
-box.innerHTML=`
+box.innerHTML=\`
 
 <div
 class="card"
 style="margin-top:15px"
 >
 
-<h3>
-📋 درخواست‌های برداشت
-</h3>
+<h3>📋 درخواست‌های برداشت</h3>
 
 <div class="table-wrap">
 
@@ -3135,53 +2506,40 @@ style="margin-top:15px"
 <thead>
 
 <tr>
-
-<th>
-مبلغ
-</th>
-
-<th>
-روش
-</th>
-
-<th>
-وضعیت
-</th>
-
-<th>
-تاریخ
-</th>
-
+<th>مبلغ</th>
+<th>روش</th>
+<th>وضعیت</th>
+<th>تاریخ</th>
 </tr>
 
 </thead>
 
 <tbody>
 
-${rows.map(x=>`
+\${rows.map(x=>\`
 
 <tr>
 
 <td>
-${num(x.amount)}
+\${num(x.amount)}
 تومان
 </td>
 
 <td>
-${esc(x.method)}
+\${esc(x.method)}
 </td>
 
 <td>
-${esc(x.status)}
+\${esc(x.status)}
 </td>
 
 <td>
-${esc(x.created_at)}
+\${esc(x.created_at)}
 </td>
 
 </tr>
 
-`).join("")}
+\`).join("")}
 
 </tbody>
 
@@ -3191,7 +2549,7 @@ ${esc(x.created_at)}
 
 </div>
 
-`;
+\`;
 
 }catch(e){
 
@@ -3209,9 +2567,7 @@ function logout(){
 
 token="";
 
-localStorage.removeItem(
-"abzarak_token"
-);
+localStorage.removeItem("abzarak_token");
 
 showView("home");
 
@@ -3226,9 +2582,7 @@ async function forgotPassword(){
 try{
 
 const email =
-document.getElementById(
-"forgotEmail"
-).value.trim();
+document.getElementById("forgotEmail").value.trim();
 
 const response =
 await api(
@@ -3237,9 +2591,7 @@ await api(
 
 method:"POST",
 
-body:JSON.stringify({
-email
-})
+body:JSON.stringify({email})
 
 }
 );
@@ -3252,14 +2604,9 @@ throw new Error(
 data.error || "خطا"
 );
 
-document.getElementById(
-"resetEmail"
-).value=email;
+document.getElementById("resetEmail").value=email;
 
-msg(
-data.message ||
-"کد ارسال شد."
-);
+msg(data.message || "کد ارسال شد.");
 
 showView("reset");
 
@@ -3289,19 +2636,13 @@ method:"POST",
 body:JSON.stringify({
 
 email:
-document.getElementById(
-"resetEmail"
-).value.trim(),
+document.getElementById("resetEmail").value.trim(),
 
 code:
-document.getElementById(
-"resetCode"
-).value.trim(),
+document.getElementById("resetCode").value.trim(),
 
 newPassword:
-document.getElementById(
-"resetPassword"
-).value
+document.getElementById("resetPassword").value
 
 })
 
@@ -3316,10 +2657,7 @@ throw new Error(
 data.error || "خطا"
 );
 
-msg(
-data.message ||
-"رمز تغییر کرد."
-);
+msg(data.message || "رمز تغییر کرد.");
 
 showView("login");
 
@@ -3338,9 +2676,7 @@ msg(e.message);
 async function sendAi(){
 
 const input =
-document.getElementById(
-"aiInput"
-);
+document.getElementById("aiInput");
 
 const message =
 input.value.trim();
@@ -3360,10 +2696,7 @@ return;
 
 }
 
-addMessage(
-"user",
-message
-);
+addMessage("user",message);
 
 input.value="";
 
@@ -3396,9 +2729,7 @@ const data =
 await response.json();
 
 const el =
-document.getElementById(
-loading
-);
+document.getElementById(loading);
 
 if(el)
 el.remove();
@@ -3421,8 +2752,7 @@ addMessage(
 
 addMessage(
 "ai",
-"❌ " +
-(data.error || "خطا")
+"❌ " + (data.error || "خطا")
 );
 
 }
@@ -3433,16 +2763,13 @@ return;
 
 addMessage(
 "ai",
-data.reply ||
-"پاسخی دریافت نشد."
+data.reply || "پاسخی دریافت نشد."
 );
 
 }catch(e){
 
 const el =
-document.getElementById(
-loading
-);
+document.getElementById(loading);
 
 if(el)
 el.remove();
@@ -3456,21 +2783,13 @@ addMessage(
 
 }
 
-function addMessage(
-type,
-text,
-id=""
-){
+function addMessage(type,text,id=""){
 
 const chat =
-document.getElementById(
-"chat"
-);
+document.getElementById("chat");
 
 const div =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 div.className =
 "message " + type;
@@ -3494,9 +2813,7 @@ chat.scrollHeight;
 async function loadPlans(){
 
 const box =
-document.getElementById(
-"plansBox"
-);
+document.getElementById("plansBox");
 
 if(!plansData){
 
@@ -3537,9 +2854,7 @@ if(!plansData)
 return;
 
 const box =
-document.getElementById(
-"plansBox"
-);
+document.getElementById("plansBox");
 
 const plans =
 currency === "usd"
@@ -3569,7 +2884,7 @@ const button =
 plan.price_toman === 0
 ?
 
-`
+\`
 <button
 class="btn secondary"
 style="width:100%"
@@ -3577,14 +2892,14 @@ onclick="showView('ai')"
 >
 شروع استفاده
 </button>
-`
+\`
 
 :
 
 usd
 ?
 
-`
+\`
 <button
 class="btn secondary"
 style="width:100%"
@@ -3592,57 +2907,43 @@ onclick="msg('پرداخت دلاری به‌زودی فعال می‌شود. د
 >
 پرداخت بین‌المللی
 </button>
-`
+\`
 
 :
 
-`
+\`
 <button
 class="btn primary"
 style="width:100%"
-onclick="buyPlan('${plan.id}')"
+onclick="buyPlan('\${plan.id}')"
 >
 💳 خرید پلن
 </button>
-`;
+\`;
 
-return `
+return \`
 
 <div
-class="plan ${
-isPopular ? "popular" : ""
-}"
+class="plan \${isPopular ? "popular" : ""}"
 >
 
-${
-isPopular
-?
-`
+\${isPopular ? \`
 <div class="badge">
 محبوب
 </div>
-`
-:
-""
-}
+\` : ""}
 
 <h3>
-${esc(plan.name)}
+\${esc(plan.name)}
 </h3>
 
 <div class="price">
 
-${price}
+\${price}
 
 <small>
 
-${
-usd
-?
-" / month"
-:
-" تومان / ماه"
-}
+\${usd ? " / month" : " تومان / ماه"}
 
 </small>
 
@@ -3650,21 +2951,19 @@ usd
 
 <ul>
 
-${
-(plan.features || [])
+\${(plan.features || [])
 .map(f =>
-`<li>${esc(f)}</li>`
+\`<li>\${esc(f)}</li>\`
 )
-.join("")
-}
+.join("")}
 
 </ul>
 
-${button}
+\${button}
 
 </div>
 
-`;
+\`;
 
 }).join("");
 
@@ -3742,9 +3041,7 @@ method:"POST",
 body:JSON.stringify({
 
 password:
-document.getElementById(
-"adminPassword"
-).value
+document.getElementById("adminPassword").value
 
 })
 
@@ -3756,8 +3053,7 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error ||
-"خطا"
+data.error || "خطا"
 );
 
 adminToken=data.token;
@@ -3794,9 +3090,7 @@ adminUsers();
 async function adminUsers(){
 
 const box =
-document.getElementById(
-"adminContent"
-);
+document.getElementById("adminContent");
 
 box.innerHTML =
 "در حال دریافت کاربران...";
@@ -3804,9 +3098,7 @@ box.innerHTML =
 try{
 
 const response =
-await adminApi(
-"/api/admin/users"
-);
+await adminApi("/api/admin/users");
 
 const data =
 await response.json();
@@ -3816,11 +3108,9 @@ throw new Error(
 data.error || "خطا"
 );
 
-box.innerHTML=`
+box.innerHTML=\`
 
-<h3>
-👥 کاربران
-</h3>
+<h3>👥 کاربران</h3>
 
 <div class="table-wrap">
 
@@ -3829,54 +3119,41 @@ box.innerHTML=`
 <thead>
 
 <tr>
-
-<th>
-نام
-</th>
-
-<th>
-ایمیل
-</th>
-
-<th>
-موجودی
-</th>
-
-<th>
-تاریخ
-</th>
-
+<th>نام</th>
+<th>ایمیل</th>
+<th>موجودی</th>
+<th>تاریخ</th>
 </tr>
 
 </thead>
 
 <tbody>
 
-${(data.users || [])
-.map(x=>`
+\${(data.users || [])
+.map(x=>\`
 
 <tr>
 
 <td>
-${esc(x.name)}
+\${esc(x.name)}
 </td>
 
 <td>
-${esc(x.email)}
+\${esc(x.email)}
 </td>
 
 <td>
-${num(x.balance)}
+\${num(x.balance)}
 تومان
 </td>
 
 <td>
-${esc(x.created_at)}
+\${esc(x.created_at)}
 </td>
 
 </tr>
 
-`).join("")}
+\`).join("")}
 
 </tbody>
 
@@ -3884,16 +3161,15 @@ ${esc(x.created_at)}
 
 </div>
 
-`;
+\`;
 
 }catch(e){
 
-box.innerHTML =
-`
+box.innerHTML=\`
 <div class="notice">
-${esc(e.message)}
+\${esc(e.message)}
 </div>
-`;
+\`;
 
 }
 
@@ -3902,9 +3178,7 @@ ${esc(e.message)}
 async function adminPayments(){
 
 const box =
-document.getElementById(
-"adminContent"
-);
+document.getElementById("adminContent");
 
 box.innerHTML =
 "در حال دریافت تراکنش‌ها...";
@@ -3912,9 +3186,7 @@ box.innerHTML =
 try{
 
 const response =
-await adminApi(
-"/api/admin/payments"
-);
+await adminApi("/api/admin/payments");
 
 const data =
 await response.json();
@@ -3924,11 +3196,9 @@ throw new Error(
 data.error || "خطا"
 );
 
-box.innerHTML=`
+box.innerHTML=\`
 
-<h3>
-💳 تراکنش‌ها
-</h3>
+<h3>💳 تراکنش‌ها</h3>
 
 <div class="table-wrap">
 
@@ -3937,54 +3207,41 @@ box.innerHTML=`
 <thead>
 
 <tr>
-
-<th>
-ایمیل
-</th>
-
-<th>
-پلن
-</th>
-
-<th>
-مبلغ
-</th>
-
-<th>
-وضعیت
-</th>
-
+<th>ایمیل</th>
+<th>پلن</th>
+<th>مبلغ</th>
+<th>وضعیت</th>
 </tr>
 
 </thead>
 
 <tbody>
 
-${(data.payments || [])
-.map(x=>`
+\${(data.payments || [])
+.map(x=>\`
 
 <tr>
 
 <td>
-${esc(x.email)}
+\${esc(x.email)}
 </td>
 
 <td>
-${esc(x.plan_id || "-")}
+\${esc(x.plan_id || "-")}
 </td>
 
 <td>
-${num(x.amount_toman)}
+\${num(x.amount_toman)}
 تومان
 </td>
 
 <td>
-${esc(x.status)}
+\${esc(x.status)}
 </td>
 
 </tr>
 
-`).join("")}
+\`).join("")}
 
 </tbody>
 
@@ -3992,16 +3249,15 @@ ${esc(x.status)}
 
 </div>
 
-`;
+\`;
 
 }catch(e){
 
-box.innerHTML =
-`
+box.innerHTML=\`
 <div class="notice">
-${esc(e.message)}
+\${esc(e.message)}
 </div>
-`;
+\`;
 
 }
 
@@ -4010,9 +3266,7 @@ ${esc(e.message)}
 async function adminWithdrawals(){
 
 const box =
-document.getElementById(
-"adminContent"
-);
+document.getElementById("adminContent");
 
 box.innerHTML =
 "در حال دریافت برداشت‌ها...";
@@ -4020,9 +3274,7 @@ box.innerHTML =
 try{
 
 const response =
-await adminApi(
-"/api/admin/withdrawals"
-);
+await adminApi("/api/admin/withdrawals");
 
 const data =
 await response.json();
@@ -4035,11 +3287,9 @@ data.error || "خطا"
 const rows =
 data.withdrawals || [];
 
-box.innerHTML=`
+box.innerHTML=\`
 
-<h3>
-💸 درخواست‌های برداشت
-</h3>
+<h3>💸 درخواست‌های برداشت</h3>
 
 <div class="table-wrap">
 
@@ -4048,86 +3298,63 @@ box.innerHTML=`
 <thead>
 
 <tr>
-
-<th>
-ایمیل
-</th>
-
-<th>
-مبلغ
-</th>
-
-<th>
-مقصد
-</th>
-
-<th>
-وضعیت
-</th>
-
-<th>
-عملیات
-</th>
-
+<th>ایمیل</th>
+<th>مبلغ</th>
+<th>مقصد</th>
+<th>وضعیت</th>
+<th>عملیات</th>
 </tr>
 
 </thead>
 
 <tbody>
 
-${rows.map(x=>`
+\${rows.map(x=>\`
 
 <tr>
 
 <td>
-${esc(x.email)}
+\${esc(x.email)}
 </td>
 
 <td>
-${num(x.amount)}
+\${num(x.amount)}
 تومان
 </td>
 
 <td>
-${esc(x.destination)}
+\${esc(x.destination)}
 </td>
 
 <td>
-${esc(x.status)}
+\${esc(x.status)}
 </td>
 
 <td>
 
-${
-x.status === "pending"
-?
+\${x.status === "pending" ? \`
 
-`
 <button
 class="btn primary"
-onclick="processWithdrawal('${x.id}','paid')"
+onclick="processWithdrawal('\${x.id}','paid')"
 >
 پرداخت شد
 </button>
 
 <button
 class="btn danger"
-onclick="processWithdrawal('${x.id}','rejected')"
+onclick="processWithdrawal('\${x.id}','rejected')"
 >
 رد
 </button>
-`
 
-:
-
-"-"
-}
+\` : "-"}
 
 </td>
 
 </tr>
 
-`).join("")}
+\`).join("")}
 
 </tbody>
 
@@ -4135,25 +3362,21 @@ onclick="processWithdrawal('${x.id}','rejected')"
 
 </div>
 
-`;
+\`;
 
 }catch(e){
 
-box.innerHTML =
-`
+box.innerHTML=\`
 <div class="notice">
-${esc(e.message)}
+\${esc(e.message)}
 </div>
-`;
+\`;
 
 }
 
 }
 
-async function processWithdrawal(
-id,
-action
-){
+async function processWithdrawal(id,action){
 
 try{
 
@@ -4181,8 +3404,7 @@ data.error || "خطا"
 );
 
 msg(
-data.message ||
-"انجام شد."
+data.message || "انجام شد."
 );
 
 adminWithdrawals();
@@ -4246,9 +3468,7 @@ const html =
 document.documentElement;
 
 const btn =
-document.getElementById(
-"langBtn"
-);
+document.getElementById("langBtn");
 
 if(html.lang === "fa"){
 
@@ -4422,5 +3642,6 @@ navigator.serviceWorker
 </script>
 
 </body>
+
 </html>`;
-    }
+}
