@@ -4,7 +4,11 @@
 
 function renderHomepage() {
 
-  const page = String.raw;
+  const page = (strings, ...values) => {
+    return String.raw(strings, ...values)
+      .replaceAll("\\`", "`")
+      .replaceAll("\\${", "${");
+  };
 
   return page`<!DOCTYPE html>
 <html lang="fa" dir="rtl">
