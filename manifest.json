@@ -1,0 +1,36 @@
+{
+  "name": "ابزارک | دستیار هوش مصنوعی",
+  "short_name": "ابزارک",
+  "description": "دستیار هوش مصنوعی چندزبانه برای کاربران سراسر جهان",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6fb",
+  "theme_color": "#12163a",
+  "lang": "fa",
+  "dir": "rtl",
+  "categories": [
+    "productivity",
+    "utilities",
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
