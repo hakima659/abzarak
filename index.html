@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="ابزارک؛ مجموعه ابزارهای رایگان آنلاین برای محاسبه، تبدیل واحد، سود، تخفیف و اقساط">
-<meta name="keywords" content="ابزار آنلاین, محاسبه درصد, محاسبه سود, تخفیف, اقساط, تبدیل واحد">
-<title>ابزارک | ابزارهای رایگان آنلاین</title>
+
+<meta name="description" content="ابزارک | Abzarak - مجموعه‌ای از ابزارهای رایگان، سریع و کاربردی آنلاین برای محاسبه، تبدیل ارز، تخفیف، سود و افزایش قیمت.">
+<meta name="keywords" content="ابزار آنلاین, ابزار رایگان, online tools, free tools, calculator, currency converter, percentage calculator, discount calculator, profit calculator">
+
+<link rel="canonical" href="https://abzarakai.ir/">
+
+<title>ابزارک | Abzarak - ابزارهای رایگان آنلاین</title>
 
 <style>
 * {
@@ -23,7 +27,7 @@ body {
 header {
   background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: white;
-  padding: 35px 16px;
+  padding: 30px 16px;
   text-align: center;
 }
 
@@ -33,7 +37,16 @@ header h1 {
 }
 
 header p {
+  margin: 0 0 15px;
+}
+
+.lang-btn {
+  width: auto;
+  padding: 8px 18px;
   margin: 0;
+  background: white;
+  color: #2563eb;
+  border-radius: 20px;
 }
 
 main {
@@ -80,11 +93,6 @@ button {
   font-family: inherit;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
 button {
   background: #2563eb;
   color: white;
@@ -111,187 +119,623 @@ footer {
   padding: 35px 15px;
   color: #666;
 }
+
+body.en {
+  direction: ltr;
+  font-family: Arial, Tahoma, sans-serif;
+}
+
+body.en .lang-btn {
+  direction: ltr;
+}
+
+.hidden {
+  display: none;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>ابزارک</h1>
-  <p>ابزارهای رایگان، سریع و کاربردی آنلاین</p>
+  <h1>ابزارک | Abzarak</h1>
+
+  <p id="subtitle">
+    ابزارهای رایگان، سریع و کاربردی آنلاین
+  </p>
+
+  <button class="lang-btn" onclick="toggleLanguage()" id="langButton">
+    English
+  </button>
 </header>
 
 <main>
 
 <div class="intro">
-  <h2>ابزارهای کاربردی، رایگان و سریع</h2>
-  <p>
-    در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل دلار، تخفیف،
-    سود و اقساط را به‌صورت آنلاین انجام دهید.
+  <h2 id="introTitle">ابزارهای کاربردی، رایگان و سریع</h2>
+
+  <p id="introText">
+    در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل ارز،
+    تخفیف، سود و افزایش قیمت را به‌صورت آنلاین انجام دهید.
   </p>
 </div>
 
 <div class="grid">
 
 <section class="card">
-  <h2>🧮 محاسبه درصد</h2>
-  <input id="num" type="number" placeholder="عدد">
-  <input id="per" type="number" placeholder="درصد">
-  <button onclick="percent()">محاسبه</button>
+  <h2 id="percentTitle">🧮 محاسبه درصد</h2>
+
+  <input
+    id="num"
+    type="number"
+    placeholder="عدد"
+  >
+
+  <input
+    id="per"
+    type="number"
+    placeholder="درصد"
+  >
+
+  <button onclick="percent()" id="percentButton">
+    محاسبه
+  </button>
+
   <div class="result" id="r1"></div>
 </section>
 
+
 <section class="card">
-  <h2>💵 تبدیل دلار به تومان</h2>
-  <input id="usd" type="number" placeholder="مقدار دلار">
-  <input id="rate" type="number" placeholder="قیمت هر دلار به تومان">
-  <button onclick="dollar()">محاسبه</button>
+  <h2 id="currencyTitle">💱 تبدیل ارز</h2>
+
+  <input
+    id="amount"
+    type="number"
+    placeholder="مقدار"
+  >
+
+  <input
+    id="rate"
+    type="number"
+    placeholder="نرخ تبدیل"
+  >
+
+  <button onclick="currency()" id="currencyButton">
+    محاسبه
+  </button>
+
   <div class="result" id="r2"></div>
 </section>
 
+
 <section class="card">
-  <h2>🏷️ محاسبه تخفیف</h2>
-  <input id="price" type="number" placeholder="قیمت کالا">
-  <input id="discount" type="number" placeholder="درصد تخفیف">
-  <button onclick="off()">محاسبه</button>
+  <h2 id="discountTitle">🏷️ محاسبه تخفیف</h2>
+
+  <input
+    id="price"
+    type="number"
+    placeholder="قیمت"
+  >
+
+  <input
+    id="discount"
+    type="number"
+    placeholder="درصد تخفیف"
+  >
+
+  <button onclick="off()" id="discountButton">
+    محاسبه
+  </button>
+
   <div class="result" id="r3"></div>
 </section>
 
+
 <section class="card">
-  <h2>💰 محاسبه سود</h2>
-  <input id="buy" type="number" placeholder="قیمت خرید">
-  <input id="sell" type="number" placeholder="قیمت فروش">
-  <button onclick="profit()">محاسبه</button>
+  <h2 id="profitTitle">💰 محاسبه سود</h2>
+
+  <input
+    id="buy"
+    type="number"
+    placeholder="قیمت خرید"
+  >
+
+  <input
+    id="sell"
+    type="number"
+    placeholder="قیمت فروش"
+  >
+
+  <button onclick="profit()" id="profitButton">
+    محاسبه
+  </button>
+
   <div class="result" id="r4"></div>
 </section>
 
+
 <section class="card">
-  <h2>📊 محاسبه افزایش قیمت</h2>
-  <input id="base" type="number" placeholder="قیمت اولیه">
-  <input id="increase" type="number" placeholder="درصد افزایش">
-  <button onclick="increasePrice()">محاسبه</button>
+  <h2 id="increaseTitle">📊 محاسبه افزایش قیمت</h2>
+
+  <input
+    id="base"
+    type="number"
+    placeholder="قیمت اولیه"
+  >
+
+  <input
+    id="increase"
+    type="number"
+    placeholder="درصد افزایش"
+  >
+
+  <button onclick="increasePrice()" id="increaseButton">
+    محاسبه
+  </button>
+
   <div class="result" id="r5"></div>
 </section>
 
+
 <section class="card">
-  <h2>📝 تولید متن معرفی</h2>
-  <input id="topic" type="text" placeholder="موضوع یا محصول">
-  <button onclick="makeText()">تولید متن</button>
+  <h2 id="textTitle">📝 تولید متن معرفی</h2>
+
+  <input
+    id="topic"
+    type="text"
+    placeholder="موضوع یا محصول"
+  >
+
+  <button onclick="makeText()" id="textButton">
+    تولید متن
+  </button>
+
   <div class="result" id="r6"></div>
 </section>
 
 </div>
 
+
 <div class="intro">
-  <h2>💡 درباره ابزارک</h2>
-  <p>
-    ابزارک یک مجموعه ابزار آنلاین ساده و رایگان است.
-    این سایت می‌تواند در آینده با ابزارهای بیشتر، محتوای آموزشی،
-    تبلیغات و همکاری در فروش توسعه پیدا کند.
+
+  <h2 id="aboutTitle">💡 درباره ابزارک</h2>
+
+  <p id="aboutText">
+    ابزارک یک مجموعه ابزار آنلاین ساده، سریع و رایگان است
+    که برای کاربران سراسر جهان طراحی شده است.
+    ابزارهای جدید به‌مرور به این مجموعه اضافه خواهند شد.
   </p>
+
 </div>
 
 </main>
 
 <footer>
-  ابزارک — ابزارهای رایگان آنلاین
+  <span id="footerText">
+    ابزارک — ابزارهای رایگان آنلاین
+  </span>
 </footer>
+
 
 <script>
 
+let currentLanguage = "fa";
+
+
 function formatNumber(number) {
+
+  if (currentLanguage === "en") {
+
+    return Number(number).toLocaleString("en-US");
+
+  }
+
   return Number(number).toLocaleString("fa-IR");
 }
 
+
 function percent() {
+
   const n = Number(document.getElementById("num").value);
   const p = Number(document.getElementById("per").value);
 
   if (!Number.isFinite(n) || !Number.isFinite(p)) {
-    document.getElementById("r1").textContent = "لطفاً اعداد را وارد کنید.";
+
+    document.getElementById("r1").textContent =
+      currentLanguage === "en"
+      ? "Please enter valid numbers."
+      : "لطفاً اعداد معتبر را وارد کنید.";
+
     return;
   }
 
   document.getElementById("r1").textContent =
     formatNumber(n * p / 100);
+
 }
 
-function dollar() {
-  const usd = Number(document.getElementById("usd").value);
-  const rate = Number(document.getElementById("rate").value);
 
-  if (!Number.isFinite(usd) || !Number.isFinite(rate)) {
-    document.getElementById("r2").textContent = "لطفاً اعداد را وارد کنید.";
+function currency() {
+
+  const amount =
+    Number(document.getElementById("amount").value);
+
+  const rate =
+    Number(document.getElementById("rate").value);
+
+  if (!Number.isFinite(amount) || !Number.isFinite(rate)) {
+
+    document.getElementById("r2").textContent =
+      currentLanguage === "en"
+      ? "Please enter valid numbers."
+      : "لطفاً اعداد معتبر را وارد کنید.";
+
     return;
   }
 
   document.getElementById("r2").textContent =
-    formatNumber(usd * rate) + " تومان";
+    formatNumber(amount * rate);
+
 }
+
 
 function off() {
-  const price = Number(document.getElementById("price").value);
-  const discount = Number(document.getElementById("discount").value);
+
+  const price =
+    Number(document.getElementById("price").value);
+
+  const discount =
+    Number(document.getElementById("discount").value);
 
   if (!Number.isFinite(price) || !Number.isFinite(discount)) {
-    document.getElementById("r3").textContent = "لطفاً اعداد را وارد کنید.";
+
+    document.getElementById("r3").textContent =
+      currentLanguage === "en"
+      ? "Please enter valid numbers."
+      : "لطفاً اعداد معتبر را وارد کنید.";
+
     return;
   }
 
-  const amount = price * discount / 100;
-  const finalPrice = price - amount;
+  const amount =
+    price * discount / 100;
 
-  document.getElementById("r3").textContent =
-    "مبلغ تخفیف: " + formatNumber(amount) +
-    " | قیمت نهایی: " + formatNumber(finalPrice);
+  const finalPrice =
+    price - amount;
+
+  if (currentLanguage === "en") {
+
+    document.getElementById("r3").textContent =
+      "Discount: " +
+      formatNumber(amount) +
+      " | Final price: " +
+      formatNumber(finalPrice);
+
+  } else {
+
+    document.getElementById("r3").textContent =
+      "مبلغ تخفیف: " +
+      formatNumber(amount) +
+      " | قیمت نهایی: " +
+      formatNumber(finalPrice);
+
+  }
+
 }
 
+
 function profit() {
-  const buy = Number(document.getElementById("buy").value);
-  const sell = Number(document.getElementById("sell").value);
+
+  const buy =
+    Number(document.getElementById("buy").value);
+
+  const sell =
+    Number(document.getElementById("sell").value);
 
   if (!Number.isFinite(buy) || !Number.isFinite(sell)) {
-    document.getElementById("r4").textContent = "لطفاً اعداد را وارد کنید.";
+
+    document.getElementById("r4").textContent =
+      currentLanguage === "en"
+      ? "Please enter valid numbers."
+      : "لطفاً اعداد معتبر را وارد کنید.";
+
     return;
   }
 
-  const profitAmount = sell - buy;
-  const percentProfit = buy !== 0
+  const profitAmount =
+    sell - buy;
+
+  const percentProfit =
+    buy !== 0
     ? (profitAmount / buy) * 100
     : 0;
 
-  document.getElementById("r4").textContent =
-    "سود: " + formatNumber(profitAmount) +
-    " | درصد سود: " + formatNumber(percentProfit.toFixed(2)) + "٪";
+  if (currentLanguage === "en") {
+
+    document.getElementById("r4").textContent =
+      "Profit: " +
+      formatNumber(profitAmount) +
+      " | Profit percentage: " +
+      Number(percentProfit).toFixed(2) +
+      "%";
+
+  } else {
+
+    document.getElementById("r4").textContent =
+      "سود: " +
+      formatNumber(profitAmount) +
+      " | درصد سود: " +
+      Number(percentProfit).toFixed(2) +
+      "٪";
+
+  }
+
 }
+
 
 function increasePrice() {
-  const base = Number(document.getElementById("base").value);
-  const increase = Number(document.getElementById("increase").value);
+
+  const base =
+    Number(document.getElementById("base").value);
+
+  const increase =
+    Number(document.getElementById("increase").value);
 
   if (!Number.isFinite(base) || !Number.isFinite(increase)) {
-    document.getElementById("r5").textContent = "لطفاً اعداد را وارد کنید.";
+
+    document.getElementById("r5").textContent =
+      currentLanguage === "en"
+      ? "Please enter valid numbers."
+      : "لطفاً اعداد معتبر را وارد کنید.";
+
     return;
   }
 
-  const finalPrice = base + (base * increase / 100);
+  const finalPrice =
+    base + (base * increase / 100);
 
   document.getElementById("r5").textContent =
-    "قیمت جدید: " + formatNumber(finalPrice);
+    currentLanguage === "en"
+    ? "New price: " + formatNumber(finalPrice)
+    : "قیمت جدید: " + formatNumber(finalPrice);
+
 }
 
+
 function makeText() {
-  const topic = document.getElementById("topic").value.trim();
+
+  const topic =
+    document.getElementById("topic").value.trim();
 
   if (!topic) {
+
     document.getElementById("r6").textContent =
-      "لطفاً موضوع یا نام محصول را وارد کنید.";
+      currentLanguage === "en"
+      ? "Please enter a topic or product."
+      : "لطفاً موضوع یا نام محصول را وارد کنید.";
+
     return;
   }
 
-  document.getElementById("r6").textContent =
-    "معرفی " + topic +
-    ": این محصول یا خدمت با هدف ارائه کیفیت مناسب، استفاده آسان و تجربه بهتر برای کاربران طراحی شده است.";
+  if (currentLanguage === "en") {
+
+    document.getElementById("r6").textContent =
+      "Introduction to " +
+      topic +
+      ": This product or service is designed to provide convenient use, suitable quality and a better user experience.";
+
+  } else {
+
+    document.getElementById("r6").textContent =
+      "معرفی " +
+      topic +
+      ": این محصول یا خدمت با هدف ارائه کیفیت مناسب، استفاده آسان و تجربه بهتر برای کاربران طراحی شده است.";
+
+  }
+
+}
+
+
+function toggleLanguage() {
+
+  if (currentLanguage === "fa") {
+
+    currentLanguage = "en";
+
+    document.documentElement.lang = "en";
+    document.documentElement.dir = "ltr";
+    document.body.classList.add("en");
+
+    document.getElementById("subtitle").textContent =
+      "Free, fast and useful online tools";
+
+    document.getElementById("langButton").textContent =
+      "فارسی";
+
+    document.getElementById("introTitle").textContent =
+      "Useful, free and fast online tools";
+
+    document.getElementById("introText").textContent =
+      "Abzarak provides simple online tools for percentage calculations, currency conversion, discounts, profits and price increases.";
+
+    document.getElementById("percentTitle").textContent =
+      "🧮 Percentage Calculator";
+
+    document.getElementById("percentButton").textContent =
+      "Calculate";
+
+    document.getElementById("num").placeholder =
+      "Number";
+
+    document.getElementById("per").placeholder =
+      "Percentage";
+
+    document.getElementById("currencyTitle").textContent =
+      "💱 Currency Converter";
+
+    document.getElementById("currencyButton").textContent =
+      "Calculate";
+
+    document.getElementById("amount").placeholder =
+      "Amount";
+
+    document.getElementById("rate").placeholder =
+      "Exchange rate";
+
+    document.getElementById("discountTitle").textContent =
+      "🏷️ Discount Calculator";
+
+    document.getElementById("discountButton").textContent =
+      "Calculate";
+
+    document.getElementById("price").placeholder =
+      "Price";
+
+    document.getElementById("discount").placeholder =
+      "Discount percentage";
+
+    document.getElementById("profitTitle").textContent =
+      "💰 Profit Calculator";
+
+    document.getElementById("profitButton").textContent =
+      "Calculate";
+
+    document.getElementById("buy").placeholder =
+      "Purchase price";
+
+    document.getElementById("sell").placeholder =
+      "Selling price";
+
+    document.getElementById("increaseTitle").textContent =
+      "📊 Price Increase Calculator";
+
+    document.getElementById("increaseButton").textContent =
+      "Calculate";
+
+    document.getElementById("base").placeholder =
+      "Original price";
+
+    document.getElementById("increase").placeholder =
+      "Increase percentage";
+
+    document.getElementById("textTitle").textContent =
+      "📝 Introduction Text Generator";
+
+    document.getElementById("textButton").textContent =
+      "Generate";
+
+    document.getElementById("topic").placeholder =
+      "Topic or product";
+
+    document.getElementById("aboutTitle").textContent =
+      "💡 About Abzarak";
+
+    document.getElementById("aboutText").textContent =
+      "Abzarak is a simple, fast and free collection of online tools designed for users around the world. More useful tools will be added over time.";
+
+    document.getElementById("footerText").textContent =
+      "Abzarak — Free online tools";
+
+  } else {
+
+    currentLanguage = "fa";
+
+    document.documentElement.lang = "fa";
+    document.documentElement.dir = "rtl";
+    document.body.classList.remove("en");
+
+    document.getElementById("subtitle").textContent =
+      "ابزارهای رایگان، سریع و کاربردی آنلاین";
+
+    document.getElementById("langButton").textContent =
+      "English";
+
+    document.getElementById("introTitle").textContent =
+      "ابزارهای کاربردی، رایگان و سریع";
+
+    document.getElementById("introText").textContent =
+      "در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل ارز، تخفیف، سود و افزایش قیمت را به‌صورت آنلاین انجام دهید.";
+
+    document.getElementById("percentTitle").textContent =
+      "🧮 محاسبه درصد";
+
+    document.getElementById("percentButton").textContent =
+      "محاسبه";
+
+    document.getElementById("num").placeholder =
+      "عدد";
+
+    document.getElementById("per").placeholder =
+      "درصد";
+
+    document.getElementById("currencyTitle").textContent =
+      "💱 تبدیل ارز";
+
+    document.getElementById("currencyButton").textContent =
+      "محاسبه";
+
+    document.getElementById("amount").placeholder =
+      "مقدار";
+
+    document.getElementById("rate").placeholder =
+      "نرخ تبدیل";
+
+    document.getElementById("discountTitle").textContent =
+      "🏷️ محاسبه تخفیف";
+
+    document.getElementById("discountButton").textContent =
+      "محاسبه";
+
+    document.getElementById("price").placeholder =
+      "قیمت";
+
+    document.getElementById("discount").placeholder =
+      "درصد تخفیف";
+
+    document.getElementById("profitTitle").textContent =
+      "💰 محاسبه سود";
+
+    document.getElementById("profitButton").textContent =
+      "محاسبه";
+
+    document.getElementById("buy").placeholder =
+      "قیمت خرید";
+
+    document.getElementById("sell").placeholder =
+      "قیمت فروش";
+
+    document.getElementById("increaseTitle").textContent =
+      "📊 محاسبه افزایش قیمت";
+
+    document.getElementById("increaseButton").textContent =
+      "محاسبه";
+
+    document.getElementById("base").placeholder =
+      "قیمت اولیه";
+
+    document.getElementById("increase").placeholder =
+      "درصد افزایش";
+
+    document.getElementById("textTitle").textContent =
+      "📝 تولید متن معرفی";
+
+    document.getElementById("textButton").textContent =
+      "تولید متن";
+
+    document.getElementById("topic").placeholder =
+      "موضوع یا محصول";
+
+    document.getElementById("aboutTitle").textContent =
+      "💡 درباره ابزارک";
+
+    document.getElementById("aboutText").textContent =
+      "ابزارک یک مجموعه ابزار آنلاین ساده، سریع و رایگان است که برای کاربران سراسر جهان طراحی شده است. ابزارهای جدید به‌مرور به این مجموعه اضافه خواهند شد.";
+
+    document.getElementById("footerText").textContent =
+      "ابزارک — ابزارهای رایگان آنلاین";
+
+  }
+
 }
 
 </script>
