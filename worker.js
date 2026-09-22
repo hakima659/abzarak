@@ -1,5 +1,7 @@
 // =============================================================
-// HOMEPAGE — SEO OPTIMIZED + IMAGE ADS + LIMITED FREE PLAN
+// HOMEPAGE — GLOBAL MULTILINGUAL VERSION
+// Persian + English
+// Existing Auth / AI / Plans / Admin / PWA preserved
 // =============================================================
 
 function renderHomepage() {
@@ -20,31 +22,23 @@ function renderHomepage() {
 <meta name="viewport"
 content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-<meta name="theme-color"
-content="#12163a">
+<meta name="theme-color" content="#12163a">
 
-<meta name="mobile-web-app-capable"
-content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ابزارک">
+<meta name="application-name" content="Abzarak AI">
 
-<meta name="apple-mobile-web-app-capable"
-content="yes">
-
-<meta name="apple-mobile-web-app-title"
-content="ابزارک">
-
-<meta name="application-name"
-content="ابزارک">
-
-<title>ابزارک | دستیار هوش مصنوعی فارسی و چت هوشمند آنلاین</title>
+<title>ابزارک | دستیار هوش مصنوعی فارسی و چندزبانه</title>
 
 <meta
 name="description"
-content="ابزارک، دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره. با سهمیه رایگان محدود شروع کنید و در صورت نیاز پلن خود را ارتقا دهید."
+content="ابزارک یک دستیار هوش مصنوعی فارسی و چندزبانه برای گفتگو، پاسخ به سوالات، ترجمه، تولید محتوا و کارهای روزمره است."
 >
 
 <meta
 name="keywords"
-content="دستیار هوش مصنوعی فارسی, هوش مصنوعی فارسی, چت با هوش مصنوعی فارسی, چت بات فارسی, هوش مصنوعی آنلاین, دستیار هوشمند فارسی, تولید محتوا با هوش مصنوعی, ترجمه با هوش مصنوعی, ابزار هوش مصنوعی, ابزارک"
+content="دستیار هوش مصنوعی فارسی, هوش مصنوعی فارسی, چت با هوش مصنوعی فارسی, چت بات فارسی, هوش مصنوعی آنلاین, multilingual AI assistant, AI assistant, AI chatbot, Abzarak AI, ابزارک"
 >
 
 <meta name="author" content="ابزارک">
@@ -61,35 +55,21 @@ content="index, follow, max-image-preview:large, max-snippet:-1, max-video-previ
 
 <link rel="canonical" href="https://abzarakai.ir/">
 
-<link
-rel="alternate"
-hreflang="fa"
-href="https://abzarakai.ir/"
->
-
-<link
-rel="alternate"
-hreflang="en"
-href="https://abzarakai.ir/"
->
-
-<link
-rel="alternate"
-hreflang="x-default"
-href="https://abzarakai.ir/"
->
+<link rel="alternate" hreflang="fa" href="https://abzarakai.ir/">
+<link rel="alternate" hreflang="en" href="https://abzarakai.ir/">
+<link rel="alternate" hreflang="x-default" href="https://abzarakai.ir/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ابزارک">
 
 <meta
 property="og:title"
-content="ابزارک | دستیار هوش مصنوعی فارسی"
+content="Abzarak AI | Multilingual AI Assistant"
 >
 
 <meta
 property="og:description"
-content="دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه و انجام کارهای روزمره با سهمیه رایگان محدود."
+content="A multilingual AI assistant for conversation, questions, translation, content creation and everyday tasks."
 >
 
 <meta property="og:url" content="https://abzarakai.ir/">
@@ -101,16 +81,16 @@ property="og:image"
 content="https://abzarakai.ir/icon.svg"
 >
 
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 
 <meta
 name="twitter:title"
-content="ابزارک | دستیار هوش مصنوعی فارسی"
+content="Abzarak AI | Multilingual AI Assistant"
 >
 
 <meta
 name="twitter:description"
-content="با ابزارک با هوش مصنوعی فارسی گفتگو کنید، سؤال بپرسید، متن تولید کنید و برای کارهای روزمره کمک بگیرید."
+content="Chat with AI, ask questions, translate, create content and get help with everyday tasks."
 >
 
 <meta
@@ -120,16 +100,9 @@ content="https://abzarakai.ir/icon.svg"
 
 <link rel="manifest" href="/manifest.json">
 
-<link
-rel="icon"
-href="/icon.svg"
-type="image/svg+xml"
->
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 
-<link
-rel="apple-touch-icon"
-href="/icon.svg"
->
+<link rel="apple-touch-icon" href="/icon.svg">
 
 <meta name="enamad" content="36032134">
 
@@ -141,14 +114,16 @@ href="/icon.svg"
       "@type": "WebSite",
       "@id": "https://abzarakai.ir/#website",
       "url": "https://abzarakai.ir/",
-      "name": "ابزارک",
-      "description": "دستیار هوش مصنوعی فارسی برای گفتگو، پاسخ به سوالات، تولید محتوا و انجام کارهای روزمره.",
-      "inLanguage": "fa-IR"
+      "name": "Abzarak AI",
+      "alternateName": "ابزارک",
+      "description": "A multilingual AI assistant for conversation, questions, translation, content creation and everyday tasks.",
+      "inLanguage": ["fa-IR","en"]
     },
     {
       "@type": "Organization",
       "@id": "https://abzarakai.ir/#organization",
-      "name": "ابزارک",
+      "name": "Abzarak AI",
+      "alternateName": "ابزارک",
       "url": "https://abzarakai.ir/",
       "logo": {
         "@type": "ImageObject",
@@ -158,23 +133,20 @@ href="/icon.svg"
     {
       "@type": "WebApplication",
       "@id": "https://abzarakai.ir/#application",
-      "name": "ابزارک",
-      "alternateName": "Abzarak AI",
+      "name": "Abzarak AI",
+      "alternateName": "ابزارک",
       "url": "https://abzarakai.ir/",
-      "description": "دستیار هوش مصنوعی فارسی و چندزبانه برای گفتگو، پاسخ به سوالات، ترجمه، تولید محتوا و انجام کارهای روزمره.",
+      "description": "A multilingual AI assistant for chat, translation, content creation and everyday tasks.",
       "applicationCategory": "ProductivityApplication",
       "operatingSystem": "Android, iOS, Windows, macOS, Linux",
       "browserRequirements": "Requires a modern web browser",
-      "inLanguage": [
-        "fa-IR",
-        "en"
-      ],
+      "inLanguage": ["fa-IR","en"],
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "IRR",
+        "priceCurrency": "USD",
         "availability": "https://schema.org/InStock",
-        "description": "پلن رایگان محدود با ۱۰ پیام در روز"
+        "description": "Limited free plan"
       }
     }
   ]
@@ -635,6 +607,16 @@ color:#475569;
 padding-right:25px;
 }
 
+body[dir="ltr"] #seo-content ul{
+padding-right:0;
+padding-left:25px;
+}
+
+body[dir="ltr"] th,
+body[dir="ltr"] td{
+text-align:left;
+}
+
 footer{
 text-align:center;
 padding:30px 0 50px;
@@ -727,20 +709,34 @@ onclick="showView('home');return false;"
 
 <img
 src="/icon.svg"
-alt="لوگوی ابزارک - دستیار هوش مصنوعی فارسی"
+alt="Abzarak AI logo"
 >
 
-🤖 ابزارک
+🤖 <span data-i18n="brand">ابزارک</span>
 
 </a>
 
-<nav class="nav-links" aria-label="منوی اصلی">
+<nav class="nav-links" aria-label="Main navigation">
 
-<button onclick="showView('home')">🏠 خانه</button>
-<button onclick="showView('account')">👤 حساب</button>
-<button onclick="showView('ai')">🤖 هوش مصنوعی</button>
-<button onclick="showView('plans')">💰 پلن‌ها</button>
-<button onclick="showView('admin')">🛠️ مدیریت</button>
+<button onclick="showView('home')" data-i18n="navHome">
+🏠 خانه
+</button>
+
+<button onclick="showView('account')" data-i18n="navAccount">
+👤 حساب
+</button>
+
+<button onclick="showView('ai')" data-i18n="navAI">
+🤖 هوش مصنوعی
+</button>
+
+<button onclick="showView('plans')" data-i18n="navPlans">
+💰 پلن‌ها
+</button>
+
+<button onclick="showView('admin')" data-i18n="navAdmin">
+🛠️ مدیریت
+</button>
 
 </nav>
 
@@ -748,6 +744,7 @@ alt="لوگوی ابزارک - دستیار هوش مصنوعی فارسی"
 id="installBtn"
 class="top-btn install hidden"
 onclick="installPwa()"
+data-i18n="install"
 >
 📲 نصب اپ
 </button>
@@ -770,15 +767,15 @@ English
 
 <div class="hero">
 
-<div class="badge">
+<div class="badge" data-i18n="heroBadge">
 ✨ دستیار هوش مصنوعی فارسی و چندزبانه
 </div>
 
-<h1>
+<h1 data-i18n="heroTitle">
 ابزارک؛ دستیار هوش مصنوعی فارسی
 </h1>
 
-<p>
+<p data-i18n="heroText">
 با ابزارک با هوش مصنوعی فارسی گفتگو کنید،
 سؤال بپرسید، پاسخ دریافت کنید، متن تولید کنید،
 ترجمه کنید و برای انجام کارهای روزمره از یک
@@ -790,6 +787,7 @@ English
 <button
 class="btn light"
 onclick="showView('ai')"
+data-i18n="startChat"
 >
 🤖 شروع گفتگو
 </button>
@@ -798,6 +796,7 @@ onclick="showView('ai')"
 class="btn"
 style="background:rgba(255,255,255,.15);color:white"
 onclick="showView('plans')"
+data-i18n="viewPlans"
 >
 💎 مشاهده پلن‌ها
 </button>
@@ -810,11 +809,13 @@ onclick="showView('plans')"
 
 <div>
 
-<strong>شروع با سهمیه رایگان محدود</strong>
+<strong data-i18n="freeTitle">
+شروع با سهمیه رایگان محدود
+</strong>
 
 <br>
 
-<small>
+<small data-i18n="freeText">
 ۱۰ پیام رایگان در روز؛ برای استفاده بیشتر، پلن خود را ارتقا دهید.
 </small>
 
@@ -826,7 +827,9 @@ onclick="showView('plans')"
 
 <div class="ad-slot ad-blue">
 
-<div class="ad-label">تبلیغات</div>
+<div class="ad-label" data-i18n="adLabel">
+تبلیغات
+</div>
 
 <div class="ad-image">
 
@@ -834,7 +837,7 @@ onclick="showView('plans')"
 viewBox="0 0 1000 430"
 xmlns="http://www.w3.org/2000/svg"
 role="img"
-aria-label="تبلیغ ابزارک AI"
+aria-label="Abzarak AI"
 >
 
 <defs>
@@ -923,7 +926,7 @@ font-size="48"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-ابزارک AI
+Abzarak AI
 </text>
 
 <text
@@ -934,7 +937,7 @@ fill="#eef2ff"
 font-size="27"
 font-family="Tahoma, Arial, sans-serif"
 >
-دستیار هوش مصنوعی فارسی
+Multilingual AI Assistant
 </text>
 
 <text
@@ -945,7 +948,7 @@ fill="#ddd6fe"
 font-size="22"
 font-family="Tahoma, Arial, sans-serif"
 >
-گفتگو • ترجمه • تولید محتوا
+Chat • Translation • Content
 </text>
 
 <rect
@@ -967,7 +970,7 @@ font-size="27"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🆓 ۱۰ پیام رایگان در روز
+🆓 10 Free Messages / Day
 </text>
 
 <path
@@ -991,15 +994,20 @@ stroke-linecap="round"
 
 <div class="ad-content">
 
-<h3>✨ ابزارک؛ دستیار هوشمند شما</h3>
+<h3 data-i18n="ad1Title">
+✨ ابزارک؛ دستیار هوشمند شما
+</h3>
 
-<p>
+<p data-i18n="ad1Text">
 برای گفتگو، پرسش و پاسخ، ترجمه و تولید محتوا
 از هوش مصنوعی استفاده کنید.
 </p>
 
 <div class="ad-free">
-🆓 سهمیه رایگان: <strong>۱۰ پیام در روز</strong>
+🆓 <span data-i18n="dailyQuota">سهمیه رایگان</span>:
+<strong data-i18n="tenMessages">
+۱۰ پیام در روز
+</strong>
 </div>
 
 <br>
@@ -1007,6 +1015,7 @@ stroke-linecap="round"
 <button
 class="ad-cta"
 onclick="showView('ai')"
+data-i18n="startChat"
 >
 🤖 شروع گفتگو
 </button>
@@ -1017,11 +1026,11 @@ onclick="showView('ai')"
 
 <div class="section">
 
-<h2>
+<h2 data-i18n="sectionTitle">
 🌍 دستیار هوش مصنوعی برای کارهای روزمره
 </h2>
 
-<p class="muted">
+<p class="muted" data-i18n="sectionText">
 ابزارک یک دستیار هوش مصنوعی آنلاین و فارسی است
 که برای کاربران فارسی‌زبان و کاربران سراسر جهان
 طراحی شده است.
@@ -1031,8 +1040,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>🤖</h2>
-<h3>گفتگو با هوش مصنوعی فارسی</h3>
-<p class="muted">
+<h3 data-i18n="feature1Title">
+گفتگو با هوش مصنوعی فارسی
+</h3>
+<p class="muted" data-i18n="feature1Text">
 سؤال‌های خود را به فارسی مطرح کنید و
 پاسخ‌های هوشمند دریافت کنید.
 </p>
@@ -1040,8 +1051,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>✍️</h2>
-<h3>تولید و بازنویسی متن</h3>
-<p class="muted">
+<h3 data-i18n="feature2Title">
+تولید و بازنویسی متن
+</h3>
+<p class="muted" data-i18n="feature2Text">
 برای نوشتن، بازنویسی، خلاصه‌سازی و
 ایده‌پردازی از هوش مصنوعی کمک بگیرید.
 </p>
@@ -1049,8 +1062,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>🌍</h2>
-<h3>دستیار هوش مصنوعی چندزبانه</h3>
-<p class="muted">
+<h3 data-i18n="feature3Title">
+دستیار هوش مصنوعی چندزبانه
+</h3>
+<p class="muted" data-i18n="feature3Text">
 پیام خود را به زبان موردنظر بنویسید و
 برای کارهای مختلف از ابزارک کمک بگیرید.
 </p>
@@ -1058,8 +1073,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>📱</h2>
-<h3>هوش مصنوعی برای موبایل و کامپیوتر</h3>
-<p class="muted">
+<h3 data-i18n="feature4Title">
+هوش مصنوعی برای موبایل و کامپیوتر
+</h3>
+<p class="muted" data-i18n="feature4Text">
 ابزارک برای استفاده راحت در موبایل،
 تبلت و کامپیوتر طراحی شده است.
 </p>
@@ -1067,8 +1084,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>🔐</h2>
-<h3>حساب کاربری و اشتراک</h3>
-<p class="muted">
+<h3 data-i18n="feature5Title">
+حساب کاربری و اشتراک
+</h3>
+<p class="muted" data-i18n="feature5Text">
 حساب کاربری، اشتراک‌ها و سوابق استفاده
 خود را مدیریت کنید.
 </p>
@@ -1076,8 +1095,10 @@ onclick="showView('ai')"
 
 <div class="card">
 <h2>💎</h2>
-<h3>پلن‌های اشتراکی هوش مصنوعی</h3>
-<p class="muted">
+<h3 data-i18n="feature6Title">
+پلن‌های اشتراکی هوش مصنوعی
+</h3>
+<p class="muted" data-i18n="feature6Text">
 برای استفاده بیشتر از امکانات هوش مصنوعی،
 پلن مناسب خود را انتخاب کنید.
 </p>
@@ -1089,7 +1110,9 @@ onclick="showView('ai')"
 
 <div class="ad-slot ad-green">
 
-<div class="ad-label">تبلیغات</div>
+<div class="ad-label" data-i18n="adLabel">
+تبلیغات
+</div>
 
 <div class="ad-image">
 
@@ -1097,7 +1120,7 @@ onclick="showView('ai')"
 viewBox="0 0 1000 350"
 xmlns="http://www.w3.org/2000/svg"
 role="img"
-aria-label="پلن رایگان ابزارک"
+aria-label="Abzarak AI free plan"
 >
 
 <defs>
@@ -1150,7 +1173,7 @@ font-size="43"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🚀 امکانات بیشتر با ابزارک
+🚀 More with Abzarak AI
 </text>
 
 <text
@@ -1161,7 +1184,7 @@ fill="#ecfdf5"
 font-size="25"
 font-family="Tahoma, Arial, sans-serif"
 >
-برای شروع، سهمیه رایگان روزانه در اختیار شماست
+Start with a daily free allowance
 </text>
 
 <rect
@@ -1183,7 +1206,7 @@ font-size="29"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🆓 ۱۰ پیام رایگان در روز
+🆓 10 Free Messages / Day
 </text>
 
 </svg>
@@ -1192,9 +1215,11 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>🚀 استفاده بیشتر با پلن‌های اشتراکی</h3>
+<h3 data-i18n="ad2Title">
+🚀 استفاده بیشتر با پلن‌های اشتراکی
+</h3>
 
-<p>
+<p data-i18n="ad2Text">
 اگر سهمیه روزانه شما تمام شد،
 می‌توانید پلن مناسب خود را انتخاب کنید.
 </p>
@@ -1202,6 +1227,7 @@ font-family="Tahoma, Arial, sans-serif"
 <button
 class="ad-cta"
 onclick="showView('plans')"
+data-i18n="viewPlans"
 >
 💎 مشاهده پلن‌ها
 </button>
@@ -1212,101 +1238,110 @@ onclick="showView('plans')"
 
 <section id="seo-content">
 
-<h2>ابزارک؛ دستیار هوش مصنوعی فارسی</h2>
+<h2 data-i18n="seoTitle1">
+ابزارک؛ دستیار هوش مصنوعی فارسی
+</h2>
 
-<p>
+<p data-i18n="seoText1">
 ابزارک یک دستیار هوش مصنوعی فارسی و چندزبانه
 است که برای گفتگو، پاسخ به سوالات، تولید محتوا،
 ترجمه، بازنویسی متن و انجام کارهای روزمره طراحی شده است.
-هدف ابزارک این است که استفاده از هوش مصنوعی را
-برای کاربران فارسی‌زبان ساده، سریع و کاربردی کند.
 </p>
 
-<h2>چت با هوش مصنوعی فارسی</h2>
+<h2 data-i18n="seoTitle2">
+چت با هوش مصنوعی فارسی
+</h2>
 
-<p>
+<p data-i18n="seoText2">
 با ابزارک می‌توانید با هوش مصنوعی فارسی گفتگو کنید،
 سؤال بپرسید، ایده دریافت کنید، متن بنویسید،
 متن‌های خود را بازنویسی کنید و برای کارهای روزمره
 از یک دستیار هوشمند آنلاین کمک بگیرید.
 </p>
 
-<h2>هوش مصنوعی فارسی چیست؟</h2>
+<h2 data-i18n="seoTitle3">
+هوش مصنوعی فارسی چیست؟
+</h2>
 
-<p>
+<p data-i18n="seoText3">
 هوش مصنوعی فارسی به ابزارهایی گفته می‌شود که
 می‌توانند متن فارسی را درک کنند و به درخواست‌های
-کاربر به زبان فارسی پاسخ دهند. این فناوری می‌تواند
-برای پرسش و پاسخ، تولید محتوا، خلاصه‌سازی،
-بازنویسی، ایده‌پردازی، ترجمه و بسیاری از کارهای
-روزمره استفاده شود.
+کاربر به زبان فارسی پاسخ دهند.
 </p>
 
-<h2>امکانات دستیار هوشمند ابزارک</h2>
+<h2 data-i18n="seoTitle4">
+امکانات دستیار هوشمند ابزارک
+</h2>
 
 <ul>
 
-<li>گفتگو با هوش مصنوعی فارسی</li>
-<li>پاسخ به سوالات و درخواست‌های روزمره</li>
-<li>تولید محتوای متنی</li>
-<li>بازنویسی و بهبود متن</li>
-<li>خلاصه‌سازی و ایده‌پردازی</li>
-<li>کمک در ترجمه و کار با زبان‌های مختلف</li>
-<li>حساب کاربری و مدیریت اشتراک</li>
-<li>استفاده در موبایل، تبلت و کامپیوتر</li>
+<li data-i18n="seoLi1">گفتگو با هوش مصنوعی فارسی</li>
+<li data-i18n="seoLi2">پاسخ به سوالات و درخواست‌های روزمره</li>
+<li data-i18n="seoLi3">تولید محتوای متنی</li>
+<li data-i18n="seoLi4">بازنویسی و بهبود متن</li>
+<li data-i18n="seoLi5">خلاصه‌سازی و ایده‌پردازی</li>
+<li data-i18n="seoLi6">کمک در ترجمه و کار با زبان‌های مختلف</li>
+<li data-i18n="seoLi7">حساب کاربری و مدیریت اشتراک</li>
+<li data-i18n="seoLi8">استفاده در موبایل، تبلت و کامپیوتر</li>
 
 </ul>
 
-<h2>دستیار هوش مصنوعی آنلاین برای موبایل و کامپیوتر</h2>
+<h2 data-i18n="seoTitle5">
+دستیار هوش مصنوعی آنلاین برای موبایل و کامپیوتر
+</h2>
 
-<p>
+<p data-i18n="seoText5">
 ابزارک به صورت آنلاین در مرورگر قابل استفاده است
 و طراحی آن برای موبایل، تبلت و کامپیوتر انجام شده است.
-کاربران دستگاه‌های سازگار می‌توانند نسخه وب‌اپلیکیشن
-را نیز روی دستگاه خود نصب کنند.
 </p>
 
-<h2>تولید محتوا با هوش مصنوعی</h2>
+<h2 data-i18n="seoTitle6">
+تولید محتوا با هوش مصنوعی
+</h2>
 
-<p>
+<p data-i18n="seoText6">
 دستیار هوش مصنوعی ابزارک می‌تواند برای ایده‌پردازی،
 نوشتن و بازنویسی متن و آماده‌سازی محتوای متنی
-به کاربران کمک کند. هدف، ساده‌تر کردن فرآیند تولید
-محتوا و کاهش زمان انجام کارهای نوشتاری است.
+به کاربران کمک کند.
 </p>
 
-<h2>پلن رایگان محدود ابزارک</h2>
+<h2 data-i18n="seoTitle7">
+پلن رایگان محدود ابزارک
+</h2>
 
-<p>
-کاربران جدید و کاربران بدون اشتراک می‌توانند هر روز
-تا ۱۰ پیام از هوش مصنوعی استفاده کنند. این سهمیه
-رایگان محدود است و پس از رسیدن به سقف روزانه،
+<p data-i18n="seoText7">
+کاربران بدون اشتراک می‌توانند هر روز تا ۱۰ پیام
+از هوش مصنوعی استفاده کنند. پس از رسیدن به سقف روزانه،
 کاربر می‌تواند برای ادامه استفاده یکی از پلن‌های
 اشتراکی را انتخاب کند.
 </p>
 
-<h2>پلن‌های اشتراکی ابزارک</h2>
+<h2 data-i18n="seoTitle8">
+پلن‌های اشتراکی ابزارک
+</h2>
 
-<p>
+<p data-i18n="seoText8">
 پلن‌های اشتراکی برای کاربرانی طراحی شده‌اند که
-به استفاده بیشتر از هوش مصنوعی و امکانات پیشرفته‌تر
-نیاز دارند.
+به استفاده بیشتر از هوش مصنوعی نیاز دارند.
 </p>
 
-<h2>چرا ابزارک؟</h2>
+<h2 data-i18n="seoTitle9">
+چرا ابزارک؟
+</h2>
 
-<p>
+<p data-i18n="seoText9">
 ابزارک تلاش می‌کند یک دستیار هوش مصنوعی ساده،
 کاربردی و چندزبانه برای کاربران فارسی‌زبان و
-کاربران سراسر جهان ارائه کند؛ از گفتگو و پرسش‌وپاسخ
-تا تولید متن، ترجمه و کمک در انجام کارهای روزمره.
+کاربران سراسر جهان ارائه کند.
 </p>
 
 </section>
 
 <div class="ad-slot ad-orange">
 
-<div class="ad-label">تبلیغات</div>
+<div class="ad-label" data-i18n="adLabel">
+تبلیغات
+</div>
 
 <div class="ad-image">
 
@@ -1314,7 +1349,7 @@ onclick="showView('plans')"
 viewBox="0 0 1000 350"
 xmlns="http://www.w3.org/2000/svg"
 role="img"
-aria-label="تبلیغات ابزارک"
+aria-label="Abzarak AI"
 >
 
 <defs>
@@ -1367,7 +1402,7 @@ font-size="43"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-💡 یک ابزار جدید را کشف کنید
+💡 Discover Abzarak AI
 </text>
 
 <text
@@ -1378,7 +1413,7 @@ fill="#fff7ed"
 font-size="25"
 font-family="Tahoma, Arial, sans-serif"
 >
-ابزارک؛ دستیار هوش مصنوعی فارسی و چندزبانه
+Multilingual AI assistant
 </text>
 
 <rect
@@ -1400,7 +1435,7 @@ font-size="26"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🤖 شروع گفتگو
+🤖 Start Chatting
 </text>
 
 </svg>
@@ -1409,9 +1444,11 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>💡 یک ابزار جدید را کشف کنید</h3>
+<h3 data-i18n="ad3Title">
+💡 یک ابزار جدید را کشف کنید
+</h3>
 
-<p>
+<p data-i18n="ad3Text">
 با ابزارک گفتگو کنید، سؤال بپرسید و از هوش مصنوعی
 برای کارهای روزمره کمک بگیرید.
 </p>
@@ -1419,6 +1456,7 @@ font-family="Tahoma, Arial, sans-serif"
 <button
 class="ad-cta"
 onclick="showView('ai')"
+data-i18n="continue"
 >
 🤖 ادامه
 </button>
@@ -1429,11 +1467,16 @@ onclick="showView('ai')"
 
 </section>
 
+
+<!-- LOGIN -->
+
 <section id="view-login" class="view">
 
 <div class="card form">
 
-<h2>🔑 ورود به حساب</h2>
+<h2 data-i18n="loginTitle">
+🔑 ورود به حساب
+</h2>
 
 <input
 id="loginEmail"
@@ -1441,6 +1484,7 @@ class="input"
 type="email"
 placeholder="ایمیل"
 autocomplete="email"
+data-i18n-placeholder="email"
 >
 
 <input
@@ -1449,12 +1493,14 @@ class="input"
 type="password"
 placeholder="رمز عبور"
 autocomplete="current-password"
+data-i18n-placeholder="password"
 >
 
 <button
 class="btn primary"
 style="width:100%"
 onclick="login()"
+data-i18n="login"
 >
 ورود
 </button>
@@ -1463,6 +1509,7 @@ onclick="login()"
 class="btn secondary"
 style="width:100%;margin-top:8px"
 onclick="showView('signup')"
+data-i18n="signup"
 >
 📝 ثبت‌نام
 </button>
@@ -1471,6 +1518,7 @@ onclick="showView('signup')"
 class="btn"
 style="width:100%;margin-top:8px;background:transparent;color:#4f46e5"
 onclick="showView('forgot')"
+data-i18n="forgot"
 >
 فراموشی رمز عبور؟
 </button>
@@ -1479,17 +1527,23 @@ onclick="showView('forgot')"
 
 </section>
 
+
+<!-- SIGNUP -->
+
 <section id="view-signup" class="view">
 
 <div class="card form">
 
-<h2>📝 ثبت‌نام</h2>
+<h2 data-i18n="signupTitle">
+📝 ثبت‌نام
+</h2>
 
 <input
 id="signupName"
 class="input"
 placeholder="نام"
 autocomplete="name"
+data-i18n-placeholder="name"
 >
 
 <input
@@ -1498,6 +1552,7 @@ class="input"
 type="email"
 placeholder="ایمیل"
 autocomplete="email"
+data-i18n-placeholder="email"
 >
 
 <input
@@ -1506,12 +1561,14 @@ class="input"
 type="password"
 placeholder="رمز عبور حداقل ۶ کاراکتر"
 autocomplete="new-password"
+data-i18n-placeholder="passwordMin"
 >
 
 <button
 class="btn primary"
 style="width:100%"
 onclick="signup()"
+data-i18n="signup"
 >
 ثبت‌نام
 </button>
@@ -1520,13 +1577,18 @@ onclick="signup()"
 
 </section>
 
+
+<!-- FORGOT -->
+
 <section id="view-forgot" class="view">
 
 <div class="card form">
 
-<h2>🔐 بازیابی رمز عبور</h2>
+<h2 data-i18n="forgotTitle">
+🔐 بازیابی رمز عبور
+</h2>
 
-<p class="muted">
+<p class="muted" data-i18n="forgotText">
 ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.
 </p>
 
@@ -1535,12 +1597,14 @@ id="forgotEmail"
 class="input"
 type="email"
 placeholder="ایمیل"
+data-i18n-placeholder="email"
 >
 
 <button
 class="btn primary"
 style="width:100%"
 onclick="forgotPassword()"
+data-i18n="sendCode"
 >
 ارسال کد
 </button>
@@ -1549,6 +1613,7 @@ onclick="forgotPassword()"
 class="btn secondary"
 style="width:100%;margin-top:8px"
 onclick="showView('reset')"
+data-i18n="haveCode"
 >
 کد را دارم
 </button>
@@ -1557,17 +1622,23 @@ onclick="showView('reset')"
 
 </section>
 
+
+<!-- RESET -->
+
 <section id="view-reset" class="view">
 
 <div class="card form">
 
-<h2>🔑 تغییر رمز عبور</h2>
+<h2 data-i18n="resetTitle">
+🔑 تغییر رمز عبور
+</h2>
 
 <input
 id="resetEmail"
 class="input"
 type="email"
 placeholder="ایمیل"
+data-i18n-placeholder="email"
 >
 
 <input
@@ -1576,6 +1647,7 @@ class="input"
 placeholder="کد ۶ رقمی"
 inputmode="numeric"
 maxlength="6"
+data-i18n-placeholder="resetCode"
 >
 
 <input
@@ -1583,12 +1655,14 @@ id="resetPassword"
 class="input"
 type="password"
 placeholder="رمز جدید"
+data-i18n-placeholder="newPassword"
 >
 
 <button
 class="btn primary"
 style="width:100%"
 onclick="resetPassword()"
+data-i18n="changePassword"
 >
 تغییر رمز
 </button>
@@ -1597,11 +1671,16 @@ onclick="resetPassword()"
 
 </section>
 
+
+<!-- ACCOUNT -->
+
 <section id="view-account" class="view">
 
 <div class="card">
 
-<h2>🏠 حساب من</h2>
+<h2 data-i18n="accountTitle">
+🏠 حساب من
+</h2>
 
 <div id="accountBox">
 در حال دریافت اطلاعات...
@@ -1611,15 +1690,22 @@ onclick="resetPassword()"
 
 </section>
 
+
+<!-- AI -->
+
 <section id="view-ai" class="view">
 
 <div class="card">
 
-<h2>🤖 گفتگو با هوش مصنوعی فارسی</h2>
+<h2 data-i18n="aiTitle">
+🤖 گفتگو با هوش مصنوعی
+</h2>
 
 <div class="ad-slot ad-blue">
 
-<div class="ad-label">تبلیغات</div>
+<div class="ad-label" data-i18n="adLabel">
+تبلیغات
+</div>
 
 <div class="ad-image">
 
@@ -1627,7 +1713,7 @@ onclick="resetPassword()"
 viewBox="0 0 1000 300"
 xmlns="http://www.w3.org/2000/svg"
 role="img"
-aria-label="تبلیغ ابزارک زیر بخش هوش مصنوعی"
+aria-label="Abzarak AI"
 >
 
 <defs>
@@ -1680,7 +1766,7 @@ font-size="38"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🤖 ابزارک AI
+🤖 Abzarak AI
 </text>
 
 <text
@@ -1691,7 +1777,7 @@ fill="#e0e7ff"
 font-size="23"
 font-family="Tahoma, Arial, sans-serif"
 >
-دستیار هوش مصنوعی فارسی و چندزبانه
+Multilingual AI Assistant
 </text>
 
 <rect
@@ -1713,7 +1799,7 @@ font-size="25"
 font-weight="700"
 font-family="Tahoma, Arial, sans-serif"
 >
-🆓 ۱۰ پیام رایگان در روز
+🆓 10 Free Messages / Day
 </text>
 
 </svg>
@@ -1722,14 +1808,19 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="ad-content">
 
-<h3>✨ شروع رایگان با ابزارک</h3>
+<h3 data-i18n="freeStart">
+✨ شروع رایگان با ابزارک
+</h3>
 
-<p>
+<p data-i18n="dailyFree">
 روزانه تا ۱۰ پیام رایگان برای گفتگو با هوش مصنوعی.
 </p>
 
 <div class="ad-free">
-🆓 سهمیه امروز: <strong>۱۰ پیام رایگان</strong>
+🆓 <span data-i18n="todayQuota">سهمیه امروز</span>:
+<strong data-i18n="tenFree">
+۱۰ پیام رایگان
+</strong>
 </div>
 
 </div>
@@ -1738,19 +1829,22 @@ font-family="Tahoma, Arial, sans-serif"
 
 <div class="notice">
 
-🆓 پلن رایگان محدود:
-
-<strong>۱۰ پیام در روز</strong>
+🆓
+<strong data-i18n="limitedFree">
+پلن رایگان محدود: ۱۰ پیام در روز
+</strong>
 
 <br>
 
-💎 برای استفاده بیشتر می‌توانید پلن اشتراکی انتخاب کنید.
+💎
+<span data-i18n="upgradeText">
+برای استفاده بیشتر می‌توانید پلن اشتراکی انتخاب کنید.
+</span>
 
 </div>
 
-<p class="muted">
-هر زبانی که استفاده کنید، ابزارک تلاش می‌کند
-به همان زبان پاسخ دهد.
+<p class="muted" data-i18n="languageAI">
+هر زبانی که استفاده کنید، ابزارک تلاش می‌کند به همان زبان پاسخ دهد.
 </p>
 
 <div
@@ -1766,12 +1860,14 @@ aria-live="polite"
 id="aiInput"
 class="input"
 placeholder="پیام خود را بنویسید..."
+data-i18n-placeholder="messagePlaceholder"
 onkeydown="if(event.key==='Enter')sendAi()"
 >
 
 <button
 class="btn primary"
 onclick="sendAi()"
+data-i18n="send"
 >
 ارسال
 </button>
@@ -1782,24 +1878,31 @@ onclick="sendAi()"
 
 </section>
 
+
+<!-- PLANS -->
+
 <section id="view-plans" class="view">
 
-<h2>💰 پلن‌های اشتراک ابزارک</h2>
+<h2 data-i18n="plansTitle">
+💰 پلن‌های اشتراک ابزارک
+</h2>
 
 <div class="notice">
 
 🆓
-<strong>
+<strong data-i18n="limitedFree">
 پلن رایگان محدود: ۱۰ پیام در روز
 </strong>
 
 <br>
 
+<span data-i18n="choosePlan">
 برای استفاده بیشتر، یکی از پلن‌های اشتراکی را انتخاب کنید.
+</span>
 
 </div>
 
-<p class="muted">
+<p class="muted" data-i18n="choosePlan2">
 پلن موردنظر خود را انتخاب کنید.
 </p>
 
@@ -1830,46 +1933,50 @@ class="plans"
 
 </section>
 
+
+<!-- ADMIN -->
+
 <section id="view-admin" class="view">
 
-<div
-id="adminLogin"
-class="card form"
->
+<div id="adminLogin" class="card form">
 
-<h2>🛠️ مدیریت</h2>
+<h2 data-i18n="adminTitle">
+🛠️ مدیریت
+</h2>
 
 <input
 id="adminPassword"
 class="input"
 type="password"
 placeholder="رمز مدیریت"
+data-i18n-placeholder="adminPassword"
 >
 
 <button
 class="btn primary"
 style="width:100%"
 onclick="adminLogin()"
+data-i18n="adminLogin"
 >
 ورود
 </button>
 
 </div>
 
-<div
-id="adminPanel"
-class="hidden"
->
+<div id="adminPanel" class="hidden">
 
 <div class="card">
 
-<h2>🛠️ پنل مدیریت</h2>
+<h2 data-i18n="adminPanelTitle">
+🛠️ پنل مدیریت
+</h2>
 
 <div class="actions">
 
 <button
 class="btn secondary"
 onclick="adminUsers()"
+data-i18n="users"
 >
 👥 کاربران
 </button>
@@ -1877,6 +1984,7 @@ onclick="adminUsers()"
 <button
 class="btn secondary"
 onclick="adminPayments()"
+data-i18n="transactions"
 >
 💳 تراکنش‌ها
 </button>
@@ -1884,6 +1992,7 @@ onclick="adminPayments()"
 <button
 class="btn secondary"
 onclick="adminWithdrawals()"
+data-i18n="withdrawals"
 >
 💸 برداشت‌ها
 </button>
@@ -1891,6 +2000,7 @@ onclick="adminWithdrawals()"
 <button
 class="btn danger"
 onclick="adminLogout()"
+data-i18n="logout"
 >
 خروج
 </button>
@@ -1911,25 +2021,30 @@ onclick="adminLogout()"
 
 <div class="container">
 
-<strong>🤖 ابزارک</strong>
+<strong>🤖 Abzarak AI</strong>
 
 <br>
 
+<span data-i18n="footerText">
 دستیار هوش مصنوعی فارسی و چندزبانه
-
-<br><br>
-
-<span>
-🆓 سهمیه رایگان محدود: ۱۰ پیام در روز
 </span>
 
 <br><br>
 
-© 2026 ابزارک — تمامی حقوق محفوظ است
+<span>
+🆓 <span data-i18n="footerFree">
+سهمیه رایگان محدود: ۱۰ پیام در روز
+</span>
+</span>
+
+<br><br>
+
+© 2026 Abzarak AI — <span data-i18n="rights">تمامی حقوق محفوظ است</span>
 
 </div>
 
 </footer>
+
 
 <script>
 
@@ -1949,11 +2064,434 @@ let plansData = null;
 
 let pwaPrompt = null;
 
+let currentLang =
+localStorage.getItem("abzarak_lang") || "fa";
+
+
+/* ============================================================
+   TRANSLATIONS
+============================================================ */
+
+const translations = {
+
+fa: {
+
+brand:"ابزارک",
+
+navHome:"🏠 خانه",
+navAccount:"👤 حساب",
+navAI:"🤖 هوش مصنوعی",
+navPlans:"💰 پلن‌ها",
+navAdmin:"🛠️ مدیریت",
+
+install:"📲 نصب اپ",
+
+heroBadge:"✨ دستیار هوش مصنوعی فارسی و چندزبانه",
+heroTitle:"ابزارک؛ دستیار هوش مصنوعی فارسی",
+
+heroText:
+"با ابزارک با هوش مصنوعی فارسی گفتگو کنید، سؤال بپرسید، پاسخ دریافت کنید، متن تولید کنید، ترجمه کنید و برای انجام کارهای روزمره از یک دستیار هوشمند آنلاین کمک بگیرید.",
+
+startChat:"🤖 شروع گفتگو",
+viewPlans:"💎 مشاهده پلن‌ها",
+
+freeTitle:"شروع با سهمیه رایگان محدود",
+freeText:"۱۰ پیام رایگان در روز؛ برای استفاده بیشتر، پلن خود را ارتقا دهید.",
+
+adLabel:"تبلیغات",
+
+ad1Title:"✨ ابزارک؛ دستیار هوشمند شما",
+ad1Text:"برای گفتگو، پرسش و پاسخ، ترجمه و تولید محتوا از هوش مصنوعی استفاده کنید.",
+
+dailyQuota:"سهمیه رایگان",
+tenMessages:"۱۰ پیام در روز",
+
+sectionTitle:"🌍 دستیار هوش مصنوعی برای کارهای روزمره",
+sectionText:"ابزارک یک دستیار هوش مصنوعی آنلاین و فارسی است که برای کاربران فارسی‌زبان و کاربران سراسر جهان طراحی شده است.",
+
+feature1Title:"گفتگو با هوش مصنوعی فارسی",
+feature1Text:"سؤال‌های خود را به فارسی مطرح کنید و پاسخ‌های هوشمند دریافت کنید.",
+
+feature2Title:"تولید و بازنویسی متن",
+feature2Text:"برای نوشتن، بازنویسی، خلاصه‌سازی و ایده‌پردازی از هوش مصنوعی کمک بگیرید.",
+
+feature3Title:"دستیار هوش مصنوعی چندزبانه",
+feature3Text:"پیام خود را به زبان موردنظر بنویسید و برای کارهای مختلف از ابزارک کمک بگیرید.",
+
+feature4Title:"هوش مصنوعی برای موبایل و کامپیوتر",
+feature4Text:"ابزارک برای استفاده راحت در موبایل، تبلت و کامپیوتر طراحی شده است.",
+
+feature5Title:"حساب کاربری و اشتراک",
+feature5Text:"حساب کاربری، اشتراک‌ها و سوابق استفاده خود را مدیریت کنید.",
+
+feature6Title:"پلن‌های اشتراکی هوش مصنوعی",
+feature6Text:"برای استفاده بیشتر از امکانات هوش مصنوعی، پلن مناسب خود را انتخاب کنید.",
+
+ad2Title:"🚀 استفاده بیشتر با پلن‌های اشتراکی",
+ad2Text:"اگر سهمیه روزانه شما تمام شد، می‌توانید پلن مناسب خود را انتخاب کنید.",
+
+seoTitle1:"ابزارک؛ دستیار هوش مصنوعی فارسی",
+seoText1:"ابزارک یک دستیار هوش مصنوعی فارسی و چندزبانه است که برای گفتگو، پاسخ به سوالات، تولید محتوا، ترجمه، بازنویسی متن و انجام کارهای روزمره طراحی شده است.",
+
+seoTitle2:"چت با هوش مصنوعی فارسی",
+seoText2:"با ابزارک می‌توانید با هوش مصنوعی فارسی گفتگو کنید، سؤال بپرسید، ایده دریافت کنید، متن بنویسید، متن‌های خود را بازنویسی کنید و برای کارهای روزمره از یک دستیار هوشمند آنلاین کمک بگیرید.",
+
+seoTitle3:"هوش مصنوعی فارسی چیست؟",
+seoText3:"هوش مصنوعی فارسی به ابزارهایی گفته می‌شود که می‌توانند متن فارسی را درک کنند و به درخواست‌های کاربر به زبان فارسی پاسخ دهند.",
+
+seoTitle4:"امکانات دستیار هوشمند ابزارک",
+
+seoLi1:"گفتگو با هوش مصنوعی فارسی",
+seoLi2:"پاسخ به سوالات و درخواست‌های روزمره",
+seoLi3:"تولید محتوای متنی",
+seoLi4:"بازنویسی و بهبود متن",
+seoLi5:"خلاصه‌سازی و ایده‌پردازی",
+seoLi6:"کمک در ترجمه و کار با زبان‌های مختلف",
+seoLi7:"حساب کاربری و مدیریت اشتراک",
+seoLi8:"استفاده در موبایل، تبلت و کامپیوتر",
+
+seoTitle5:"دستیار هوش مصنوعی آنلاین برای موبایل و کامپیوتر",
+seoText5:"ابزارک به صورت آنلاین در مرورگر قابل استفاده است و طراحی آن برای موبایل، تبلت و کامپیوتر انجام شده است.",
+
+seoTitle6:"تولید محتوا با هوش مصنوعی",
+seoText6:"دستیار هوش مصنوعی ابزارک می‌تواند برای ایده‌پردازی، نوشتن و بازنویسی متن و آماده‌سازی محتوای متنی به کاربران کمک کند.",
+
+seoTitle7:"پلن رایگان محدود ابزارک",
+seoText7:"کاربران بدون اشتراک می‌توانند هر روز تا ۱۰ پیام از هوش مصنوعی استفاده کنند. پس از رسیدن به سقف روزانه، کاربر می‌تواند برای ادامه استفاده یکی از پلن‌های اشتراکی را انتخاب کند.",
+
+seoTitle8:"پلن‌های اشتراکی ابزارک",
+seoText8:"پلن‌های اشتراکی برای کاربرانی طراحی شده‌اند که به استفاده بیشتر از هوش مصنوعی نیاز دارند.",
+
+seoTitle9:"چرا ابزارک؟",
+seoText9:"ابزارک تلاش می‌کند یک دستیار هوش مصنوعی ساده، کاربردی و چندزبانه برای کاربران فارسی‌زبان و کاربران سراسر جهان ارائه کند.",
+
+ad3Title:"💡 یک ابزار جدید را کشف کنید",
+ad3Text:"با ابزارک گفتگو کنید، سؤال بپرسید و از هوش مصنوعی برای کارهای روزمره کمک بگیرید.",
+
+continue:"🤖 ادامه",
+
+loginTitle:"🔑 ورود به حساب",
+login:"ورود",
+signup:"📝 ثبت‌نام",
+forgot:"فراموشی رمز عبور؟",
+
+signupTitle:"📝 ثبت‌نام",
+
+forgotTitle:"🔐 بازیابی رمز عبور",
+forgotText:"ایمیل خود را وارد کنید تا کد بازیابی برایتان ارسال شود.",
+sendCode:"ارسال کد",
+haveCode:"کد را دارم",
+
+resetTitle:"🔑 تغییر رمز عبور",
+changePassword:"تغییر رمز",
+
+accountTitle:"🏠 حساب من",
+
+aiTitle:"🤖 گفتگو با هوش مصنوعی",
+freeStart:"✨ شروع رایگان با ابزارک",
+dailyFree:"روزانه تا ۱۰ پیام رایگان برای گفتگو با هوش مصنوعی.",
+todayQuota:"سهمیه امروز",
+tenFree:"۱۰ پیام رایگان",
+limitedFree:"پلن رایگان محدود: ۱۰ پیام در روز",
+upgradeText:"برای استفاده بیشتر می‌توانید پلن اشتراکی انتخاب کنید.",
+languageAI:"هر زبانی که استفاده کنید، ابزارک تلاش می‌کند به همان زبان پاسخ دهد.",
+
+send:"ارسال",
+messagePlaceholder:"پیام خود را بنویسید...",
+
+plansTitle:"💰 پلن‌های اشتراک ابزارک",
+choosePlan:"برای استفاده بیشتر، یکی از پلن‌های اشتراکی را انتخاب کنید.",
+choosePlan2:"پلن موردنظر خود را انتخاب کنید.",
+
+adminTitle:"🛠️ مدیریت",
+adminPassword:"رمز مدیریت",
+adminLogin:"ورود",
+adminPanelTitle:"🛠️ پنل مدیریت",
+
+users:"👥 کاربران",
+transactions:"💳 تراکنش‌ها",
+withdrawals:"💸 برداشت‌ها",
+logout:"خروج",
+
+footerText:"دستیار هوش مصنوعی فارسی و چندزبانه",
+footerFree:"سهمیه رایگان محدود: ۱۰ پیام در روز",
+rights:"تمامی حقوق محفوظ است",
+
+email:"ایمیل",
+password:"رمز عبور",
+name:"نام",
+passwordMin:"رمز عبور حداقل ۶ کاراکتر",
+resetCode:"کد ۶ رقمی",
+newPassword:"رمز جدید"
+
+},
+
+en: {
+
+brand:"Abzarak AI",
+
+navHome:"🏠 Home",
+navAccount:"👤 Account",
+navAI:"🤖 AI",
+navPlans:"💰 Plans",
+navAdmin:"🛠️ Admin",
+
+install:"📲 Install App",
+
+heroBadge:"✨ Multilingual AI Assistant",
+heroTitle:"Abzarak AI — Your Multilingual AI Assistant",
+
+heroText:
+"Chat with AI, ask questions, create content, translate text and get help with everyday tasks through a simple online AI assistant.",
+
+startChat:"🤖 Start Chat",
+viewPlans:"💎 View Plans",
+
+freeTitle:"Start with a limited free allowance",
+freeText:"10 free messages per day. Upgrade your plan when you need more.",
+
+adLabel:"Advertisement",
+
+ad1Title:"✨ Abzarak AI — Your Smart Assistant",
+ad1Text:"Use AI for conversations, questions, translation and content creation.",
+
+dailyQuota:"Free allowance",
+tenMessages:"10 messages per day",
+
+sectionTitle:"🌍 AI Assistant for Everyday Tasks",
+sectionText:"Abzarak AI is an online multilingual AI assistant designed for users around the world.",
+
+feature1Title:"AI Conversation",
+feature1Text:"Ask questions and chat with an AI assistant in your preferred language.",
+
+feature2Title:"Content Creation & Rewriting",
+feature2Text:"Get help with writing, rewriting, summarizing and brainstorming.",
+
+feature3Title:"Multilingual AI Assistant",
+feature3Text:"Write your message in your preferred language and get help with different tasks.",
+
+feature4Title:"AI for Mobile & Desktop",
+feature4Text:"Abzarak AI is designed to work comfortably on phones, tablets and computers.",
+
+feature5Title:"Account & Subscription",
+feature5Text:"Manage your account, subscriptions and usage.",
+
+feature6Title:"AI Subscription Plans",
+feature6Text:"Choose a plan when you need more AI usage.",
+
+ad2Title:"🚀 Get More with Subscription Plans",
+ad2Text:"When your daily free allowance is used, you can choose a subscription plan.",
+
+seoTitle1:"Abzarak AI — Multilingual AI Assistant",
+seoText1:"Abzarak AI is a multilingual AI assistant designed for conversation, questions, content creation, translation, rewriting and everyday tasks.",
+
+seoTitle2:"Chat with AI Online",
+seoText2:"Use Abzarak AI to chat with an AI assistant, ask questions, generate ideas, write text, rewrite content and get help with everyday tasks.",
+
+seoTitle3:"What is an AI Assistant?",
+seoText3:"An AI assistant is a software service that can understand user requests and generate useful responses in different languages.",
+
+seoTitle4:"Abzarak AI Features",
+
+seoLi1:"AI conversations",
+seoLi2:"Answers to everyday questions",
+seoLi3:"Text content generation",
+seoLi4:"Text rewriting and improvement",
+seoLi5:"Summarization and brainstorming",
+seoLi6:"Translation and multilingual assistance",
+seoLi7:"User account and subscription management",
+seoLi8:"Use on mobile, tablet and desktop",
+
+seoTitle5:"Online AI Assistant for Mobile and Desktop",
+seoText5:"Abzarak AI works online in modern web browsers and is designed for phones, tablets and computers.",
+
+seoTitle6:"Content Creation with AI",
+seoText6:"Abzarak AI can help with brainstorming, writing, rewriting and preparing text content.",
+
+seoTitle7:"Limited Free Plan",
+seoText7:"Users without a subscription can use up to 10 AI messages per day. After reaching the daily limit, users can choose a subscription plan for additional usage.",
+
+seoTitle8:"AI Subscription Plans",
+seoText8:"Subscription plans are designed for users who need more AI usage.",
+
+seoTitle9:"About Abzarak AI",
+seoText9:"Abzarak AI aims to provide a simple, practical and multilingual AI assistant for users around the world.",
+
+ad3Title:"💡 Discover Abzarak AI",
+ad3Text:"Chat with Abzarak AI, ask questions and get help with everyday tasks.",
+
+continue:"🤖 Continue",
+
+loginTitle:"🔑 Sign In",
+login:"Sign In",
+signup:"📝 Create Account",
+forgot:"Forgot password?",
+
+signupTitle:"📝 Create Account",
+
+forgotTitle:"🔐 Password Recovery",
+forgotText:"Enter your email to receive a recovery code.",
+sendCode:"Send Code",
+haveCode:"I Have a Code",
+
+resetTitle:"🔑 Change Password",
+changePassword:"Change Password",
+
+accountTitle:"🏠 My Account",
+
+aiTitle:"🤖 Chat with AI",
+freeStart:"✨ Start Free with Abzarak AI",
+dailyFree:"Up to 10 free AI messages per day.",
+todayQuota:"Today's allowance",
+tenFree:"10 free messages",
+limitedFree:"Limited free plan: 10 messages per day",
+upgradeText:"Choose a subscription plan when you need more usage.",
+languageAI:"Abzarak AI tries to respond in the language you use.",
+
+send:"Send",
+messagePlaceholder:"Write your message...",
+
+plansTitle:"💰 Abzarak AI Plans",
+choosePlan:"Choose a subscription plan when you need more usage.",
+choosePlan2:"Select the plan that works for you.",
+
+adminTitle:"🛠️ Administration",
+adminPassword:"Admin password",
+adminLogin:"Sign In",
+adminPanelTitle:"🛠️ Admin Panel",
+
+users:"👥 Users",
+transactions:"💳 Transactions",
+withdrawals:"💸 Withdrawals",
+logout:"Log Out",
+
+footerText:"Multilingual AI Assistant",
+footerFree:"Limited free allowance: 10 messages per day",
+rights:"All rights reserved",
+
+email:"Email",
+password:"Password",
+name:"Name",
+passwordMin:"Password — at least 6 characters",
+resetCode:"6-digit code",
+newPassword:"New password"
+
+}
+
+};
+
+
+/* ============================================================
+   LANGUAGE APPLY
+============================================================ */
+
+function applyLanguage(){
+
+const lang =
+translations[currentLang] ||
+translations.fa;
+
+const html =
+document.documentElement;
+
+html.lang=currentLang;
+
+html.dir =
+currentLang === "fa"
+? "rtl"
+: "ltr";
+
+document.body.dir=html.dir;
+
+document
+.querySelectorAll("[data-i18n]")
+.forEach(el=>{
+
+const key =
+el.getAttribute("data-i18n");
+
+if(lang[key] !== undefined){
+
+el.textContent =
+lang[key];
+
+}
+
+});
+
+document
+.querySelectorAll("[data-i18n-placeholder]")
+.forEach(el=>{
+
+const key =
+el.getAttribute("data-i18n-placeholder");
+
+if(lang[key] !== undefined){
+
+el.placeholder =
+lang[key];
+
+}
+
+});
+
+const btn =
+document.getElementById("langBtn");
+
+if(btn){
+
+btn.textContent =
+currentLang === "fa"
+? "English"
+: "فارسی";
+
+}
+
+document.title =
+currentLang === "fa"
+? "ابزارک | دستیار هوش مصنوعی فارسی و چندزبانه"
+: "Abzarak AI | Multilingual AI Assistant";
+
+document
+.querySelector('meta[name="description"]')
+?.setAttribute(
+"content",
+currentLang === "fa"
+?
+"ابزارک یک دستیار هوش مصنوعی فارسی و چندزبانه برای گفتگو، پاسخ به سوالات، ترجمه، تولید محتوا و کارهای روزمره است."
+:
+"Abzarak AI is a multilingual AI assistant for conversations, questions, translation, content creation and everyday tasks."
+);
+
+}
+
+
+/* ============================================================
+   LANGUAGE TOGGLE
+============================================================ */
+
+function toggleLang(){
+
+currentLang =
+currentLang === "fa"
+? "en"
+: "fa";
+
+localStorage.setItem(
+"abzarak_lang",
+currentLang
+);
+
+applyLanguage();
+
+}
+
+
 /* ============================================================
    API
 ============================================================ */
 
-function api(path, options = {}) {
+function api(path, options = {}){
 
 const headers =
 options.headers || {};
@@ -1997,6 +2535,7 @@ headers
 
 }
 
+
 /* ============================================================
    VIEW
 ============================================================ */
@@ -2035,6 +2574,7 @@ loadPlans();
 
 }
 
+
 /* ============================================================
    ALERT
 ============================================================ */
@@ -2042,6 +2582,7 @@ loadPlans();
 function msg(text){
 alert(text);
 }
+
 
 /* ============================================================
    SIGNUP
@@ -2077,7 +2618,9 @@ await response.json();
 if(!response.ok)
 throw new Error(
 data.error ||
-"خطا در ثبت‌نام"
+(currentLang==="fa"
+? "خطا در ثبت‌نام"
+: "Signup failed")
 );
 
 token=data.token;
@@ -2087,7 +2630,11 @@ localStorage.setItem(
 token
 );
 
-msg("ثبت‌نام با موفقیت انجام شد.");
+msg(
+currentLang==="fa"
+? "ثبت‌نام با موفقیت انجام شد."
+: "Account created successfully."
+);
 
 showView("account");
 
@@ -2098,6 +2645,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    LOGIN
@@ -2130,7 +2678,9 @@ await response.json();
 if(!response.ok)
 throw new Error(
 data.error ||
-"خطا در ورود"
+(currentLang==="fa"
+? "خطا در ورود"
+: "Login failed")
 );
 
 token=data.token;
@@ -2140,7 +2690,11 @@ localStorage.setItem(
 token
 );
 
-msg("ورود موفق بود.");
+msg(
+currentLang==="fa"
+? "ورود موفق بود."
+: "Login successful."
+);
 
 showView("account");
 
@@ -2151,6 +2705,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    ACCOUNT
@@ -2163,26 +2718,40 @@ document.getElementById("accountBox");
 
 if(!token){
 
-box.innerHTML=\`
+box.innerHTML=
 
+currentLang==="fa"
+
+?
+
+\`
 <p class="muted">
 برای مشاهده حساب وارد شوید.
 </p>
 
-<button
-class="btn primary"
-onclick="showView('login')"
->
+<button class="btn primary" onclick="showView('login')">
 🔑 ورود
 </button>
 
-<button
-class="btn secondary"
-onclick="showView('signup')"
->
+<button class="btn secondary" onclick="showView('signup')">
 📝 ثبت‌نام
 </button>
+\`
 
+:
+
+\`
+<p class="muted">
+Please sign in to view your account.
+</p>
+
+<button class="btn primary" onclick="showView('login')">
+🔑 Sign In
+</button>
+
+<button class="btn secondary" onclick="showView('signup')">
+📝 Create Account
+</button>
 \`;
 
 return;
@@ -2190,7 +2759,9 @@ return;
 }
 
 box.innerHTML =
-"در حال دریافت اطلاعات...";
+currentLang==="fa"
+? "در حال دریافت اطلاعات..."
+: "Loading account information...";
 
 try{
 
@@ -2210,27 +2781,31 @@ localStorage.removeItem(
 
 throw new Error(
 data.error ||
-"نشست نامعتبر است."
+(currentLang==="fa"
+? "نشست نامعتبر است."
+: "Invalid session.")
 );
 
 }
 
 const user=data.user;
-
 const sub=data.subscription;
-
 const usage=data.usage;
 
-let subscriptionHtml = "";
+let subscriptionHtml="";
 
 if(sub){
 
-subscriptionHtml=\`
+subscriptionHtml=
 
+currentLang==="fa"
+
+?
+
+\`
 <div class="notice">
 
 💎 اشتراک فعال:
-
 <strong>
 \${esc(sub.plan?.name || sub.plan_id)}
 </strong>
@@ -2238,7 +2813,6 @@ subscriptionHtml=\`
 <br>
 
 📅 پایان اشتراک:
-
 <strong>
 \${new Date(
 sub.expires_at
@@ -2248,17 +2822,48 @@ sub.expires_at
 <br>
 
 🚀 پیام‌های AI:
-
 نامحدود
 
 </div>
+\`
 
+:
+
+\`
+<div class="notice">
+
+💎 Active subscription:
+<strong>
+\${esc(sub.plan?.name || sub.plan_id)}
+</strong>
+
+<br>
+
+📅 Subscription ends:
+<strong>
+\${new Date(
+sub.expires_at
+).toLocaleDateString("en-US")
+}
+</strong>
+
+<br>
+
+🚀 AI messages:
+Unlimited
+
+</div>
 \`;
 
 }else{
 
-subscriptionHtml=\`
+subscriptionHtml=
 
+currentLang==="fa"
+
+?
+
+\`
 <div class="notice">
 
 🆓 پلن رایگان محدود
@@ -2266,17 +2871,13 @@ subscriptionHtml=\`
 <br>
 
 📊 مصرف امروز:
-
 <strong>
 \${usage.used}
 </strong>
-
 از
-
 <strong>
 \${usage.limit}
 </strong>
-
 پیام
 
 <br>
@@ -2284,19 +2885,45 @@ subscriptionHtml=\`
 💎 برای استفاده بیشتر، پلن اشتراکی انتخاب کنید.
 
 </div>
+\`
 
+:
+
+\`
+<div class="notice">
+
+🆓 Limited free plan
+
+<br>
+
+📊 Today's usage:
+<strong>
+\${usage.used}
+</strong>
+of
+<strong>
+\${usage.limit}
+</strong>
+messages
+
+<br>
+
+💎 Choose a subscription plan for more usage.
+
+</div>
 \`;
 
 }
 
-box.innerHTML=\`
+box.innerHTML=
 
+\`
 <div class="account-grid">
 
 <div class="card">
 
 <div class="muted">
-نام
+\${currentLang==="fa" ? "نام" : "Name"}
 </div>
 
 <div class="account-value">
@@ -2308,7 +2935,7 @@ box.innerHTML=\`
 <div class="card">
 
 <div class="muted">
-ایمیل
+\${currentLang==="fa" ? "ایمیل" : "Email"}
 </div>
 
 <div
@@ -2323,12 +2950,17 @@ style="font-size:16px"
 <div class="card">
 
 <div class="muted">
-موجودی
+\${currentLang==="fa" ? "موجودی" : "Balance"}
 </div>
 
 <div class="account-value">
+
 \${num(user.balance)}
-تومان
+
+\${currentLang==="fa"
+? "تومان"
+: "IRR"}
+
 </div>
 
 </div>
@@ -2343,56 +2975,56 @@ style="font-size:16px"
 class="btn primary"
 onclick="showView('ai')"
 >
-🤖 هوش مصنوعی
+🤖 \${currentLang==="fa" ? "هوش مصنوعی" : "AI"}
 </button>
 
 <button
 class="btn secondary"
 onclick="showView('plans')"
 >
-💎 پلن‌ها
+💎 \${currentLang==="fa" ? "پلن‌ها" : "Plans"}
 </button>
 
 <button
 class="btn secondary"
 onclick="withdraw()"
 >
-💸 برداشت موجودی
+💸 \${currentLang==="fa" ? "برداشت موجودی" : "Withdraw"}
 </button>
 
 <button
 class="btn secondary"
 onclick="myWithdrawals()"
 >
-📋 وضعیت برداشت‌ها
+📋 \${currentLang==="fa" ? "وضعیت برداشت‌ها" : "Withdrawals"}
 </button>
 
 <button
 class="btn danger"
 onclick="logout()"
 >
-خروج
+\${currentLang==="fa" ? "خروج" : "Log Out"}
 </button>
 
 </div>
 
 <div id="accountExtra"></div>
-
 \`;
 
 }catch(e){
 
-box.innerHTML=\`
+box.innerHTML=
 
+\`
 <div class="notice">
 \${esc(e.message)}
 </div>
-
 \`;
 
 }
 
 }
+
 
 /* ============================================================
    WITHDRAW
@@ -2410,7 +3042,9 @@ return;
 
 const amount =
 prompt(
-"مبلغ برداشت به تومان را وارد کنید:"
+currentLang==="fa"
+? "مبلغ برداشت به تومان را وارد کنید:"
+: "Enter withdrawal amount:"
 );
 
 if(!amount)
@@ -2418,7 +3052,9 @@ return;
 
 const destination =
 prompt(
-"شماره شبا / حساب مقصد را وارد کنید:"
+currentLang==="fa"
+? "شماره شبا / حساب مقصد را وارد کنید:"
+: "Enter bank account / destination:"
 );
 
 if(!destination)
@@ -2452,11 +3088,17 @@ await response.json();
 if(!response.ok)
 throw new Error(
 data.error ||
-"خطا در برداشت"
+(currentLang==="fa"
+? "خطا در برداشت"
+: "Withdrawal failed")
 );
 
 msg(
+currentLang==="fa"
+?
 "درخواست برداشت ثبت شد و پس از بررسی مدیریت پرداخت می‌شود."
+:
+"Withdrawal request submitted for review."
 );
 
 loadAccount();
@@ -2468,6 +3110,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    MY WITHDRAWALS
@@ -2485,7 +3128,8 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa" ? "خطا" : "Error")
 );
 
 const rows =
@@ -2494,14 +3138,20 @@ data.withdrawals || [];
 const box =
 document.getElementById("accountExtra");
 
-box.innerHTML=\`
+box.innerHTML=
 
+\`
 <div
 class="card"
 style="margin-top:15px"
 >
 
-<h3>📋 درخواست‌های برداشت</h3>
+<h3>
+📋
+\${currentLang==="fa"
+? "درخواست‌های برداشت"
+: "Withdrawal Requests"}
+</h3>
 
 <div class="table-wrap">
 
@@ -2510,10 +3160,23 @@ style="margin-top:15px"
 <thead>
 
 <tr>
-<th>مبلغ</th>
-<th>روش</th>
-<th>وضعیت</th>
-<th>تاریخ</th>
+
+<th>
+\${currentLang==="fa" ? "مبلغ" : "Amount"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "روش" : "Method"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "وضعیت" : "Status"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "تاریخ" : "Date"}
+</th>
+
 </tr>
 
 </thead>
@@ -2526,7 +3189,7 @@ style="margin-top:15px"
 
 <td>
 \${num(x.amount)}
-تومان
+\${currentLang==="fa" ? " تومان" : " IRR"}
 </td>
 
 <td>
@@ -2552,7 +3215,6 @@ style="margin-top:15px"
 </div>
 
 </div>
-
 \`;
 
 }catch(e){
@@ -2563,6 +3225,7 @@ msg(e.message);
 
 }
 
+
 /* ============================================================
    LOGOUT
 ============================================================ */
@@ -2571,11 +3234,14 @@ function logout(){
 
 token="";
 
-localStorage.removeItem("abzarak_token");
+localStorage.removeItem(
+"abzarak_token"
+);
 
 showView("home");
 
 }
+
 
 /* ============================================================
    FORGOT PASSWORD
@@ -2605,12 +3271,18 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa" ? "خطا" : "Error")
 );
 
 document.getElementById("resetEmail").value=email;
 
-msg(data.message || "کد ارسال شد.");
+msg(
+data.message ||
+(currentLang==="fa"
+? "کد ارسال شد."
+: "Recovery code sent.")
+);
 
 showView("reset");
 
@@ -2621,6 +3293,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    RESET
@@ -2658,10 +3331,18 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
-msg(data.message || "رمز تغییر کرد.");
+msg(
+data.message ||
+(currentLang==="fa"
+? "رمز تغییر کرد."
+: "Password changed.")
+);
 
 showView("login");
 
@@ -2672,6 +3353,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    AI
@@ -2691,7 +3373,11 @@ return;
 if(!token){
 
 msg(
+currentLang==="fa"
+?
 "برای استفاده از هوش مصنوعی ابتدا وارد حساب شوید."
+:
+"Please sign in before using AI."
 );
 
 showView("login");
@@ -2709,7 +3395,9 @@ const loading =
 
 addMessage(
 "ai",
-"در حال پاسخ...",
+currentLang==="fa"
+? "در حال پاسخ..."
+: "Thinking...",
 loading
 );
 
@@ -2744,19 +3432,31 @@ if(data.upgrade_required){
 
 addMessage(
 "ai",
+currentLang==="fa"
+?
 "⚠️ سهمیه ۱۰ پیام روزانه پلن رایگان شما تمام شده است. برای ادامه استفاده، یکی از پلن‌های اشتراکی را انتخاب کنید."
+:
+"⚠️ Your 10 free messages for today have been used. Choose a subscription plan to continue."
 );
 
 addMessage(
 "ai",
+currentLang==="fa"
+?
 "💎 برای مشاهده پلن‌ها، از منوی «پلن‌ها» استفاده کنید."
+:
+"💎 Open the Plans section to view available subscription plans."
 );
 
 }else{
 
 addMessage(
 "ai",
-"❌ " + (data.error || "خطا")
+"❌ " +
+(data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error"))
 );
 
 }
@@ -2767,7 +3467,10 @@ return;
 
 addMessage(
 "ai",
-data.reply || "پاسخی دریافت نشد."
+data.reply ||
+(currentLang==="fa"
+? "پاسخی دریافت نشد."
+: "No response received.")
 );
 
 }catch(e){
@@ -2786,6 +3489,7 @@ addMessage(
 }
 
 }
+
 
 function addMessage(type,text,id=""){
 
@@ -2810,6 +3514,7 @@ chat.scrollHeight;
 
 }
 
+
 /* ============================================================
    PLANS
 ============================================================ */
@@ -2832,7 +3537,9 @@ await response.json();
 }catch(e){
 
 box.innerHTML =
-"خطا در دریافت پلن‌ها.";
+currentLang==="fa"
+? "خطا در دریافت پلن‌ها."
+: "Unable to load plans.";
 
 return;
 
@@ -2844,6 +3551,7 @@ renderPlans();
 
 }
 
+
 function setCurrency(x){
 
 currency=x;
@@ -2851,6 +3559,7 @@ currency=x;
 renderPlans();
 
 }
+
 
 function renderPlans(){
 
@@ -2886,6 +3595,7 @@ plan.id === "special";
 
 const button =
 plan.price_toman === 0
+
 ?
 
 \`
@@ -2894,22 +3604,33 @@ class="btn secondary"
 style="width:100%"
 onclick="showView('ai')"
 >
-شروع استفاده
+\${currentLang==="fa"
+? "شروع استفاده"
+: "Start Using"}
 </button>
 \`
 
 :
 
 usd
+
 ?
 
 \`
 <button
 class="btn secondary"
 style="width:100%"
-onclick="msg('پرداخت دلاری به‌زودی فعال می‌شود. درگاه زرین‌پال برای پرداخت تومانی است.')"
+onclick="msg(
+currentLang==="fa"
+?
+"پرداخت دلاری به‌زودی فعال می‌شود. درگاه زرین‌پال برای پرداخت تومانی است."
+:
+"USD payments will be available soon. ZarinPal currently supports local Toman payments."
+)"
 >
-پرداخت بین‌المللی
+\${currentLang==="fa"
+? "پرداخت بین‌المللی"
+: "International Payment"}
 </button>
 \`
 
@@ -2921,7 +3642,9 @@ class="btn primary"
 style="width:100%"
 onclick="buyPlan('\${plan.id}')"
 >
-💳 خرید پلن
+💳 \${currentLang==="fa"
+? "خرید پلن"
+: "Buy Plan"}
 </button>
 \`;
 
@@ -2933,7 +3656,9 @@ class="plan \${isPopular ? "popular" : ""}"
 
 \${isPopular ? \`
 <div class="badge">
-محبوب
+\${currentLang==="fa"
+? "محبوب"
+: "Popular"}
 </div>
 \` : ""}
 
@@ -2947,7 +3672,11 @@ class="plan \${isPopular ? "popular" : ""}"
 
 <small>
 
-\${usd ? " / month" : " تومان / ماه"}
+\${usd
+? " / month"
+: currentLang==="fa"
+? " تومان / ماه"
+: " IRR / month"}
 
 </small>
 
@@ -2973,6 +3702,7 @@ class="plan \${isPopular ? "popular" : ""}"
 
 }
 
+
 /* ============================================================
    BUY
 ============================================================ */
@@ -2982,7 +3712,11 @@ async function buyPlan(id){
 if(!token){
 
 msg(
+currentLang==="fa"
+?
 "برای خرید ابتدا وارد حساب شوید."
+:
+"Please sign in before purchasing."
 );
 
 showView("login");
@@ -3013,7 +3747,9 @@ await response.json();
 if(!response.ok)
 throw new Error(
 data.error ||
-"خطا در پرداخت"
+(currentLang==="fa"
+? "خطا در پرداخت"
+: "Payment error")
 );
 
 window.location.href =
@@ -3026,6 +3762,7 @@ msg(e.message);
 }
 
 }
+
 
 /* ============================================================
    ADMIN
@@ -3057,7 +3794,10 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
 adminToken=data.token;
@@ -3077,6 +3817,7 @@ msg(e.message);
 
 }
 
+
 function showAdmin(){
 
 document
@@ -3091,13 +3832,16 @@ adminUsers();
 
 }
 
+
 async function adminUsers(){
 
 const box =
 document.getElementById("adminContent");
 
 box.innerHTML =
-"در حال دریافت کاربران...";
+currentLang==="fa"
+? "در حال دریافت کاربران..."
+: "Loading users...";
 
 try{
 
@@ -3109,12 +3853,20 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
 box.innerHTML=\`
 
-<h3>👥 کاربران</h3>
+<h3>
+👥
+\${currentLang==="fa"
+? "کاربران"
+: "Users"}
+</h3>
 
 <div class="table-wrap">
 
@@ -3123,10 +3875,23 @@ box.innerHTML=\`
 <thead>
 
 <tr>
-<th>نام</th>
-<th>ایمیل</th>
-<th>موجودی</th>
-<th>تاریخ</th>
+
+<th>
+\${currentLang==="fa" ? "نام" : "Name"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "ایمیل" : "Email"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "موجودی" : "Balance"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "تاریخ" : "Date"}
+</th>
+
 </tr>
 
 </thead>
@@ -3148,7 +3913,9 @@ box.innerHTML=\`
 
 <td>
 \${num(x.balance)}
-تومان
+\${currentLang==="fa"
+? " تومان"
+: " IRR"}
 </td>
 
 <td>
@@ -3179,13 +3946,16 @@ box.innerHTML=\`
 
 }
 
+
 async function adminPayments(){
 
 const box =
 document.getElementById("adminContent");
 
 box.innerHTML =
-"در حال دریافت تراکنش‌ها...";
+currentLang==="fa"
+? "در حال دریافت تراکنش‌ها..."
+: "Loading transactions...";
 
 try{
 
@@ -3197,12 +3967,20 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
 box.innerHTML=\`
 
-<h3>💳 تراکنش‌ها</h3>
+<h3>
+💳
+\${currentLang==="fa"
+? "تراکنش‌ها"
+: "Transactions"}
+</h3>
 
 <div class="table-wrap">
 
@@ -3211,10 +3989,23 @@ box.innerHTML=\`
 <thead>
 
 <tr>
-<th>ایمیل</th>
-<th>پلن</th>
-<th>مبلغ</th>
-<th>وضعیت</th>
+
+<th>
+\${currentLang==="fa" ? "ایمیل" : "Email"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "پلن" : "Plan"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "مبلغ" : "Amount"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "وضعیت" : "Status"}
+</th>
+
 </tr>
 
 </thead>
@@ -3236,7 +4027,9 @@ box.innerHTML=\`
 
 <td>
 \${num(x.amount_toman)}
-تومان
+\${currentLang==="fa"
+? " تومان"
+: " IRR"}
 </td>
 
 <td>
@@ -3267,13 +4060,16 @@ box.innerHTML=\`
 
 }
 
+
 async function adminWithdrawals(){
 
 const box =
 document.getElementById("adminContent");
 
 box.innerHTML =
-"در حال دریافت برداشت‌ها...";
+currentLang==="fa"
+? "در حال دریافت برداشت‌ها..."
+: "Loading withdrawals...";
 
 try{
 
@@ -3285,7 +4081,10 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
 const rows =
@@ -3293,7 +4092,12 @@ data.withdrawals || [];
 
 box.innerHTML=\`
 
-<h3>💸 درخواست‌های برداشت</h3>
+<h3>
+💸
+\${currentLang==="fa"
+? "درخواست‌های برداشت"
+: "Withdrawal Requests"}
+</h3>
 
 <div class="table-wrap">
 
@@ -3302,11 +4106,27 @@ box.innerHTML=\`
 <thead>
 
 <tr>
-<th>ایمیل</th>
-<th>مبلغ</th>
-<th>مقصد</th>
-<th>وضعیت</th>
-<th>عملیات</th>
+
+<th>
+\${currentLang==="fa" ? "ایمیل" : "Email"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "مبلغ" : "Amount"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "مقصد" : "Destination"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "وضعیت" : "Status"}
+</th>
+
+<th>
+\${currentLang==="fa" ? "عملیات" : "Action"}
+</th>
+
 </tr>
 
 </thead>
@@ -3323,7 +4143,9 @@ box.innerHTML=\`
 
 <td>
 \${num(x.amount)}
-تومان
+\${currentLang==="fa"
+? " تومان"
+: " IRR"}
 </td>
 
 <td>
@@ -3342,14 +4164,18 @@ box.innerHTML=\`
 class="btn primary"
 onclick="processWithdrawal('\${x.id}','paid')"
 >
-پرداخت شد
+\${currentLang==="fa"
+? "پرداخت شد"
+: "Paid"}
 </button>
 
 <button
 class="btn danger"
 onclick="processWithdrawal('\${x.id}','rejected')"
 >
-رد
+\${currentLang==="fa"
+? "رد"
+: "Reject"}
 </button>
 
 \` : "-"}
@@ -3380,6 +4206,7 @@ box.innerHTML=\`
 
 }
 
+
 async function processWithdrawal(id,action){
 
 try{
@@ -3404,11 +4231,17 @@ await response.json();
 
 if(!response.ok)
 throw new Error(
-data.error || "خطا"
+data.error ||
+(currentLang==="fa"
+? "خطا"
+: "Error")
 );
 
 msg(
-data.message || "انجام شد."
+data.message ||
+(currentLang==="fa"
+? "انجام شد."
+: "Done.")
 );
 
 adminWithdrawals();
@@ -3420,6 +4253,7 @@ msg(e.message);
 }
 
 }
+
 
 function adminLogout(){
 
@@ -3439,6 +4273,7 @@ document
 
 }
 
+
 /* ============================================================
    HELPERS
 ============================================================ */
@@ -3447,9 +4282,14 @@ function num(x){
 
 return Number(
 x || 0
-).toLocaleString("fa-IR");
+).toLocaleString(
+currentLang==="fa"
+? "fa-IR"
+: "en-US"
+);
 
 }
+
 
 function esc(x){
 
@@ -3462,43 +4302,6 @@ return String(x ?? "")
 
 }
 
-/* ============================================================
-   LANGUAGE
-============================================================ */
-
-function toggleLang(){
-
-const html =
-document.documentElement;
-
-const btn =
-document.getElementById("langBtn");
-
-if(html.lang === "fa"){
-
-html.lang="en";
-
-html.dir="ltr";
-
-btn.textContent="فارسی";
-
-document.title =
-"Abzarak | Multilingual AI Assistant";
-
-}else{
-
-html.lang="fa";
-
-html.dir="rtl";
-
-btn.textContent="English";
-
-document.title =
-"ابزارک | دستیار هوش مصنوعی فارسی و چت هوشمند آنلاین";
-
-}
-
-}
 
 /* ============================================================
    PWA
@@ -3519,12 +4322,17 @@ document
 }
 );
 
+
 async function installPwa(){
 
 if(!pwaPrompt){
 
 msg(
+currentLang==="fa"
+?
 "از منوی Chrome گزینه «افزودن به صفحه اصلی» را انتخاب کنید."
+:
+"Open the Chrome menu and choose Add to Home screen."
 );
 
 return;
@@ -3543,6 +4351,7 @@ document
 
 }
 
+
 /* ============================================================
    PAYMENT RESULT
 ============================================================ */
@@ -3560,7 +4369,11 @@ return;
 if(p === "success"){
 
 alert(
+currentLang==="fa"
+?
 "✅ پرداخت موفق بود و اشتراک شما فعال شد."
+:
+"✅ Payment successful and your subscription is active."
 );
 
 }
@@ -3568,7 +4381,11 @@ alert(
 if(p === "cancel"){
 
 alert(
+currentLang==="fa"
+?
 "پرداخت لغو شد."
+:
+"Payment was cancelled."
 );
 
 }
@@ -3576,7 +4393,11 @@ alert(
 if(p === "failed"){
 
 alert(
+currentLang==="fa"
+?
 "❌ پرداخت تأیید نشد."
+:
+"❌ Payment was not confirmed."
 );
 
 }
@@ -3589,7 +4410,9 @@ location.search
 ).get("reason");
 
 alert(
-"❌ خطا در پرداخت." +
+(currentLang==="fa"
+? "❌ خطا در پرداخت."
+: "❌ Payment error.") +
 (reason
 ? "\\n\\n" + reason
 : "")
@@ -3605,6 +4428,7 @@ document.title,
 
 }
 
+
 /* ============================================================
    START
 ============================================================ */
@@ -3612,6 +4436,8 @@ document.title,
 document.addEventListener(
 "DOMContentLoaded",
 ()=>{
+
+applyLanguage();
 
 paymentResult();
 
