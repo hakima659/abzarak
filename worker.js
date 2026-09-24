@@ -3561,6 +3561,15 @@ renderPlans();
 }
 
 
+/* ============================================================
+   PLANS DISPLAY
+   قیمت نمایش تومان:
+   basic    = 400,000
+   standard = 1,000,000
+   pro      = 2,000,000
+   special  = 3,000,000
+============================================================ */
+
 function renderPlans(){
 
 if(!plansData)
@@ -3576,25 +3585,61 @@ plansData.plans_usd
 :
 plansData.plans;
 
+
+/*
+  قیمت‌های جدید پنل در حالت تومان.
+  این بخش فقط قیمت نمایش داده‌شده در
+  صفحه پلن‌ها را کنترل می‌کند.
+*/
+
+const fixedPrices = {
+
+basic: 400000,
+
+standard: 1000000,
+
+pro: 2000000,
+
+special: 3000000
+
+};
+
+
 box.innerHTML =
 plans.map(plan=>{
 
 const usd =
 currency === "usd";
 
+
+/*
+  اگر حالت تومان باشد، قیمت‌های جدید استفاده می‌شوند.
+  اگر حالت USD باشد، همان قیمت دلاری بک‌اند نمایش داده می‌شود.
+*/
+
+const tomanPrice =
+fixedPrices[plan.id] !== undefined
+?
+fixedPrices[plan.id]
+:
+Number(plan.price_toman || 0);
+
+
 const price =
 usd
 ?
 "$" + plan.price_usd
 :
-num(plan.price_toman);
+num(tomanPrice);
+
 
 const isPopular =
 plan.id === "pro" ||
 plan.id === "special";
 
+
 const button =
-plan.price_toman === 0
+tomanPrice === 0
 
 ?
 
@@ -3647,6 +3692,7 @@ onclick="buyPlan('\${plan.id}')"
 : "Buy Plan"}
 </button>
 \`;
+
 
 return \`
 
