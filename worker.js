@@ -2,6 +2,7 @@
 // ABZARAK AI — HOMEPAGE + BACKEND API
 // Auth / D1 / AI / Plans / Resend / Payment / Admin / Withdrawals
 // Fixed authentication/session handling
+// Fixed ZarinPal v4 payment request + verify
 // =============================================================
 
 
@@ -938,8 +939,6 @@ function renderHomepage() {
 
   // =========================================================
   // API
-  // IMPORTANT:
-  // Preserve HTTP status so 500 is not mistaken for logout.
   // =========================================================
 
   async function api(
@@ -996,7 +995,6 @@ function renderHomepage() {
           "خطایی رخ داد."
         );
 
-      // Keep HTTP status.
       error.status =
         res.status;
 
@@ -1091,9 +1089,6 @@ function renderHomepage() {
         );
 
       } else {
-
-        // Token is intentionally kept if /api/me
-        // returned a server error.
 
         closeModal();
 
@@ -1417,10 +1412,6 @@ function renderHomepage() {
 
   // =========================================================
   // LOAD ME
-  //
-  // IMPORTANT FIX:
-  // Do NOT delete token for 500/503/etc.
-  // Delete token only for real 401.
   // =========================================================
 
   async function loadMe() {
@@ -1473,11 +1464,6 @@ function renderHomepage() {
         e
       );
 
-
-      /*
-        فقط 401 یعنی توکن واقعاً نامعتبر یا منقضی است.
-        خطای 500 نباید کاربر را Logout کند.
-      */
 
       if (
         Number(e.status) === 401
@@ -1602,10 +1588,6 @@ function renderHomepage() {
       return;
 
 
-    /*
-      First check the local token.
-    */
-
     if (!token) {
 
       addMsg(
@@ -1686,10 +1668,6 @@ function renderHomepage() {
         e
       );
 
-
-      /*
-        فقط در صورت 401، نشست را پاک می‌کنیم.
-      */
 
       if (
         Number(e.status) === 401
@@ -1897,12 +1875,24 @@ function renderHomepage() {
         window.location.href =
           data.payment_url;
 
+      } else {
+
+        alert(
+          "لینک پرداخت از زرین‌پال دریافت نشد."
+        );
+
       }
 
     } catch (e) {
 
+      console.error(
+        "BUY PLAN ERROR:",
+        e
+      );
+
       alert(
-        e.message
+        e.message ||
+        "خطا در ایجاد پرداخت."
       );
 
     }
@@ -2061,9 +2051,6 @@ const PLAN_FEATURES = {
 
 // =============================================================
 // AUTH SECRET
-//
-// JWT_SECRET should be configured as a Cloudflare secret.
-// ADMIN_PASSWORD is only a fallback for compatibility.
 // =============================================================
 
 function getAuthSecret(env) {
@@ -2869,11 +2856,6 @@ async function getUsage(
 
     } catch (error) {
 
-      /*
-        اگر درخواست همزمان باعث UNIQUE conflict شد،
-        دوباره رکورد موجود را می‌خوانیم.
-      */
-
       console.error(
         "USAGE INSERT:",
         error
@@ -3420,13 +3402,6 @@ async function meApi(
       401
     );
 
-
-  /*
-    User is already authenticated.
-    Subscription and usage are optional response data.
-    If one of them has an old DB/schema issue,
-    authentication itself should not be reported as logout.
-  */
 
   let subscription =
     null;
@@ -4261,7 +4236,7 @@ async function aiChatApi(
 
 
 // =============================================================
-// PAYMENT REQUEST
+// PAYMENT REQUEST — ZARINPAL V4
 // =============================================================
 
 async function paymentRequestApi(
@@ -4269,177 +4244,322 @@ async function paymentRequestApi(
   env
 ) {
 
-  const user =
-    await requireUser(
-      request,
-      env
-    );
-
-
-  if (!user)
-    return json(
-      {
-        error:
-          "برای خرید ابتدا وارد حساب شوید."
-      },
-      401
-    );
-
-
-  const body =
-    await bodyJson(
-      request
-    );
-
-
-  const planId =
-    String(
-      body.planId || ""
-    );
-
-
-  if (
-    !Object.prototype.hasOwnProperty.call(
-      PLAN_PRICES,
-      planId
-    )
-  ) {
-
-    return json(
-      {
-        error:
-          "پلن انتخاب‌شده معتبر نیست."
-      },
-      400
-    );
-
-  }
-
-
-  const amount =
-    PLAN_PRICES[
-      planId
-    ];
-
-
-  const paymentId =
-    randomHex(16);
-
-
-  await env.DB.prepare(`
-    INSERT INTO payments
-    (id,user_id,plan_id,amount_toman,status,created_at)
-    VALUES (?,?,?,?,?,?)
-  `)
-    .bind(
-      paymentId,
-      user.id,
-      planId,
-      amount,
-      "pending",
-      new Date().toISOString()
-    )
-    .run();
-
-
-  if (
-    !env.ZARINPAL_MERCHANT_ID
-  ) {
-
-    return json(
-      {
-        error:
-          "درگاه زرین‌پال هنوز در Worker تنظیم نشده است."
-      },
-      503
-    );
-
-  }
-
-
-  const callback =
-    env.PUBLIC_BASE_URL
-      ? env.PUBLIC_BASE_URL +
-        "/api/payment/verify?payment_id=" +
-        encodeURIComponent(
-          paymentId
-        )
-      : new URL(
-          "/api/payment/verify?payment_id=" +
-          encodeURIComponent(
-            paymentId
-          ),
-          request.url
-        ).toString();
-
-
   try {
 
-    const response =
-      await fetch(
-        "https://payment.zarinpal.com/pg/v4/payment/request.json",
-        {
+    // ---------------------------------------------------------
+    // USER
+    // ---------------------------------------------------------
 
-          method:
-            "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              merchant_id:
-                env.ZARINPAL_MERCHANT_ID,
-
-              amount,
-
-              description:
-                "Abzarak AI - " +
-                PLAN_NAMES[
-                  planId
-                ],
-
-              callback_url:
-                callback,
-
-              metadata: {
-
-                email:
-                  user.email,
-
-                mobile:
-                  ""
-
-              }
-
-            })
-
-        }
+    const user =
+      await requireUser(
+        request,
+        env
       );
 
 
-    const data =
-      await response.json();
+    if (!user)
+      return json(
+        {
+          error:
+            "برای خرید ابتدا وارد حساب شوید."
+        },
+        401
+      );
 
+
+    // ---------------------------------------------------------
+    // BODY
+    // ---------------------------------------------------------
+
+    const body =
+      await bodyJson(
+        request
+      );
+
+
+    const planId =
+      String(
+        body.planId || ""
+      ).trim();
+
+
+    // ---------------------------------------------------------
+    // PLAN VALIDATION
+    // ---------------------------------------------------------
 
     if (
-      !response.ok ||
-      !data.data ||
-      !data.data.authority
+      !Object.prototype.hasOwnProperty.call(
+        PLAN_PRICES,
+        planId
+      )
     ) {
 
       return json(
         {
           error:
-            "ایجاد درخواست پرداخت ناموفق بود.",
+            "پلن انتخاب‌شده معتبر نیست."
+        },
+        400
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // AMOUNT STORED IN ABZARAK = TOMAN
+    // ---------------------------------------------------------
+
+    const amountToman =
+      Number(
+        PLAN_PRICES[planId]
+      );
+
+
+    if (
+      !Number.isSafeInteger(
+        amountToman
+      ) ||
+      amountToman <= 0
+    ) {
+
+      return json(
+        {
+          error:
+            "مبلغ پلن معتبر نیست."
+        },
+        400
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // MERCHANT
+    // ---------------------------------------------------------
+
+    const merchantId =
+      String(
+        env.ZARINPAL_MERCHANT_ID ||
+        ""
+      ).trim();
+
+
+    if (!merchantId) {
+
+      return json(
+        {
+          error:
+            "درگاه زرین‌پال هنوز در Worker تنظیم نشده است."
+        },
+        503
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // PAYMENT ID
+    // ---------------------------------------------------------
+
+    const paymentId =
+      randomHex(16);
+
+
+    // ---------------------------------------------------------
+    // SAVE PENDING PAYMENT
+    // ---------------------------------------------------------
+
+    try {
+
+      await env.DB.prepare(`
+        INSERT INTO payments
+        (
+          id,
+          user_id,
+          plan_id,
+          amount_toman,
+          authority,
+          status,
+          created_at,
+          paid_at
+        )
+        VALUES
+        (?, ?, ?, ?, NULL, 'pending', ?, NULL)
+      `)
+        .bind(
+          paymentId,
+          user.id,
+          planId,
+          amountToman,
+          new Date().toISOString()
+        )
+        .run();
+
+    } catch (dbError) {
+
+      console.error(
+        "PAYMENT DB INSERT ERROR:",
+        dbError
+      );
+
+
+      return json(
+        {
+          error:
+            "ثبت درخواست پرداخت در پایگاه داده انجام نشد.",
 
           details:
-            data.errors ||
-            data.data ||
-            null
+            dbError?.message ||
+            String(dbError)
+        },
+        500
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // CALLBACK
+    // ---------------------------------------------------------
+
+    const baseUrl =
+      String(
+        env.PUBLIC_BASE_URL ||
+        new URL(
+          request.url
+        ).origin
+      ).replace(
+        /\/+$/,
+        ""
+      );
+
+
+    const callback =
+      baseUrl +
+      "/api/payment/verify?payment_id=" +
+      encodeURIComponent(
+        paymentId
+      );
+
+
+    // ---------------------------------------------------------
+    // TOMAN -> RIAL
+    //
+    // Abzarak database:
+    // 400000 تومان
+    //
+    // ZarinPal request:
+    // 4000000 ریال
+    // ---------------------------------------------------------
+
+    const amountRial =
+      amountToman * 10;
+
+
+    // ---------------------------------------------------------
+    // REQUEST PAYLOAD
+    // ---------------------------------------------------------
+
+    const payload = {
+
+      merchant_id:
+        merchantId,
+
+      amount:
+        amountRial,
+
+      description:
+        "Abzarak AI - " +
+        PLAN_NAMES[planId],
+
+      callback_url:
+        callback,
+
+      metadata: {
+
+        email:
+          user.email,
+
+        mobile:
+          ""
+
+      }
+
+    };
+
+
+    console.log(
+      "ABZARAK ZARINPAL REQUEST:",
+      JSON.stringify({
+        payment_id:
+          paymentId,
+
+        plan_id:
+          planId,
+
+        amount_toman:
+          amountToman,
+
+        amount_rial:
+          amountRial,
+
+        callback_url:
+          callback
+      })
+    );
+
+
+    // ---------------------------------------------------------
+    // ZARINPAL REQUEST
+    // ---------------------------------------------------------
+
+    let response;
+
+
+    try {
+
+      response =
+        await fetch(
+          "https://api.zarinpal.com/pg/v4/payment/request.json",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+
+              "Content-Type":
+                "application/json",
+
+              "Accept":
+                "application/json"
+
+            },
+
+            body:
+              JSON.stringify(
+                payload
+              )
+
+          }
+        );
+
+    } catch (networkError) {
+
+      console.error(
+        "ZARINPAL NETWORK ERROR:",
+        networkError
+      );
+
+
+      return json(
+        {
+          error:
+            "ارتباط با درگاه زرین‌پال برقرار نشد.",
+
+          details:
+            networkError?.message ||
+            String(networkError)
         },
         502
       );
@@ -4447,46 +4567,216 @@ async function paymentRequestApi(
     }
 
 
-    const authority =
-      data.data.authority;
+    // ---------------------------------------------------------
+    // READ RESPONSE SAFELY
+    // ---------------------------------------------------------
+
+    const rawResponse =
+      await response.text();
 
 
-    await env.DB.prepare(`
-      UPDATE payments
-      SET authority = ?
-      WHERE id = ?
-    `)
-      .bind(
-        authority,
-        paymentId
+    let data = {};
+
+
+    try {
+
+      data =
+        rawResponse
+          ? JSON.parse(
+              rawResponse
+            )
+          : {};
+
+    } catch (parseError) {
+
+      console.error(
+        "ZARINPAL INVALID JSON:",
+        rawResponse
+      );
+
+
+      return json(
+        {
+          error:
+            "پاسخ نامعتبر از زرین‌پال دریافت شد.",
+
+          http_status:
+            response.status
+        },
+        502
+      );
+
+    }
+
+
+    console.log(
+      "ABZARAK ZARINPAL RESPONSE:",
+      JSON.stringify(
+        data
       )
-      .run();
+    );
+
+
+    // ---------------------------------------------------------
+    // CHECK RESULT
+    // ---------------------------------------------------------
+
+    const gatewayCode =
+      data?.data?.code;
+
+
+    const authority =
+      data?.data?.authority;
+
+
+    const errorCode =
+      data?.errors?.code;
+
+
+    const errorMessage =
+      data?.errors?.message;
+
+
+    if (
+      !response.ok ||
+      !authority ||
+      (
+        gatewayCode !== undefined &&
+        Number(
+          gatewayCode
+        ) !== 100
+      )
+    ) {
+
+      console.error(
+        "ZARINPAL REQUEST FAILED:",
+        JSON.stringify({
+          http_status:
+            response.status,
+
+          gateway_code:
+            gatewayCode ??
+            null,
+
+          error_code:
+            errorCode ??
+            null,
+
+          error_message:
+            errorMessage ??
+            null
+        })
+      );
+
+
+      return json(
+        {
+          error:
+            errorMessage ||
+            "ایجاد درخواست پرداخت ناموفق بود.",
+
+          gateway_code:
+            errorCode ??
+            gatewayCode ??
+            null,
+
+          http_status:
+            response.status
+        },
+        502
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // SAVE AUTHORITY
+    // ---------------------------------------------------------
+
+    try {
+
+      await env.DB.prepare(`
+        UPDATE payments
+        SET authority = ?
+        WHERE id = ?
+      `)
+        .bind(
+          String(
+            authority
+          ),
+          paymentId
+        )
+        .run();
+
+    } catch (dbError) {
+
+      console.error(
+        "PAYMENT AUTHORITY SAVE ERROR:",
+        dbError
+      );
+
+
+      return json(
+        {
+          error:
+            "شناسه پرداخت دریافت شد اما ذخیره آن ناموفق بود.",
+
+          details:
+            dbError?.message ||
+            String(dbError)
+        },
+        500
+      );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // PAYMENT URL
+    // ---------------------------------------------------------
+
+    const paymentUrl =
+      "https://www.zarinpal.com/pg/StartPay/" +
+      authority;
 
 
     return json({
 
+      ok:
+        true,
+
       payment_url:
-        "https://www.zarinpal.com/pg/StartPay/" +
-        authority,
+        paymentUrl,
 
       payment_id:
-        paymentId
+        paymentId,
+
+      authority:
+        String(
+          authority
+        )
 
     });
 
 
   } catch (error) {
 
+    console.error(
+      "PAYMENT REQUEST UNHANDLED ERROR:",
+      error
+    );
+
+
     return json(
       {
         error:
-          "ارتباط با درگاه پرداخت ناموفق بود.",
+          "خطای داخلی در ایجاد درخواست پرداخت.",
 
         details:
           error?.message ||
           String(error)
       },
-      502
+      500
     );
 
   }
@@ -4495,7 +4785,7 @@ async function paymentRequestApi(
 
 
 // =============================================================
-// PAYMENT VERIFY
+// PAYMENT VERIFY — ZARINPAL V4
 // =============================================================
 
 async function paymentVerifyApi(
@@ -4527,6 +4817,10 @@ async function paymentVerifyApi(
     );
 
 
+  // -----------------------------------------------------------
+  // PAYMENT ID
+  // -----------------------------------------------------------
+
   if (!paymentId) {
 
     return Response.redirect(
@@ -4539,6 +4833,10 @@ async function paymentVerifyApi(
 
   }
 
+
+  // -----------------------------------------------------------
+  // FIND PAYMENT
+  // -----------------------------------------------------------
 
   const payment =
     await env.DB.prepare(`
@@ -4565,20 +4863,56 @@ async function paymentVerifyApi(
   }
 
 
+  // -----------------------------------------------------------
+  // PREVENT DOUBLE PROCESSING
+  // -----------------------------------------------------------
+
+  if (
+    payment.status ===
+    "paid"
+  ) {
+
+    return Response.redirect(
+      new URL(
+        "/?payment=success",
+        request.url
+      ).toString(),
+      302
+    );
+
+  }
+
+
+  // -----------------------------------------------------------
+  // CANCELLED BY USER
+  // -----------------------------------------------------------
+
   if (
     status !== "OK" ||
     !authority
   ) {
 
-    await env.DB.prepare(`
-      UPDATE payments
-      SET status = 'cancelled'
-      WHERE id = ?
-    `)
-      .bind(
-        paymentId
-      )
-      .run();
+    try {
+
+      await env.DB.prepare(`
+        UPDATE payments
+        SET status = 'cancelled'
+        WHERE id = ?
+          AND status = 'pending'
+      `)
+        .bind(
+          paymentId
+        )
+        .run();
+
+    } catch (error) {
+
+      console.error(
+        "PAYMENT CANCEL UPDATE ERROR:",
+        error
+      );
+
+    }
 
 
     return Response.redirect(
@@ -4592,9 +4926,18 @@ async function paymentVerifyApi(
   }
 
 
-  if (
-    !env.ZARINPAL_MERCHANT_ID
-  ) {
+  // -----------------------------------------------------------
+  // MERCHANT
+  // -----------------------------------------------------------
+
+  const merchantId =
+    String(
+      env.ZARINPAL_MERCHANT_ID ||
+      ""
+    ).trim();
+
+
+  if (!merchantId) {
 
     return Response.redirect(
       new URL(
@@ -4607,33 +4950,79 @@ async function paymentVerifyApi(
   }
 
 
+  // -----------------------------------------------------------
+  // AMOUNT
+  //
+  // Database amount = TOMAN
+  // ZarinPal verification = RIAL
+  // -----------------------------------------------------------
+
+  const amountToman =
+    Number(
+      payment.amount_toman
+    );
+
+
+  const amountRial =
+    amountToman * 10;
+
+
+  // -----------------------------------------------------------
+  // VERIFY
+  // -----------------------------------------------------------
+
   try {
+
+    console.log(
+      "ABZARAK ZARINPAL VERIFY:",
+      JSON.stringify({
+        payment_id:
+          paymentId,
+
+        plan_id:
+          payment.plan_id,
+
+        amount_toman:
+          amountToman,
+
+        amount_rial:
+          amountRial,
+
+        authority:
+          authority
+      })
+    );
+
 
     const response =
       await fetch(
-        "https://payment.zarinpal.com/pg/v4/payment/verify.json",
+        "https://api.zarinpal.com/pg/v4/payment/verify.json",
         {
 
           method:
             "POST",
 
           headers: {
+
             "Content-Type":
+              "application/json",
+
+            "Accept":
               "application/json"
+
           },
 
           body:
             JSON.stringify({
 
               merchant_id:
-                env.ZARINPAL_MERCHANT_ID,
+                merchantId,
 
               amount:
-                Number(
-                  payment.amount_toman
-                ),
+                amountRial,
 
-              authority
+              authority:
+                authority
 
             })
 
@@ -4641,14 +5030,80 @@ async function paymentVerifyApi(
       );
 
 
-    const data =
-      await response.json();
+    const rawResponse =
+      await response.text();
 
+
+    let data = {};
+
+
+    try {
+
+      data =
+        rawResponse
+          ? JSON.parse(
+              rawResponse
+            )
+          : {};
+
+    } catch (parseError) {
+
+      console.error(
+        "ZARINPAL VERIFY INVALID JSON:",
+        rawResponse
+      );
+
+
+      return Response.redirect(
+        new URL(
+          "/?payment=error&reason=invalid-gateway-response",
+          request.url
+        ).toString(),
+        302
+      );
+
+    }
+
+
+    console.log(
+      "ABZARAK ZARINPAL VERIFY RESPONSE:",
+      JSON.stringify(
+        data
+      )
+    );
+
+
+    // ---------------------------------------------------------
+    // RESPONSE CHECK
+    // ---------------------------------------------------------
 
     if (
       !response.ok ||
       !data.data
     ) {
+
+      try {
+
+        await env.DB.prepare(`
+          UPDATE payments
+          SET status = 'failed'
+          WHERE id = ?
+            AND status = 'pending'
+        `)
+          .bind(
+            paymentId
+          )
+          .run();
+
+      } catch (error) {
+
+        console.error(
+          "PAYMENT FAILED UPDATE ERROR:",
+          error
+        );
+
+      }
+
 
       return Response.redirect(
         new URL(
@@ -4667,20 +5122,37 @@ async function paymentVerifyApi(
       );
 
 
+    // ---------------------------------------------------------
+    // 100 = SUCCESS
+    // 101 = ALREADY VERIFIED
+    // ---------------------------------------------------------
+
     if (
       code !== 100 &&
       code !== 101
     ) {
 
-      await env.DB.prepare(`
-        UPDATE payments
-        SET status = 'failed'
-        WHERE id = ?
-      `)
-        .bind(
-          paymentId
-        )
-        .run();
+      try {
+
+        await env.DB.prepare(`
+          UPDATE payments
+          SET status = 'failed'
+          WHERE id = ?
+            AND status = 'pending'
+        `)
+          .bind(
+            paymentId
+          )
+          .run();
+
+      } catch (error) {
+
+        console.error(
+          "PAYMENT FAILED STATUS UPDATE ERROR:",
+          error
+        );
+
+      }
 
 
       return Response.redirect(
@@ -4694,9 +5166,13 @@ async function paymentVerifyApi(
     }
 
 
+    // ---------------------------------------------------------
+    // FIND ACTIVE SUBSCRIPTION
+    // ---------------------------------------------------------
+
     const existingSubscription =
       await env.DB.prepare(`
-        SELECT id
+        SELECT id, expires_at
         FROM subscriptions
         WHERE user_id = ?
           AND plan_id = ?
@@ -4713,9 +5189,33 @@ async function paymentVerifyApi(
         .first();
 
 
+    // ---------------------------------------------------------
+    // ACTIVATE / EXTEND SUBSCRIPTION
+    // ---------------------------------------------------------
+
     if (
       existingSubscription
     ) {
+
+      const currentExpiry =
+        new Date(
+          existingSubscription.expires_at
+        );
+
+
+      const baseTime =
+        Math.max(
+          currentExpiry.getTime(),
+          Date.now()
+        );
+
+
+      const newExpiry =
+        new Date(
+          baseTime +
+          30 * 86400000
+        ).toISOString();
+
 
       await env.DB.prepare(`
         UPDATE subscriptions
@@ -4723,7 +5223,7 @@ async function paymentVerifyApi(
         WHERE id = ?
       `)
         .bind(
-          addDays(30),
+          newExpiry,
           existingSubscription.id
         )
         .run();
@@ -4732,8 +5232,16 @@ async function paymentVerifyApi(
 
       await env.DB.prepare(`
         INSERT INTO subscriptions
-        (id,user_id,plan_id,starts_at,expires_at,status)
-        VALUES (?,?,?,?,?,'active')
+        (
+          id,
+          user_id,
+          plan_id,
+          starts_at,
+          expires_at,
+          status
+        )
+        VALUES
+        (?, ?, ?, ?, ?, 'active')
       `)
         .bind(
           randomHex(16),
@@ -4747,19 +5255,30 @@ async function paymentVerifyApi(
     }
 
 
+    // ---------------------------------------------------------
+    // MARK PAYMENT PAID
+    // ---------------------------------------------------------
+
     await env.DB.prepare(`
       UPDATE payments
       SET
         status = 'paid',
+        authority = ?,
         paid_at = ?
       WHERE id = ?
+        AND status != 'paid'
     `)
       .bind(
+        authority,
         new Date().toISOString(),
         paymentId
       )
       .run();
 
+
+    // ---------------------------------------------------------
+    // SUCCESS
+    // ---------------------------------------------------------
 
     return Response.redirect(
       new URL(
@@ -5386,7 +5905,10 @@ async function healthApi(
       !!env.AI,
 
     resend:
-      !!env.RESEND_API_KEY
+      !!env.RESEND_API_KEY,
+
+    zarinpal:
+      !!env.ZARINPAL_MERCHANT_ID
 
   });
 
