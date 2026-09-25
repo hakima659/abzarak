@@ -3,6 +3,7 @@
 // Auth / D1 / AI / Plans / Resend / Payment / Admin / Withdrawals
 // Fixed authentication/session handling
 // Fixed ZarinPal v4 payment request + verify
+// Safe payments-table migration
 // =============================================================
 
 
@@ -2524,6 +2525,137 @@ function bearerToken(
 let dbReady = false;
 
 
+// =============================================================
+// SAFE PAYMENTS TABLE MIGRATION
+// =============================================================
+
+async function migratePaymentsTable(
+  env
+) {
+
+  const tableInfo =
+    await env.DB.prepare(`
+      PRAGMA table_info(payments)
+    `).all();
+
+
+  const columns =
+    new Set(
+      (tableInfo.results || [])
+        .map(
+          row =>
+            String(
+              row.name || ""
+            )
+        )
+    );
+
+
+  // -----------------------------------------------------------
+  // Add missing columns safely.
+  //
+  // We do NOT DROP the payments table.
+  // Existing payment records are preserved.
+  // -----------------------------------------------------------
+
+  if (!columns.has("user_id")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN user_id TEXT
+    `).run();
+
+  }
+
+
+  if (!columns.has("plan_id")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN plan_id TEXT
+    `).run();
+
+  }
+
+
+  if (!columns.has("amount_toman")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN amount_toman INTEGER
+    `).run();
+
+  }
+
+
+  if (!columns.has("authority")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN authority TEXT
+    `).run();
+
+  }
+
+
+  if (!columns.has("status")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN status TEXT DEFAULT 'pending'
+    `).run();
+
+  }
+
+
+  if (!columns.has("created_at")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN created_at TEXT
+    `).run();
+
+  }
+
+
+  if (!columns.has("paid_at")) {
+
+    await env.DB.prepare(`
+      ALTER TABLE payments
+      ADD COLUMN paid_at TEXT
+    `).run();
+
+  }
+
+
+  // -----------------------------------------------------------
+  // Normalize NULL status values from old records.
+  // -----------------------------------------------------------
+
+  try {
+
+    await env.DB.prepare(`
+      UPDATE payments
+      SET status = 'pending'
+      WHERE status IS NULL
+    `).run();
+
+  } catch (error) {
+
+    console.error(
+      "PAYMENTS STATUS MIGRATION ERROR:",
+      error
+    );
+
+  }
+
+}
+
+
+// =============================================================
+// DATABASE INITIALIZATION
+// =============================================================
+
 async function initDatabase(
   env
 ) {
@@ -2599,6 +2731,10 @@ async function initDatabase(
   `).run();
 
 
+  // -----------------------------------------------------------
+  // PAYMENTS TABLE
+  // -----------------------------------------------------------
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS payments (
       id TEXT PRIMARY KEY,
@@ -2611,6 +2747,17 @@ async function initDatabase(
       paid_at TEXT
     )
   `).run();
+
+
+  // -----------------------------------------------------------
+  // IMPORTANT:
+  // CREATE TABLE IF NOT EXISTS does NOT update an old table.
+  // Therefore run safe migration after CREATE.
+  // -----------------------------------------------------------
+
+  await migratePaymentsTable(
+    env
+  );
 
 
   await env.DB.prepare(`
@@ -2634,6 +2781,10 @@ async function initDatabase(
     )
   `).run();
 
+
+  // -----------------------------------------------------------
+  // PLANS
+  // -----------------------------------------------------------
 
   for (
     const id of
@@ -4365,6 +4516,10 @@ async function paymentRequestApi(
       randomHex(16);
 
 
+    const createdAt =
+      new Date().toISOString();
+
+
     // ---------------------------------------------------------
     // SAVE PENDING PAYMENT
     // ---------------------------------------------------------
@@ -4391,7 +4546,7 @@ async function paymentRequestApi(
           user.id,
           planId,
           amountToman,
-          new Date().toISOString()
+          createdAt
         )
         .run();
 
@@ -4444,12 +4599,6 @@ async function paymentRequestApi(
 
     // ---------------------------------------------------------
     // TOMAN -> RIAL
-    //
-    // Abzarak database:
-    // 400000 تومان
-    //
-    // ZarinPal request:
-    // 4000000 ریال
     // ---------------------------------------------------------
 
     const amountRial =
@@ -4552,6 +4701,29 @@ async function paymentRequestApi(
       );
 
 
+      try {
+
+        await env.DB.prepare(`
+          UPDATE payments
+          SET status = 'failed'
+          WHERE id = ?
+            AND status = 'pending'
+        `)
+          .bind(
+            paymentId
+          )
+          .run();
+
+      } catch (updateError) {
+
+        console.error(
+          "PAYMENT NETWORK FAILURE UPDATE ERROR:",
+          updateError
+        );
+
+      }
+
+
       return json(
         {
           error:
@@ -4593,6 +4765,29 @@ async function paymentRequestApi(
         "ZARINPAL INVALID JSON:",
         rawResponse
       );
+
+
+      try {
+
+        await env.DB.prepare(`
+          UPDATE payments
+          SET status = 'failed'
+          WHERE id = ?
+            AND status = 'pending'
+        `)
+          .bind(
+            paymentId
+          )
+          .run();
+
+      } catch (updateError) {
+
+        console.error(
+          "PAYMENT INVALID JSON UPDATE ERROR:",
+          updateError
+        );
+
+      }
 
 
       return json(
@@ -4647,6 +4842,29 @@ async function paymentRequestApi(
         ) !== 100
       )
     ) {
+
+      try {
+
+        await env.DB.prepare(`
+          UPDATE payments
+          SET status = 'failed'
+          WHERE id = ?
+            AND status = 'pending'
+        `)
+          .bind(
+            paymentId
+          )
+          .run();
+
+      } catch (updateError) {
+
+        console.error(
+          "PAYMENT GATEWAY FAILURE UPDATE ERROR:",
+          updateError
+        );
+
+      }
+
 
       console.error(
         "ZARINPAL REQUEST FAILED:",
@@ -4951,6 +5169,45 @@ async function paymentVerifyApi(
 
 
   // -----------------------------------------------------------
+  // CHECK AUTHORITY
+  // -----------------------------------------------------------
+
+  if (
+    payment.authority &&
+    String(
+      payment.authority
+    ) !== String(
+      authority
+    )
+  ) {
+
+    console.error(
+      "ZARINPAL AUTHORITY MISMATCH:",
+      JSON.stringify({
+        payment_id:
+          paymentId,
+
+        stored:
+          payment.authority,
+
+        received:
+          authority
+      })
+    );
+
+
+    return Response.redirect(
+      new URL(
+        "/?payment=error&reason=authority-mismatch",
+        request.url
+      ).toString(),
+      302
+    );
+
+  }
+
+
+  // -----------------------------------------------------------
   // AMOUNT
   //
   // Database amount = TOMAN
@@ -4961,6 +5218,36 @@ async function paymentVerifyApi(
     Number(
       payment.amount_toman
     );
+
+
+  if (
+    !Number.isSafeInteger(
+      amountToman
+    ) ||
+    amountToman <= 0
+  ) {
+
+    console.error(
+      "INVALID PAYMENT AMOUNT:",
+      JSON.stringify({
+        payment_id:
+          paymentId,
+
+        amount_toman:
+          payment.amount_toman
+      })
+    );
+
+
+    return Response.redirect(
+      new URL(
+        "/?payment=error&reason=invalid-amount",
+        request.url
+      ).toString(),
+      302
+    );
+
+  }
 
 
   const amountRial =
