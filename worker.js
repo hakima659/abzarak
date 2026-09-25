@@ -4,6 +4,7 @@
 // Fixed authentication/session handling
 // Fixed ZarinPal v4 payment request + verify
 // Safe payments-table migration
+// Payment V2 table for legacy D1 compatibility
 // =============================================================
 
 
@@ -2551,13 +2552,6 @@ async function migratePaymentsTable(
     );
 
 
-  // -----------------------------------------------------------
-  // Add missing columns safely.
-  //
-  // We do NOT DROP the payments table.
-  // Existing payment records are preserved.
-  // -----------------------------------------------------------
-
   if (!columns.has("user_id")) {
 
     await env.DB.prepare(`
@@ -2627,10 +2621,6 @@ async function migratePaymentsTable(
 
   }
 
-
-  // -----------------------------------------------------------
-  // Normalize NULL status values from old records.
-  // -----------------------------------------------------------
 
   try {
 
@@ -2732,7 +2722,10 @@ async function initDatabase(
 
 
   // -----------------------------------------------------------
-  // PAYMENTS TABLE
+  // OLD PAYMENTS TABLE
+  //
+  // Kept for backward compatibility.
+  // New payments DO NOT use this table.
   // -----------------------------------------------------------
 
   await env.DB.prepare(`
@@ -2749,15 +2742,32 @@ async function initDatabase(
   `).run();
 
 
-  // -----------------------------------------------------------
-  // IMPORTANT:
-  // CREATE TABLE IF NOT EXISTS does NOT update an old table.
-  // Therefore run safe migration after CREATE.
-  // -----------------------------------------------------------
-
   await migratePaymentsTable(
     env
   );
+
+
+  // -----------------------------------------------------------
+  // PAYMENTS V2
+  //
+  // IMPORTANT:
+  // This is the active payment table.
+  // It is intentionally separate from the old payments table
+  // because the old D1 table may have an incompatible schema.
+  // -----------------------------------------------------------
+
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS payments_v2 (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      plan_id TEXT NOT NULL,
+      amount_toman INTEGER NOT NULL,
+      authority TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL,
+      paid_at TEXT
+    )
+  `).run();
 
 
   await env.DB.prepare(`
@@ -4388,6 +4398,7 @@ async function aiChatApi(
 
 // =============================================================
 // PAYMENT REQUEST — ZARINPAL V4
+// ACTIVE TABLE: payments_v2
 // =============================================================
 
 async function paymentRequestApi(
@@ -4522,12 +4533,15 @@ async function paymentRequestApi(
 
     // ---------------------------------------------------------
     // SAVE PENDING PAYMENT
+    //
+    // IMPORTANT:
+    // Use payments_v2 instead of legacy payments table.
     // ---------------------------------------------------------
 
     try {
 
       await env.DB.prepare(`
-        INSERT INTO payments
+        INSERT INTO payments_v2
         (
           id,
           user_id,
@@ -4553,7 +4567,7 @@ async function paymentRequestApi(
     } catch (dbError) {
 
       console.error(
-        "PAYMENT DB INSERT ERROR:",
+        "PAYMENT V2 DB INSERT ERROR:",
         dbError
       );
 
@@ -4704,7 +4718,7 @@ async function paymentRequestApi(
       try {
 
         await env.DB.prepare(`
-          UPDATE payments
+          UPDATE payments_v2
           SET status = 'failed'
           WHERE id = ?
             AND status = 'pending'
@@ -4717,7 +4731,7 @@ async function paymentRequestApi(
       } catch (updateError) {
 
         console.error(
-          "PAYMENT NETWORK FAILURE UPDATE ERROR:",
+          "PAYMENT V2 NETWORK FAILURE UPDATE ERROR:",
           updateError
         );
 
@@ -4770,7 +4784,7 @@ async function paymentRequestApi(
       try {
 
         await env.DB.prepare(`
-          UPDATE payments
+          UPDATE payments_v2
           SET status = 'failed'
           WHERE id = ?
             AND status = 'pending'
@@ -4783,7 +4797,7 @@ async function paymentRequestApi(
       } catch (updateError) {
 
         console.error(
-          "PAYMENT INVALID JSON UPDATE ERROR:",
+          "PAYMENT V2 INVALID JSON UPDATE ERROR:",
           updateError
         );
 
@@ -4846,7 +4860,7 @@ async function paymentRequestApi(
       try {
 
         await env.DB.prepare(`
-          UPDATE payments
+          UPDATE payments_v2
           SET status = 'failed'
           WHERE id = ?
             AND status = 'pending'
@@ -4859,7 +4873,7 @@ async function paymentRequestApi(
       } catch (updateError) {
 
         console.error(
-          "PAYMENT GATEWAY FAILURE UPDATE ERROR:",
+          "PAYMENT V2 GATEWAY FAILURE UPDATE ERROR:",
           updateError
         );
 
@@ -4914,7 +4928,7 @@ async function paymentRequestApi(
     try {
 
       await env.DB.prepare(`
-        UPDATE payments
+        UPDATE payments_v2
         SET authority = ?
         WHERE id = ?
       `)
@@ -4929,7 +4943,7 @@ async function paymentRequestApi(
     } catch (dbError) {
 
       console.error(
-        "PAYMENT AUTHORITY SAVE ERROR:",
+        "PAYMENT V2 AUTHORITY SAVE ERROR:",
         dbError
       );
 
@@ -5004,6 +5018,7 @@ async function paymentRequestApi(
 
 // =============================================================
 // PAYMENT VERIFY — ZARINPAL V4
+// ACTIVE TABLE: payments_v2
 // =============================================================
 
 async function paymentVerifyApi(
@@ -5059,7 +5074,7 @@ async function paymentVerifyApi(
   const payment =
     await env.DB.prepare(`
       SELECT *
-      FROM payments
+      FROM payments_v2
       WHERE id = ?
     `)
       .bind(
@@ -5113,7 +5128,7 @@ async function paymentVerifyApi(
     try {
 
       await env.DB.prepare(`
-        UPDATE payments
+        UPDATE payments_v2
         SET status = 'cancelled'
         WHERE id = ?
           AND status = 'pending'
@@ -5126,7 +5141,7 @@ async function paymentVerifyApi(
     } catch (error) {
 
       console.error(
-        "PAYMENT CANCEL UPDATE ERROR:",
+        "PAYMENT V2 CANCEL UPDATE ERROR:",
         error
       );
 
@@ -5372,7 +5387,7 @@ async function paymentVerifyApi(
       try {
 
         await env.DB.prepare(`
-          UPDATE payments
+          UPDATE payments_v2
           SET status = 'failed'
           WHERE id = ?
             AND status = 'pending'
@@ -5385,7 +5400,7 @@ async function paymentVerifyApi(
       } catch (error) {
 
         console.error(
-          "PAYMENT FAILED UPDATE ERROR:",
+          "PAYMENT V2 FAILED UPDATE ERROR:",
           error
         );
 
@@ -5422,7 +5437,7 @@ async function paymentVerifyApi(
       try {
 
         await env.DB.prepare(`
-          UPDATE payments
+          UPDATE payments_v2
           SET status = 'failed'
           WHERE id = ?
             AND status = 'pending'
@@ -5435,7 +5450,7 @@ async function paymentVerifyApi(
       } catch (error) {
 
         console.error(
-          "PAYMENT FAILED STATUS UPDATE ERROR:",
+          "PAYMENT V2 FAILED STATUS UPDATE ERROR:",
           error
         );
 
@@ -5547,7 +5562,7 @@ async function paymentVerifyApi(
     // ---------------------------------------------------------
 
     await env.DB.prepare(`
-      UPDATE payments
+      UPDATE payments_v2
       SET
         status = 'paid',
         authority = ?,
@@ -5913,6 +5928,7 @@ async function adminUsersApi(
 
 // =============================================================
 // ADMIN PAYMENTS
+// ACTIVE TABLE: payments_v2
 // =============================================================
 
 async function adminPaymentsApi(
@@ -5940,7 +5956,7 @@ async function adminPaymentsApi(
       SELECT
         p.*,
         u.email
-      FROM payments p
+      FROM payments_v2 p
       LEFT JOIN users u
         ON u.id = p.user_id
       ORDER BY p.created_at DESC
