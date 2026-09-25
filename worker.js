@@ -1,5 +1,12 @@
 // =============================================================
-// ABZARAK AI — HOMEPAGE
+// ABZARAK AI — HOMEPAGE + BACKEND API
+// Auth / D1 / AI / Plans / Resend / Payment / Admin / Withdrawals
+// Fixed authentication/session handling
+// =============================================================
+
+
+// =============================================================
+// HOMEPAGE
 // =============================================================
 
 function renderHomepage() {
@@ -9,8 +16,11 @@ function renderHomepage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>ابزارک AI — دستیار هوشمند فارسی</title>
+
 <style>
+
   :root {
     --bg: #0f0f1a;
     --bg-soft: #16162a;
@@ -24,7 +34,11 @@ function renderHomepage() {
     --danger: #ef4444;
     --radius: 16px;
   }
-  * { box-sizing: border-box; }
+
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     margin: 0;
     font-family: Tahoma, "Vazirmatn", Arial, sans-serif;
@@ -36,8 +50,16 @@ function renderHomepage() {
     min-height: 100vh;
     direction: rtl;
   }
-  a { color: inherit; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+  a {
+    color: inherit;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px;
+  }
 
   header {
     display: flex;
@@ -46,6 +68,7 @@ function renderHomepage() {
     gap: 12px;
     padding: 8px 0 32px;
   }
+
   .logo {
     display: flex;
     align-items: center;
@@ -53,14 +76,23 @@ function renderHomepage() {
     font-weight: 900;
     font-size: 20px;
   }
+
   .logo .dot {
-    width: 34px; height: 34px;
+    width: 34px;
+    height: 34px;
     border-radius: 10px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 18px;
   }
-  nav { display: flex; gap: 8px; }
+
+  nav {
+    display: flex;
+    gap: 8px;
+  }
+
   .btn {
     border: 1px solid var(--border);
     background: var(--card);
@@ -72,31 +104,47 @@ function renderHomepage() {
     font-family: inherit;
     transition: .15s;
   }
-  .btn:hover { border-color: var(--accent); }
+
+  .btn:hover {
+    border-color: var(--accent);
+  }
+
   .btn.primary {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     border: none;
     font-weight: 700;
   }
-  .btn.primary:hover { filter: brightness(1.08); }
-  .btn.block { width: 100%; }
-  .btn.ghost { background: transparent; }
+
+  .btn.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn.block {
+    width: 100%;
+  }
+
+  .btn.ghost {
+    background: transparent;
+  }
 
   .hero {
     text-align: center;
     padding: 40px 0 56px;
   }
+
   .hero h1 {
     font-size: 38px;
     margin: 0 0 14px;
     line-height: 1.5;
   }
+
   .hero h1 span {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
+
   .hero p {
     color: var(--muted);
     font-size: 16px;
@@ -104,7 +152,13 @@ function renderHomepage() {
     margin: 0 auto 26px;
     line-height: 1.9;
   }
-  .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 
   .card {
     background: var(--card);
@@ -113,13 +167,16 @@ function renderHomepage() {
     padding: 22px;
   }
 
-  /* Chat demo */
-  .chat-section { margin: 40px 0; }
+  .chat-section {
+    margin: 40px 0;
+  }
+
   .chat-box {
     display: flex;
     flex-direction: column;
     height: 420px;
   }
+
   .chat-log {
     flex: 1;
     overflow-y: auto;
@@ -128,6 +185,7 @@ function renderHomepage() {
     gap: 12px;
     padding: 6px 4px 16px;
   }
+
   .msg {
     max-width: 80%;
     padding: 12px 16px;
@@ -136,29 +194,34 @@ function renderHomepage() {
     font-size: 14.5px;
     white-space: pre-wrap;
   }
+
   .msg.user {
     align-self: flex-start;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     border-bottom-left-radius: 4px;
   }
+
   .msg.ai {
     align-self: flex-end;
     background: var(--bg-soft);
     border: 1px solid var(--border);
     border-bottom-right-radius: 4px;
   }
+
   .msg.system {
     align-self: center;
     color: var(--muted);
     font-size: 13px;
     background: transparent;
   }
+
   .chat-input-row {
     display: flex;
     gap: 8px;
     border-top: 1px solid var(--border);
     padding-top: 14px;
   }
+
   .chat-input-row input {
     flex: 1;
     background: var(--bg-soft);
@@ -169,34 +232,89 @@ function renderHomepage() {
     font-family: inherit;
     font-size: 14.5px;
   }
-  .chat-input-row input:focus { outline: none; border-color: var(--accent); }
 
-  /* Plans */
-  .plans-section { margin: 56px 0; }
-  .section-title { text-align: center; margin-bottom: 28px; }
-  .section-title h2 { font-size: 26px; margin-bottom: 8px; }
-  .section-title p { color: var(--muted); }
+  .chat-input-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .plans-section {
+    margin: 56px 0;
+  }
+
+  .section-title {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .section-title h2 {
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+
+  .section-title p {
+    color: var(--muted);
+  }
+
   .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
   }
+
   .plan-card {
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-  .plan-card h3 { margin: 0; font-size: 18px; }
-  .plan-price { font-size: 24px; font-weight: 900; }
-  .plan-price small { font-size: 13px; color: var(--muted); font-weight: 400; }
-  .plan-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-  .plan-card li { color: var(--muted); font-size: 13.5px; display: flex; gap: 8px; align-items: flex-start; }
-  .plan-card li::before { content: "✓"; color: var(--success); font-weight: 900; }
-  .plan-card.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
-  /* Modal */
+  .plan-card h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .plan-price {
+    font-size: 24px;
+    font-weight: 900;
+  }
+
+  .plan-price small {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .plan-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .plan-card li {
+    color: var(--muted);
+    font-size: 13.5px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .plan-card li::before {
+    content: "✓";
+    color: var(--success);
+    font-weight: 900;
+  }
+
+  .plan-card.featured {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
   .overlay {
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background: rgba(5,5,15,.7);
     backdrop-filter: blur(4px);
     display: none;
@@ -205,7 +323,11 @@ function renderHomepage() {
     padding: 16px;
     z-index: 50;
   }
-  .overlay.open { display: flex; }
+
+  .overlay.open {
+    display: flex;
+  }
+
   .modal {
     width: 100%;
     max-width: 380px;
@@ -213,10 +335,25 @@ function renderHomepage() {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 24px;
+    position: relative;
   }
-  .modal h3 { margin: 0 0 18px; font-size: 18px; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+  .modal h3 {
+    margin: 0 0 18px;
+    font-size: 18px;
+  }
+
+  .field {
+    margin-bottom: 12px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
   .field input {
     width: 100%;
     background: var(--bg-soft);
@@ -227,18 +364,49 @@ function renderHomepage() {
     font-family: inherit;
     font-size: 14px;
   }
-  .field input:focus { outline: none; border-color: var(--accent); }
-  .modal-msg { font-size: 13px; margin: 10px 0; min-height: 18px; }
-  .modal-msg.err { color: var(--danger); }
-  .modal-msg.ok { color: var(--success); }
-  .switch-line { text-align: center; margin-top: 14px; font-size: 13px; color: var(--muted); }
-  .switch-line a { color: var(--accent); cursor: pointer; text-decoration: none; }
-  .modal-close {
-    position: absolute; left: 18px; top: 18px;
-    background: none; border: none; color: var(--muted);
-    font-size: 18px; cursor: pointer;
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
   }
-  .modal { position: relative; }
+
+  .modal-msg {
+    font-size: 13px;
+    margin: 10px 0;
+    min-height: 18px;
+  }
+
+  .modal-msg.err {
+    color: var(--danger);
+  }
+
+  .modal-msg.ok {
+    color: var(--success);
+  }
+
+  .switch-line {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .switch-line a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .modal-close {
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+  }
 
   #userBadge {
     display: none;
@@ -247,7 +415,10 @@ function renderHomepage() {
     font-size: 13.5px;
     color: var(--muted);
   }
-  #userBadge b { color: var(--text); }
+
+  #userBadge b {
+    color: var(--text);
+  }
 
   footer {
     text-align: center;
@@ -257,56 +428,164 @@ function renderHomepage() {
   }
 
   @media (max-width: 640px) {
-    .hero h1 { font-size: 28px; }
-    nav .btn span.long { display: none; }
+
+    .hero h1 {
+      font-size: 28px;
+    }
+
+    nav .btn span.long {
+      display: none;
+    }
+
   }
+
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
 
   <header>
-    <div class="logo"><span class="dot">🤖</span> ابزارک AI</div>
-    <nav id="navArea">
-      <button class="btn ghost" onclick="openModal('login')">ورود</button>
-      <button class="btn primary" onclick="openModal('signup')">ثبت‌نام رایگان</button>
-    </nav>
-    <div id="userBadge">
-      <span>خوش آمدی، <b id="userNameLabel"></b></span>
-      <button class="btn" onclick="logout()">خروج</button>
+
+    <div class="logo">
+      <span class="dot">🤖</span>
+      ابزارک AI
     </div>
+
+    <nav id="navArea">
+
+      <button
+        class="btn ghost"
+        onclick="openModal('login')">
+        ورود
+      </button>
+
+      <button
+        class="btn primary"
+        onclick="openModal('signup')">
+        ثبت‌نام رایگان
+      </button>
+
+    </nav>
+
+    <div id="userBadge">
+
+      <span>
+        خوش آمدی،
+        <b id="userNameLabel"></b>
+      </span>
+
+      <button
+        class="btn"
+        onclick="logout()">
+        خروج
+      </button>
+
+    </div>
+
   </header>
 
+
   <section class="hero">
-    <h1>دستیار هوشمند <span>فارسی</span> شما</h1>
-    <p>ابزارک، یک دستیار هوش مصنوعی چندزبانه برای گفتگو، تولید محتوا، ترجمه و ایده‌پردازی است. همین حالا رایگان امتحان کن.</p>
+
+    <h1>
+      دستیار هوشمند
+      <span>فارسی</span>
+      شما
+    </h1>
+
+    <p>
+      ابزارک، یک دستیار هوش مصنوعی چندزبانه برای گفتگو،
+      تولید محتوا، ترجمه و ایده‌پردازی است.
+      همین حالا رایگان امتحان کن.
+    </p>
+
     <div class="hero-actions">
-      <button class="btn primary" onclick="focusChat()">شروع گفتگو</button>
-      <button class="btn ghost" onclick="scrollToPlans()">مشاهده پلن‌ها</button>
+
+      <button
+        class="btn primary"
+        onclick="focusChat()">
+        شروع گفتگو
+      </button>
+
+      <button
+        class="btn ghost"
+        onclick="scrollToPlans()">
+        مشاهده پلن‌ها
+      </button>
+
     </div>
+
   </section>
+
 
   <section class="chat-section card">
+
     <div class="chat-box">
-      <div class="chat-log" id="chatLog">
-        <div class="msg system">سلام! من ابزارک هستم. هر سوالی داری بپرس 👋</div>
+
+      <div
+        class="chat-log"
+        id="chatLog">
+
+        <div class="msg system">
+          سلام! من ابزارک هستم.
+          هر سوالی داری بپرس 👋
+        </div>
+
       </div>
+
       <div class="chat-input-row">
-        <input id="chatInput" type="text" placeholder="پیامت را بنویس..." onkeydown="if(event.key==='Enter') sendMessage()">
-        <button class="btn primary" onclick="sendMessage()">ارسال</button>
+
+        <input
+          id="chatInput"
+          type="text"
+          placeholder="پیامت را بنویس..."
+          onkeydown="if(event.key==='Enter') sendMessage()">
+
+        <button
+          class="btn primary"
+          onclick="sendMessage()">
+          ارسال
+        </button>
+
       </div>
+
     </div>
+
   </section>
 
-  <section class="plans-section" id="plansSection">
+
+  <section
+    class="plans-section"
+    id="plansSection">
+
     <div class="section-title">
-      <h2>پلن‌های اشتراک</h2>
-      <p>متناسب با نیازت یک پلن انتخاب کن</p>
+
+      <h2>
+        پلن‌های اشتراک
+      </h2>
+
+      <p>
+        متناسب با نیازت یک پلن انتخاب کن
+      </p>
+
     </div>
-    <div class="plans-grid" id="plansGrid">
-      <div class="msg system" style="align-self:center;">در حال بارگذاری پلن‌ها...</div>
+
+    <div
+      class="plans-grid"
+      id="plansGrid">
+
+      <div
+        class="msg system"
+        style="align-self:center;">
+        در حال بارگذاری پلن‌ها...
+      </div>
+
     </div>
+
   </section>
+
 
   <footer>
     🤖 ابزارک AI — ساخته‌شده با هوش مصنوعی
@@ -314,336 +593,1454 @@ function renderHomepage() {
 
 </div>
 
-<!-- Auth Modal -->
-<div class="overlay" id="authOverlay">
+
+<!-- =========================================================
+     AUTH MODAL
+========================================================= -->
+
+<div
+  class="overlay"
+  id="authOverlay">
+
   <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <button
+      class="modal-close"
+      onclick="closeModal()">
+      ✕
+    </button>
+
+
+    <!-- LOGIN -->
 
     <div id="loginForm">
-      <h3>ورود به حساب</h3>
+
+      <h3>
+        ورود به حساب
+      </h3>
+
       <div class="field">
-        <label>ایمیل</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com">
+
+        <label>
+          ایمیل
+        </label>
+
+        <input
+          type="email"
+          id="loginEmail"
+          placeholder="you@example.com">
+
       </div>
+
+
       <div class="field">
-        <label>رمز عبور</label>
-        <input type="password" id="loginPassword" placeholder="••••••••">
+
+        <label>
+          رمز عبور
+        </label>
+
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="••••••••">
+
       </div>
-      <div class="modal-msg" id="loginMsg"></div>
-      <button class="btn primary block" onclick="doLogin()">ورود</button>
+
+
+      <div
+        class="modal-msg"
+        id="loginMsg">
+      </div>
+
+
+      <button
+        class="btn primary block"
+        onclick="doLogin()">
+        ورود
+      </button>
+
+
       <div class="switch-line">
-        حساب نداری؟ <a onclick="openModal('signup')">ثبت‌نام کن</a><br>
-        <a onclick="openModal('forgot')">رمز عبور را فراموش کرده‌ام</a>
+
+        حساب نداری؟
+        <a onclick="openModal('signup')">
+          ثبت‌نام کن
+        </a>
+
+        <br>
+
+        <a onclick="openModal('forgot')">
+          رمز عبور را فراموش کرده‌ام
+        </a>
+
       </div>
+
     </div>
 
-    <div id="signupForm" style="display:none;">
-      <h3>ساخت حساب جدید</h3>
+
+    <!-- SIGNUP -->
+
+    <div
+      id="signupForm"
+      style="display:none;">
+
+      <h3>
+        ساخت حساب جدید
+      </h3>
+
+
       <div class="field">
-        <label>نام</label>
-        <input type="text" id="signupName" placeholder="نام شما">
+
+        <label>
+          نام
+        </label>
+
+        <input
+          type="text"
+          id="signupName"
+          placeholder="نام شما">
+
       </div>
+
+
       <div class="field">
-        <label>ایمیل</label>
-        <input type="email" id="signupEmail" placeholder="you@example.com">
+
+        <label>
+          ایمیل
+        </label>
+
+        <input
+          type="email"
+          id="signupEmail"
+          placeholder="you@example.com">
+
       </div>
+
+
       <div class="field">
-        <label>رمز عبور</label>
-        <input type="password" id="signupPassword" placeholder="حداقل ۶ کاراکتر">
+
+        <label>
+          رمز عبور
+        </label>
+
+        <input
+          type="password"
+          id="signupPassword"
+          placeholder="حداقل ۶ کاراکتر">
+
       </div>
-      <div class="modal-msg" id="signupMsg"></div>
-      <button class="btn primary block" onclick="doSignup()">ثبت‌نام</button>
+
+
+      <div
+        class="modal-msg"
+        id="signupMsg">
+      </div>
+
+
+      <button
+        class="btn primary block"
+        onclick="doSignup()">
+        ثبت‌نام
+      </button>
+
+
       <div class="switch-line">
-        قبلاً ثبت‌نام کرده‌ای؟ <a onclick="openModal('login')">وارد شو</a>
+
+        قبلاً ثبت‌نام کرده‌ای؟
+
+        <a onclick="openModal('login')">
+          وارد شو
+        </a>
+
       </div>
+
     </div>
 
-    <div id="forgotForm" style="display:none;">
-      <h3>بازیابی رمز عبور</h3>
-      <div class="field">
-        <label>ایمیل</label>
-        <input type="email" id="forgotEmail" placeholder="you@example.com">
-      </div>
-      <div class="modal-msg" id="forgotMsg"></div>
-      <button class="btn primary block" onclick="doForgot()">ارسال کد بازیابی</button>
 
-      <div id="resetFields" style="display:none; margin-top:14px;">
-        <div class="field">
-          <label>کد بازیابی</label>
-          <input type="text" id="resetCode" placeholder="۶ رقمی">
-        </div>
-        <div class="field">
-          <label>رمز عبور جدید</label>
-          <input type="password" id="resetNewPassword" placeholder="حداقل ۶ کاراکتر">
-        </div>
-        <button class="btn primary block" onclick="doReset()">تغییر رمز عبور</button>
+    <!-- FORGOT -->
+
+    <div
+      id="forgotForm"
+      style="display:none;">
+
+      <h3>
+        بازیابی رمز عبور
+      </h3>
+
+
+      <div class="field">
+
+        <label>
+          ایمیل
+        </label>
+
+        <input
+          type="email"
+          id="forgotEmail"
+          placeholder="you@example.com">
+
       </div>
+
+
+      <div
+        class="modal-msg"
+        id="forgotMsg">
+      </div>
+
+
+      <button
+        class="btn primary block"
+        onclick="doForgot()">
+        ارسال کد بازیابی
+      </button>
+
+
+      <div
+        id="resetFields"
+        style="display:none; margin-top:14px;">
+
+        <div class="field">
+
+          <label>
+            کد بازیابی
+          </label>
+
+          <input
+            type="text"
+            id="resetCode"
+            placeholder="۶ رقمی">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            رمز عبور جدید
+          </label>
+
+          <input
+            type="password"
+            id="resetNewPassword"
+            placeholder="حداقل ۶ کاراکتر">
+
+        </div>
+
+
+        <button
+          class="btn primary block"
+          onclick="doReset()">
+          تغییر رمز عبور
+        </button>
+
+      </div>
+
 
       <div class="switch-line">
-        <a onclick="openModal('login')">بازگشت به ورود</a>
+
+        <a onclick="openModal('login')">
+          بازگشت به ورود
+        </a>
+
       </div>
+
     </div>
 
   </div>
+
 </div>
 
+
 <script>
+
+  // =========================================================
+  // FRONTEND AUTH
+  // =========================================================
+
   const API = "";
-  let token = localStorage.getItem("abzarak_token") || null;
+
+  let token =
+    localStorage.getItem("abzarak_token") || null;
+
   let currentUser = null;
 
+
+  // =========================================================
+  // MODAL
+  // =========================================================
+
   function openModal(which) {
-    document.getElementById("authOverlay").classList.add("open");
-    document.getElementById("loginForm").style.display = which === "login" ? "block" : "none";
-    document.getElementById("signupForm").style.display = which === "signup" ? "block" : "none";
-    document.getElementById("forgotForm").style.display = which === "forgot" ? "block" : "none";
+
+    document
+      .getElementById("authOverlay")
+      .classList
+      .add("open");
+
+    document
+      .getElementById("loginForm")
+      .style.display =
+        which === "login"
+          ? "block"
+          : "none";
+
+    document
+      .getElementById("signupForm")
+      .style.display =
+        which === "signup"
+          ? "block"
+          : "none";
+
+    document
+      .getElementById("forgotForm")
+      .style.display =
+        which === "forgot"
+          ? "block"
+          : "none";
+
   }
+
+
   function closeModal() {
-    document.getElementById("authOverlay").classList.remove("open");
+
+    document
+      .getElementById("authOverlay")
+      .classList
+      .remove("open");
+
   }
 
-  function setMsg(id, text, ok) {
-    const el = document.getElementById(id);
-    el.textContent = text || "";
-    el.className = "modal-msg " + (ok ? "ok" : "err");
+
+  // =========================================================
+  // MESSAGE
+  // =========================================================
+
+  function setMsg(
+    id,
+    text,
+    ok
+  ) {
+
+    const el =
+      document.getElementById(id);
+
+    if (!el)
+      return;
+
+    el.textContent =
+      text || "";
+
+    el.className =
+      "modal-msg " +
+      (ok ? "ok" : "err");
+
   }
 
-  async function api(path, options = {}) {
-    const headers = Object.assign(
-      { "Content-Type": "application/json" },
-      options.headers || {}
-    );
-    if (token) headers["Authorization"] = "Bearer " + token;
-    const res = await fetch(API + path, Object.assign({}, options, { headers }));
+
+  // =========================================================
+  // API
+  // IMPORTANT:
+  // Preserve HTTP status so 500 is not mistaken for logout.
+  // =========================================================
+
+  async function api(
+    path,
+    options = {}
+  ) {
+
+    const headers =
+      Object.assign(
+        {
+          "Content-Type":
+            "application/json"
+        },
+        options.headers || {}
+      );
+
+
+    if (token) {
+
+      headers["Authorization"] =
+        "Bearer " + token;
+
+    }
+
+
+    const res =
+      await fetch(
+        API + path,
+        Object.assign(
+          {},
+          options,
+          {
+            headers
+          }
+        )
+      );
+
+
     let data = {};
-    try { data = await res.json(); } catch {}
-    if (!res.ok) throw new Error(data.error || "خطایی رخ داد.");
+
+    try {
+
+      data =
+        await res.json();
+
+    } catch {}
+
+
+    if (!res.ok) {
+
+      const error =
+        new Error(
+          data.error ||
+          "خطایی رخ داد."
+        );
+
+      // Keep HTTP status.
+      error.status =
+        res.status;
+
+      error.data =
+        data;
+
+      throw error;
+
+    }
+
+
     return data;
+
   }
+
+
+  // =========================================================
+  // SIGNUP
+  // =========================================================
 
   async function doSignup() {
-    const name = document.getElementById("signupName").value.trim();
-    const email = document.getElementById("signupEmail").value.trim();
-    const password = document.getElementById("signupPassword").value;
-    setMsg("signupMsg", "");
+
+    const name =
+      document
+        .getElementById("signupName")
+        .value
+        .trim();
+
+    const email =
+      document
+        .getElementById("signupEmail")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("signupPassword")
+        .value;
+
+
+    setMsg(
+      "signupMsg",
+      ""
+    );
+
+
     try {
-      const data = await api("/api/signup", { method: "POST", body: JSON.stringify({ name, email, password }) });
-      token = data.token;
-      localStorage.setItem("abzarak_token", token);
-      closeModal();
-      await loadMe();
+
+      const data =
+        await api(
+          "/api/signup",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                name,
+                email,
+                password
+              })
+          }
+        );
+
+
+      if (!data.token)
+        throw new Error(
+          "توکن ورود از سرور دریافت نشد."
+        );
+
+
+      token =
+        data.token;
+
+
+      localStorage.setItem(
+        "abzarak_token",
+        token
+      );
+
+
+      const ok =
+        await loadMe();
+
+
+      if (ok) {
+
+        closeModal();
+
+        addMsg(
+          "ثبت‌نام با موفقیت انجام شد. حالا می‌توانی پیام بفرستی. 👋",
+          "system"
+        );
+
+      } else {
+
+        // Token is intentionally kept if /api/me
+        // returned a server error.
+
+        closeModal();
+
+        addMsg(
+          "حساب ساخته شد. اگر پیام ارسال نشد، یک‌بار صفحه را تازه‌سازی کن.",
+          "system"
+        );
+
+      }
+
+
     } catch (e) {
-      setMsg("signupMsg", e.message);
+
+      setMsg(
+        "signupMsg",
+        e.message
+      );
+
     }
+
   }
+
+
+  // =========================================================
+  // LOGIN
+  // =========================================================
 
   async function doLogin() {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    setMsg("loginMsg", "");
+
+    const email =
+      document
+        .getElementById("loginEmail")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("loginPassword")
+        .value;
+
+
+    setMsg(
+      "loginMsg",
+      ""
+    );
+
+
     try {
-      const data = await api("/api/login", { method: "POST", body: JSON.stringify({ email, password }) });
-      token = data.token;
-      localStorage.setItem("abzarak_token", token);
-      closeModal();
-      await loadMe();
+
+      const data =
+        await api(
+          "/api/login",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                email,
+                password
+              })
+          }
+        );
+
+
+      if (!data.token)
+        throw new Error(
+          "توکن ورود از سرور دریافت نشد."
+        );
+
+
+      token =
+        data.token;
+
+
+      localStorage.setItem(
+        "abzarak_token",
+        token
+      );
+
+
+      const ok =
+        await loadMe();
+
+
+      if (ok) {
+
+        closeModal();
+
+        addMsg(
+          "ورود با موفقیت انجام شد. حالا پیام خودت را بفرست. 👋",
+          "system"
+        );
+
+      } else {
+
+        closeModal();
+
+        addMsg(
+          "ورود انجام شد. اگر پیام ارسال نشد، صفحه را تازه‌سازی کن.",
+          "system"
+        );
+
+      }
+
+
     } catch (e) {
-      setMsg("loginMsg", e.message);
+
+      setMsg(
+        "loginMsg",
+        e.message
+      );
+
     }
+
   }
+
+
+  // =========================================================
+  // FORGOT PASSWORD
+  // =========================================================
 
   async function doForgot() {
-    const email = document.getElementById("forgotEmail").value.trim();
-    setMsg("forgotMsg", "");
+
+    const email =
+      document
+        .getElementById("forgotEmail")
+        .value
+        .trim();
+
+
+    setMsg(
+      "forgotMsg",
+      ""
+    );
+
+
     try {
-      const data = await api("/api/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
-      setMsg("forgotMsg", data.message, true);
-      document.getElementById("resetFields").style.display = "block";
+
+      const data =
+        await api(
+          "/api/forgot-password",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                email
+              })
+          }
+        );
+
+
+      setMsg(
+        "forgotMsg",
+        data.message,
+        true
+      );
+
+
+      document
+        .getElementById("resetFields")
+        .style.display =
+          "block";
+
+
     } catch (e) {
-      setMsg("forgotMsg", e.message);
+
+      setMsg(
+        "forgotMsg",
+        e.message
+      );
+
     }
+
   }
+
+
+  // =========================================================
+  // RESET PASSWORD
+  // =========================================================
 
   async function doReset() {
-    const email = document.getElementById("forgotEmail").value.trim();
-    const code = document.getElementById("resetCode").value.trim();
-    const newPassword = document.getElementById("resetNewPassword").value;
-    setMsg("forgotMsg", "");
+
+    const email =
+      document
+        .getElementById("forgotEmail")
+        .value
+        .trim();
+
+    const code =
+      document
+        .getElementById("resetCode")
+        .value
+        .trim();
+
+    const newPassword =
+      document
+        .getElementById("resetNewPassword")
+        .value;
+
+
+    setMsg(
+      "forgotMsg",
+      ""
+    );
+
+
     try {
-      const data = await api("/api/reset-password", { method: "POST", body: JSON.stringify({ email, code, newPassword }) });
-      setMsg("forgotMsg", data.message, true);
-      setTimeout(() => openModal("login"), 1200);
+
+      const data =
+        await api(
+          "/api/reset-password",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                email,
+                code,
+                newPassword
+              })
+          }
+        );
+
+
+      setMsg(
+        "forgotMsg",
+        data.message,
+        true
+      );
+
+
+      setTimeout(
+        () => openModal("login"),
+        1200
+      );
+
+
     } catch (e) {
-      setMsg("forgotMsg", e.message);
+
+      setMsg(
+        "forgotMsg",
+        e.message
+      );
+
     }
+
   }
+
+
+  // =========================================================
+  // LOGOUT
+  // =========================================================
 
   function logout() {
+
     token = null;
+
     currentUser = null;
-    localStorage.removeItem("abzarak_token");
+
+    localStorage.removeItem(
+      "abzarak_token"
+    );
+
     updateNav();
+
+    addMsg(
+      "از حساب خارج شدی.",
+      "system"
+    );
+
   }
+
+
+  // =========================================================
+  // NAV
+  // =========================================================
 
   function updateNav() {
-    const navArea = document.getElementById("navArea");
-    const badge = document.getElementById("userBadge");
+
+    const navArea =
+      document.getElementById(
+        "navArea"
+      );
+
+    const badge =
+      document.getElementById(
+        "userBadge"
+      );
+
+
     if (currentUser) {
-      navArea.style.display = "none";
-      badge.style.display = "flex";
-      document.getElementById("userNameLabel").textContent = currentUser.name;
+
+      navArea.style.display =
+        "none";
+
+      badge.style.display =
+        "flex";
+
+
+      document
+        .getElementById(
+          "userNameLabel"
+        )
+        .textContent =
+          currentUser.name || "کاربر";
+
+
     } else {
-      navArea.style.display = "flex";
-      badge.style.display = "none";
+
+      navArea.style.display =
+        "flex";
+
+      badge.style.display =
+        "none";
+
     }
+
   }
+
+
+  // =========================================================
+  // LOAD ME
+  //
+  // IMPORTANT FIX:
+  // Do NOT delete token for 500/503/etc.
+  // Delete token only for real 401.
+  // =========================================================
 
   async function loadMe() {
-    if (!token) { updateNav(); return; }
-    try {
-      const data = await api("/api/me");
-      currentUser = data.user;
-    } catch {
-      token = null;
-      localStorage.removeItem("abzarak_token");
-      currentUser = null;
-    }
-    updateNav();
-  }
-
-  function addMsg(text, cls) {
-    const log = document.getElementById("chatLog");
-    const div = document.createElement("div");
-    div.className = "msg " + cls;
-    div.textContent = text;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-  }
-
-  function focusChat() {
-    document.getElementById("chatInput").scrollIntoView({ behavior: "smooth", block: "center" });
-    document.getElementById("chatInput").focus();
-  }
-
-  function scrollToPlans() {
-    document.getElementById("plansSection").scrollIntoView({ behavior: "smooth" });
-  }
-
-  async function sendMessage() {
-    const input = document.getElementById("chatInput");
-    const message = input.value.trim();
-    if (!message) return;
 
     if (!token) {
-      addMsg("برای گفتگو با ابزارک ابتدا وارد حساب شو یا ثبت‌نام کن.", "system");
-      openModal("login");
-      return;
+
+      currentUser = null;
+
+      updateNav();
+
+      return false;
+
     }
 
-    addMsg(message, "user");
+
+    try {
+
+      const data =
+        await api(
+          "/api/me"
+        );
+
+
+      if (
+        !data ||
+        !data.user
+      ) {
+
+        throw new Error(
+          "اطلاعات حساب از سرور دریافت نشد."
+        );
+
+      }
+
+
+      currentUser =
+        data.user;
+
+
+      updateNav();
+
+
+      return true;
+
+
+    } catch (e) {
+
+      console.error(
+        "ABZARAK LOAD ME ERROR:",
+        e
+      );
+
+
+      /*
+        فقط 401 یعنی توکن واقعاً نامعتبر یا منقضی است.
+        خطای 500 نباید کاربر را Logout کند.
+      */
+
+      if (
+        Number(e.status) === 401
+      ) {
+
+        token = null;
+
+        localStorage.removeItem(
+          "abzarak_token"
+        );
+
+        currentUser = null;
+
+      }
+
+
+      updateNav();
+
+
+      return false;
+
+    }
+
+  }
+
+
+  // =========================================================
+  // ADD MESSAGE
+  // =========================================================
+
+  function addMsg(
+    text,
+    cls
+  ) {
+
+    const log =
+      document.getElementById(
+        "chatLog"
+      );
+
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+
+    div.className =
+      "msg " + cls;
+
+
+    div.textContent =
+      text;
+
+
+    log.appendChild(div);
+
+
+    log.scrollTop =
+      log.scrollHeight;
+
+  }
+
+
+  // =========================================================
+  // FOCUS CHAT
+  // =========================================================
+
+  function focusChat() {
+
+    const input =
+      document.getElementById(
+        "chatInput"
+      );
+
+
+    input.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+
+    input.focus();
+
+  }
+
+
+  // =========================================================
+  // PLANS SCROLL
+  // =========================================================
+
+  function scrollToPlans() {
+
+    document
+      .getElementById(
+        "plansSection"
+      )
+      .scrollIntoView({
+        behavior: "smooth"
+      });
+
+  }
+
+
+  // =========================================================
+  // SEND AI MESSAGE
+  // =========================================================
+
+  async function sendMessage() {
+
+    const input =
+      document.getElementById(
+        "chatInput"
+      );
+
+
+    const message =
+      input.value.trim();
+
+
+    if (!message)
+      return;
+
+
+    /*
+      First check the local token.
+    */
+
+    if (!token) {
+
+      addMsg(
+        "برای گفتگو با ابزارک ابتدا وارد حساب شو یا ثبت‌نام کن.",
+        "system"
+      );
+
+      openModal("login");
+
+      return;
+
+    }
+
+
+    addMsg(
+      message,
+      "user"
+    );
+
+
     input.value = "";
 
-    const thinking = document.createElement("div");
-    thinking.className = "msg ai";
-    thinking.textContent = "در حال تایپ...";
-    document.getElementById("chatLog").appendChild(thinking);
-    document.getElementById("chatLog").scrollTop = document.getElementById("chatLog").scrollHeight;
+
+    const thinking =
+      document.createElement(
+        "div"
+      );
+
+
+    thinking.className =
+      "msg ai";
+
+
+    thinking.textContent =
+      "در حال تایپ...";
+
+
+    document
+      .getElementById("chatLog")
+      .appendChild(
+        thinking
+      );
+
+
+    document
+      .getElementById("chatLog")
+      .scrollTop =
+        document
+          .getElementById("chatLog")
+          .scrollHeight;
+
 
     try {
-      const data = await api("/api/ai/chat", { method: "POST", body: JSON.stringify({ message }) });
-      thinking.textContent = data.reply;
+
+      const data =
+        await api(
+          "/api/ai/chat",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                message
+              })
+          }
+        );
+
+
+      thinking.textContent =
+        data.reply ||
+        "پاسخی دریافت نشد.";
+
+
     } catch (e) {
-      thinking.textContent = "خطا: " + e.message;
+
+      console.error(
+        "ABZARAK AI ERROR:",
+        e
+      );
+
+
+      /*
+        فقط در صورت 401، نشست را پاک می‌کنیم.
+      */
+
+      if (
+        Number(e.status) === 401
+      ) {
+
+        token = null;
+
+        currentUser = null;
+
+        localStorage.removeItem(
+          "abzarak_token"
+        );
+
+        updateNav();
+
+
+        thinking.textContent =
+          "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.";
+
+
+        setTimeout(
+          () => openModal("login"),
+          300
+        );
+
+
+      } else {
+
+        thinking.textContent =
+          "خطا: " +
+          e.message;
+
+      }
+
     }
+
   }
+
+
+  // =========================================================
+  // LOAD PLANS
+  // =========================================================
 
   async function loadPlans() {
-    const grid = document.getElementById("plansGrid");
+
+    const grid =
+      document.getElementById(
+        "plansGrid"
+      );
+
+
     try {
-      const data = await api("/api/plans");
+
+      const data =
+        await api(
+          "/api/plans"
+        );
+
+
       grid.innerHTML = "";
-      (data.plans || []).forEach((plan, i) => {
-        const card = document.createElement("div");
-        card.className = "card plan-card" + (i === 2 ? " featured" : "");
-        card.innerHTML =
-          "<h3>" + plan.name + "</h3>" +
-          "<div class='plan-price'>" + plan.price_toman.toLocaleString("fa-IR") + " تومان <small>/ ماه</small></div>" +
-          "<ul>" + plan.features.map(f => "<li>" + f + "</li>").join("") + "</ul>" +
-          "<button class='btn primary block' onclick='buyPlan(\\"" + plan.id + "\\")'>خرید این پلن</button>";
-        grid.appendChild(card);
-      });
+
+
+      (data.plans || [])
+        .forEach(
+          (plan, i) => {
+
+            const card =
+              document.createElement(
+                "div"
+              );
+
+
+            card.className =
+              "card plan-card" +
+              (
+                i === 2
+                  ? " featured"
+                  : ""
+              );
+
+
+            const features =
+              Array.isArray(
+                plan.features
+              )
+                ? plan.features
+                : [];
+
+
+            card.innerHTML =
+              "<h3>" +
+              escapeHtml(
+                plan.name
+              ) +
+              "</h3>" +
+
+              "<div class='plan-price'>" +
+              Number(
+                plan.price_toman || 0
+              ).toLocaleString("fa-IR") +
+              " تومان <small>/ ماه</small></div>" +
+
+              "<ul>" +
+              features
+                .map(
+                  f =>
+                    "<li>" +
+                    escapeHtml(
+                      String(f)
+                    ) +
+                    "</li>"
+                )
+                .join("") +
+              "</ul>" +
+
+              "<button class='btn primary block' " +
+              "onclick='buyPlan(" +
+              JSON.stringify(
+                plan.id
+              ) +
+              ")'>" +
+              "خرید این پلن" +
+              "</button>";
+
+
+            grid.appendChild(
+              card
+            );
+
+          }
+        );
+
+
     } catch (e) {
-      grid.innerHTML = "<div class='msg system' style='align-self:center;'>بارگذاری پلن‌ها ناموفق بود.</div>";
+
+      console.error(
+        "LOAD PLANS ERROR:",
+        e
+      );
+
+
+      grid.innerHTML =
+        "<div class='msg system' style='align-self:center;'>" +
+        "بارگذاری پلن‌ها ناموفق بود." +
+        "</div>";
+
     }
+
   }
 
-  async function buyPlan(planId) {
-    if (!token) { openModal("login"); return; }
-    try {
-      const data = await api("/api/payment/request", { method: "POST", body: JSON.stringify({ planId }) });
-      if (data.payment_url) window.location.href = data.payment_url;
-    } catch (e) {
-      alert(e.message);
-    }
+
+  // =========================================================
+  // HTML ESCAPE
+  // =========================================================
+
+  function escapeHtml(value) {
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
   }
+
+
+  // =========================================================
+  // BUY PLAN
+  // =========================================================
+
+  async function buyPlan(
+    planId
+  ) {
+
+    if (!token) {
+
+      openModal("login");
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await api(
+          "/api/payment/request",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify({
+                planId
+              })
+          }
+        );
+
+
+      if (
+        data.payment_url
+      ) {
+
+        window.location.href =
+          data.payment_url;
+
+      }
+
+    } catch (e) {
+
+      alert(
+        e.message
+      );
+
+    }
+
+  }
+
+
+  // =========================================================
+  // STARTUP
+  // =========================================================
 
   loadMe();
+
   loadPlans();
 
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("payment") === "success") {
-    setTimeout(() => alert("پرداخت با موفقیت انجام شد! اشتراک شما فعال است."), 300);
-  } else if (params.get("payment") === "failed" || params.get("payment") === "error") {
-    setTimeout(() => alert("پرداخت ناموفق بود. لطفاً دوباره تلاش کنید."), 300);
-  } else if (params.get("payment") === "cancel") {
-    setTimeout(() => alert("پرداخت لغو شد."), 300);
+
+  // =========================================================
+  // PAYMENT RESULT
+  // =========================================================
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  if (
+    params.get("payment") ===
+    "success"
+  ) {
+
+    setTimeout(
+      () =>
+        alert(
+          "پرداخت با موفقیت انجام شد! اشتراک شما فعال است."
+        ),
+      300
+    );
+
+  } else if (
+    params.get("payment") ===
+      "failed" ||
+    params.get("payment") ===
+      "error"
+  ) {
+
+    setTimeout(
+      () =>
+        alert(
+          "پرداخت ناموفق بود. لطفاً دوباره تلاش کنید."
+        ),
+      300
+    );
+
+  } else if (
+    params.get("payment") ===
+    "cancel"
+  ) {
+
+    setTimeout(
+      () =>
+        alert(
+          "پرداخت لغو شد."
+        ),
+      300
+    );
+
   }
+
 </script>
 
 </body>
 </html>`;
 
 }
+
+
 // =============================================================
-// ABZARAK AI — BACKEND API
-// Auth / D1 / AI / Plans / Resend / Admin / Withdrawals
+// ABZARAK AI — BACKEND
 // =============================================================
 
 const FREE_DAILY_LIMIT = 10;
 
+
 const PLAN_PRICES = {
+
   basic: 400000,
+
   standard: 1000000,
+
   pro: 2000000,
+
   special: 3000000
+
 };
+
 
 const PLAN_USD = {
+
   basic: 5,
+
   standard: 10,
+
   pro: 15,
+
   special: 20
+
 };
+
 
 const PLAN_NAMES = {
+
   basic: "Basic",
+
   standard: "Standard",
+
   pro: "Pro",
+
   special: "Special"
+
 };
 
+
 const PLAN_FEATURES = {
+
   basic: [
     "استفاده بیشتر از هوش مصنوعی",
     "گفتگو با دستیار هوشمند",
     "پشتیبانی چندزبانه"
   ],
+
   standard: [
     "استفاده گسترده‌تر از هوش مصنوعی",
     "گفتگو و تولید محتوا",
     "ترجمه و بازنویسی",
     "پشتیبانی چندزبانه"
   ],
+
   pro: [
     "استفاده حرفه‌ای از هوش مصنوعی",
     "تولید و بازنویسی متن",
@@ -651,28 +2048,59 @@ const PLAN_FEATURES = {
     "ایده‌پردازی و خلاصه‌سازی",
     "دسترسی گسترده"
   ],
+
   special: [
     "استفاده ویژه از هوش مصنوعی",
     "تمام امکانات حرفه‌ای",
     "استفاده گسترده",
     "پشتیبانی چندزبانه"
   ]
+
 };
+
+
+// =============================================================
+// AUTH SECRET
+//
+// JWT_SECRET should be configured as a Cloudflare secret.
+// ADMIN_PASSWORD is only a fallback for compatibility.
+// =============================================================
+
+function getAuthSecret(env) {
+
+  const secret =
+    String(
+      env.JWT_SECRET ||
+      env.ADMIN_PASSWORD ||
+      "abzarak-default-secret"
+    ).trim();
+
+
+  return secret;
+
+}
 
 
 // =============================================================
 // RESPONSE HELPERS
 // =============================================================
 
-function json(data, status = 200) {
+function json(
+  data,
+  status = 200
+) {
 
   return new Response(
     JSON.stringify(data),
     {
       status,
+
       headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store"
+        "Content-Type":
+          "application/json; charset=utf-8",
+
+        "Cache-Control":
+          "no-store"
       }
     }
   );
@@ -680,15 +2108,22 @@ function json(data, status = 200) {
 }
 
 
-function html(data, status = 200) {
+function html(
+  data,
+  status = 200
+) {
 
   return new Response(
     data,
     {
       status,
+
       headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store"
+        "Content-Type":
+          "text/html; charset=utf-8",
+
+        "Cache-Control":
+          "no-store"
       }
     }
   );
@@ -696,30 +2131,43 @@ function html(data, status = 200) {
 }
 
 
-function cors(response) {
+function cors(
+  response
+) {
 
-  const headers = new Headers(response.headers);
+  const headers =
+    new Headers(
+      response.headers
+    );
+
 
   headers.set(
     "Access-Control-Allow-Origin",
     "*"
   );
 
+
   headers.set(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization"
   );
+
 
   headers.set(
     "Access-Control-Allow-Methods",
     "GET,POST,PUT,DELETE,OPTIONS"
   );
 
+
   return new Response(
     response.body,
     {
-      status: response.status,
-      statusText: response.statusText,
+      status:
+        response.status,
+
+      statusText:
+        response.statusText,
+
       headers
     }
   );
@@ -728,10 +2176,12 @@ function cors(response) {
 
 
 // =============================================================
-// JSON BODY
+// BODY
 // =============================================================
 
-async function bodyJson(request) {
+async function bodyJson(
+  request
+) {
 
   try {
 
@@ -750,15 +2200,28 @@ async function bodyJson(request) {
 // RANDOM
 // =============================================================
 
-function randomHex(bytes = 32) {
+function randomHex(
+  bytes = 32
+) {
 
   const data =
-    new Uint8Array(bytes);
+    new Uint8Array(
+      bytes
+    );
 
-  crypto.getRandomValues(data);
 
-  return Array.from(data)
-    .map(x => x.toString(16).padStart(2, "0"))
+  crypto.getRandomValues(
+    data
+  );
+
+
+  return Array
+    .from(data)
+    .map(
+      x =>
+        x.toString(16)
+          .padStart(2, "0")
+    )
     .join("");
 
 }
@@ -769,10 +2232,15 @@ function randomCode() {
   const data =
     new Uint32Array(1);
 
-  crypto.getRandomValues(data);
+
+  crypto.getRandomValues(
+    data
+  );
+
 
   return String(
-    100000 + (data[0] % 900000)
+    100000 +
+    (data[0] % 900000)
   );
 
 }
@@ -782,10 +2250,15 @@ function randomCode() {
 // PASSWORD HASH
 // =============================================================
 
-async function hashPassword(password) {
+async function hashPassword(
+  password
+) {
 
   const data =
-    new TextEncoder().encode(password);
+    new TextEncoder().encode(
+      password
+    );
+
 
   const hash =
     await crypto.subtle.digest(
@@ -793,11 +2266,15 @@ async function hashPassword(password) {
       data
     );
 
-  return Array.from(
-    new Uint8Array(hash)
-  )
-    .map(x =>
-      x.toString(16).padStart(2, "0")
+
+  return Array
+    .from(
+      new Uint8Array(hash)
+    )
+    .map(
+      x =>
+        x.toString(16)
+          .padStart(2, "0")
     )
     .join("");
 
@@ -805,24 +2282,35 @@ async function hashPassword(password) {
 
 
 // =============================================================
-// JWT-LIKE TOKEN
+// BASE64URL
 // =============================================================
 
-function base64url(data) {
+function base64url(
+  data
+) {
 
   let binary = "";
 
-  if (typeof data === "string") {
 
-    binary = btoa(data);
+  if (
+    typeof data ===
+    "string"
+  ) {
+
+    binary =
+      btoa(data);
 
   } else {
 
-    binary = btoa(
-      String.fromCharCode(...data)
-    );
+    binary =
+      btoa(
+        String.fromCharCode(
+          ...data
+        )
+      );
 
   }
+
 
   return binary
     .replaceAll("+", "-")
@@ -832,20 +2320,33 @@ function base64url(data) {
 }
 
 
-function decodeBase64url(value) {
+function decodeBase64url(
+  value
+) {
 
   value =
     value
       .replaceAll("-", "+")
       .replaceAll("_", "/");
 
-  while (value.length % 4)
+
+  while (
+    value.length % 4
+  ) {
+
     value += "=";
+
+  }
+
 
   return atob(value);
 
 }
 
+
+// =============================================================
+// HMAC
+// =============================================================
 
 async function hmacSign(
   value,
@@ -855,28 +2356,44 @@ async function hmacSign(
   const key =
     await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode(secret),
+
+      new TextEncoder()
+        .encode(secret),
+
       {
         name: "HMAC",
         hash: "SHA-256"
       },
+
       false,
+
       ["sign"]
     );
+
 
   const signature =
     await crypto.subtle.sign(
       "HMAC",
+
       key,
-      new TextEncoder().encode(value)
+
+      new TextEncoder()
+        .encode(value)
     );
 
+
   return base64url(
-    new Uint8Array(signature)
+    new Uint8Array(
+      signature
+    )
   );
 
 }
 
+
+// =============================================================
+// TOKEN
+// =============================================================
 
 async function createToken(
   payload,
@@ -885,8 +2402,11 @@ async function createToken(
 
   const encoded =
     base64url(
-      JSON.stringify(payload)
+      JSON.stringify(
+        payload
+      )
     );
+
 
   const signature =
     await hmacSign(
@@ -894,7 +2414,12 @@ async function createToken(
       secret
     );
 
-  return encoded + "." + signature;
+
+  return (
+    encoded +
+    "." +
+    signature
+  );
 
 }
 
@@ -907,17 +2432,24 @@ async function verifyToken(
   if (!token)
     return null;
 
+
   const parts =
     token.split(".");
 
-  if (parts.length !== 2)
+
+  if (
+    parts.length !== 2
+  )
     return null;
+
 
   const payloadPart =
     parts[0];
 
+
   const signature =
     parts[1];
+
 
   const expected =
     await hmacSign(
@@ -925,24 +2457,34 @@ async function verifyToken(
       secret
     );
 
-  if (signature !== expected)
+
+  if (
+    signature !==
+    expected
+  )
     return null;
+
 
   try {
 
     const payload =
       JSON.parse(
-        decodeBase64url(payloadPart)
+        decodeBase64url(
+          payloadPart
+        )
       );
+
 
     if (
       payload.exp &&
-      Date.now() > payload.exp
+      Date.now() >
+        Number(payload.exp)
     ) {
 
       return null;
 
     }
+
 
     return payload;
 
@@ -956,46 +2498,61 @@ async function verifyToken(
 
 
 // =============================================================
-// TOKEN EXTRACTION
+// BEARER
 // =============================================================
 
-function bearerToken(request) {
+function bearerToken(
+  request
+) {
 
   const auth =
     request.headers.get(
       "Authorization"
     );
 
+
   if (!auth)
     return "";
 
+
   if (
-    !auth.toLowerCase()
+    !auth
+      .toLowerCase()
       .startsWith("bearer ")
   )
     return "";
 
-  return auth.slice(7).trim();
+
+  return auth
+    .slice(7)
+    .trim();
 
 }
 
 
 // =============================================================
-// DATABASE INITIALIZATION
+// DATABASE
 // =============================================================
 
 let dbReady = false;
 
 
-async function initDatabase(env) {
+async function initDatabase(
+  env
+) {
 
-  if (!env.DB)
+  if (!env.DB) {
+
     throw new Error(
       "D1 binding DB تنظیم نشده است."
     );
 
+  }
+
+
   if (dbReady)
     return;
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS users (
@@ -1091,7 +2648,10 @@ async function initDatabase(env) {
   `).run();
 
 
-  for (const id of Object.keys(PLAN_PRICES)) {
+  for (
+    const id of
+    Object.keys(PLAN_PRICES)
+  ) {
 
     const exists =
       await env.DB.prepare(
@@ -1099,6 +2659,7 @@ async function initDatabase(env) {
       )
         .bind(id)
         .first();
+
 
     if (!exists) {
 
@@ -1123,12 +2684,14 @@ async function initDatabase(env) {
       await env.DB.prepare(`
         UPDATE plans
         SET
+          name = ?,
           price_toman = ?,
           price_usd = ?,
           features = ?
         WHERE id = ?
       `)
         .bind(
+          PLAN_NAMES[id],
           PLAN_PRICES[id],
           PLAN_USD[id],
           JSON.stringify(
@@ -1141,6 +2704,7 @@ async function initDatabase(env) {
     }
 
   }
+
 
   dbReady = true;
 
@@ -1159,13 +2723,14 @@ async function requireUser(
   const token =
     bearerToken(request);
 
+
   if (!token)
     return null;
 
+
   const secret =
-    env.JWT_SECRET ||
-    env.ADMIN_PASSWORD ||
-    "abzarak-default-secret";
+    getAuthSecret(env);
+
 
   const payload =
     await verifyToken(
@@ -1173,8 +2738,13 @@ async function requireUser(
       secret
     );
 
-  if (!payload || !payload.userId)
+
+  if (
+    !payload ||
+    !payload.userId
+  )
     return null;
+
 
   const user =
     await env.DB.prepare(`
@@ -1182,8 +2752,11 @@ async function requireUser(
       FROM users
       WHERE id = ?
     `)
-      .bind(payload.userId)
+      .bind(
+        payload.userId
+      )
       .first();
+
 
   return user || null;
 
@@ -1202,19 +2775,21 @@ async function requireAdmin(
   const token =
     bearerToken(request);
 
+
   if (!token)
     return false;
 
+
   const secret =
-    env.JWT_SECRET ||
-    env.ADMIN_PASSWORD ||
-    "abzarak-default-secret";
+    getAuthSecret(env);
+
 
   const payload =
     await verifyToken(
       token,
       secret
     );
+
 
   return !!(
     payload &&
@@ -1261,6 +2836,7 @@ async function getUsage(
   const date =
     today();
 
+
   let row =
     await env.DB.prepare(`
       SELECT *
@@ -1274,25 +2850,62 @@ async function getUsage(
       )
       .first();
 
+
   if (!row) {
 
-    await env.DB.prepare(`
-      INSERT INTO usage
-      (id,user_id,usage_date,used)
-      VALUES (?,?,?,0)
-    `)
-      .bind(
-        randomHex(16),
-        userId,
-        date
-      )
-      .run();
+    try {
 
-    row = {
-      used: 0
-    };
+      await env.DB.prepare(`
+        INSERT INTO usage
+        (id,user_id,usage_date,used)
+        VALUES (?,?,?,0)
+      `)
+        .bind(
+          randomHex(16),
+          userId,
+          date
+        )
+        .run();
+
+    } catch (error) {
+
+      /*
+        اگر درخواست همزمان باعث UNIQUE conflict شد،
+        دوباره رکورد موجود را می‌خوانیم.
+      */
+
+      console.error(
+        "USAGE INSERT:",
+        error
+      );
+
+    }
+
+
+    row =
+      await env.DB.prepare(`
+        SELECT *
+        FROM usage
+        WHERE user_id = ?
+        AND usage_date = ?
+      `)
+        .bind(
+          userId,
+          date
+        )
+        .first();
+
+
+    if (!row) {
+
+      row = {
+        used: 0
+      };
+
+    }
 
   }
+
 
   return row;
 
@@ -1300,7 +2913,7 @@ async function getUsage(
 
 
 // =============================================================
-// ACTIVE SUBSCRIPTION
+// SUBSCRIPTION
 // =============================================================
 
 async function getSubscription(
@@ -1335,7 +2948,7 @@ async function getSubscription(
 
 
 // =============================================================
-// SEND RESEND EMAIL
+// RESEND
 // =============================================================
 
 async function sendRecoveryEmail(
@@ -1359,6 +2972,7 @@ async function sendRecoveryEmail(
   const from =
     env.RESEND_FROM_EMAIL;
 
+
   if (!from) {
 
     return {
@@ -1371,145 +2985,168 @@ async function sendRecoveryEmail(
   }
 
 
-  const response =
-    await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
+  try {
 
-        headers: {
-          "Authorization":
-            `Bearer ${env.RESEND_API_KEY}`,
+    const response =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
+          method: "POST",
 
-          "Content-Type":
-            "application/json"
-        },
+          headers: {
+            "Authorization":
+              "Bearer " +
+              env.RESEND_API_KEY,
 
-        body:
-          JSON.stringify({
+            "Content-Type":
+              "application/json"
+          },
 
-            from,
+          body:
+            JSON.stringify({
 
-            to: [email],
+              from,
 
-            subject:
-              "کد بازیابی رمز عبور ابزارک",
+              to: [
+                email
+              ],
 
-            html: `
-              <!doctype html>
-              <html lang="fa" dir="rtl">
-              <head>
-                <meta charset="UTF-8">
-              </head>
-              <body style="
-                margin:0;
-                padding:30px;
-                background:#f6f8ff;
-                font-family:Tahoma,Arial,sans-serif;
-                direction:rtl;
-              ">
+              subject:
+                "کد بازیابی رمز عبور ابزارک",
 
-                <div style="
-                  max-width:560px;
-                  margin:auto;
-                  background:#ffffff;
-                  border-radius:20px;
-                  padding:30px;
-                  box-shadow:0 10px 40px rgba(15,23,42,.08);
-                ">
+              html: `
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+</head>
 
-                  <h2 style="
-                    color:#1e1b4b;
-                    margin-top:0;
-                  ">
-                    🔐 بازیابی رمز عبور ابزارک
-                  </h2>
+<body style="
+margin:0;
+padding:30px;
+background:#f6f8ff;
+font-family:Tahoma,Arial,sans-serif;
+direction:rtl;
+">
 
-                  <p style="
-                    color:#475569;
-                    line-height:2;
-                  ">
-                    کد بازیابی رمز عبور شما:
-                  </p>
+<div style="
+max-width:560px;
+margin:auto;
+background:#ffffff;
+border-radius:20px;
+padding:30px;
+box-shadow:0 10px 40px rgba(15,23,42,.08);
+">
 
-                  <div style="
-                    font-size:36px;
-                    font-weight:900;
-                    letter-spacing:8px;
-                    text-align:center;
-                    padding:20px;
-                    border-radius:16px;
-                    background:#eef2ff;
-                    color:#3730a3;
-                  ">
-                    ${code}
-                  </div>
+<h2 style="
+color:#1e1b4b;
+margin-top:0;
+">
+🔐 بازیابی رمز عبور ابزارک
+</h2>
 
-                  <p style="
-                    color:#64748b;
-                    line-height:2;
-                  ">
-                    این کد تا ۱۵ دقیقه معتبر است.
-                  </p>
+<p style="
+color:#475569;
+line-height:2;
+">
+کد بازیابی رمز عبور شما:
+</p>
 
-                  <p style="
-                    color:#64748b;
-                    line-height:2;
-                  ">
-                    اگر این درخواست توسط شما انجام نشده است،
-                    این ایمیل را نادیده بگیرید.
-                  </p>
+<div style="
+font-size:36px;
+font-weight:900;
+letter-spacing:8px;
+text-align:center;
+padding:20px;
+border-radius:16px;
+background:#eef2ff;
+color:#3730a3;
+">
+${code}
+</div>
 
-                  <hr style="
-                    border:0;
-                    border-top:1px solid #e5e7eb;
-                    margin:25px 0;
-                  ">
+<p style="
+color:#64748b;
+line-height:2;
+">
+این کد تا ۱۵ دقیقه معتبر است.
+</p>
 
-                  <div style="
-                    text-align:center;
-                    color:#64748b;
-                  ">
-                    🤖 Abzarak AI
-                  </div>
+<p style="
+color:#64748b;
+line-height:2;
+">
+اگر این درخواست توسط شما انجام نشده است،
+این ایمیل را نادیده بگیرید.
+</p>
 
-                </div>
+<hr style="
+border:0;
+border-top:1px solid #e5e7eb;
+margin:25px 0;
+">
 
-              </body>
-              </html>
-            `
+<div style="
+text-align:center;
+color:#64748b;
+">
+🤖 Abzarak AI
+</div>
 
-          })
+</div>
 
-      }
-    );
+</body>
+</html>
+`
+
+            })
+
+        }
+      );
 
 
-  if (!response.ok) {
+    if (!response.ok) {
 
-    let details = "";
+      let details = "";
 
-    try {
+      try {
 
-      details =
-        await response.text();
+        details =
+          await response.text();
 
-    } catch {}
+      } catch {}
+
+
+      return {
+        ok: false,
+        status:
+          response.status,
+        error:
+          "ارسال ایمیل ناموفق بود",
+        details
+      };
+
+    }
+
+
+    return {
+      ok: true
+    };
+
+
+  } catch (error) {
 
     return {
       ok: false,
-      status: response.status,
+      status: 502,
       error:
-        "ارسال ایمیل ناموفق بود",
-      details
+        "ارتباط با سرویس Resend ناموفق بود.",
+      details:
+        error?.message ||
+        String(error)
     };
 
   }
-
-
-  return {
-    ok: true
-  };
 
 }
 
@@ -1524,41 +3161,67 @@ async function signupApi(
 ) {
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const name =
-    String(body.name || "").trim();
+    String(
+      body.name || ""
+    ).trim();
+
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
+
   const password =
-    String(body.password || "");
+    String(
+      body.password || ""
+    );
+
 
   if (!name)
     return json(
-      { error: "نام را وارد کنید." },
+      {
+        error:
+          "نام را وارد کنید."
+      },
       400
     );
 
+
   if (!email)
     return json(
-      { error: "ایمیل را وارد کنید." },
+      {
+        error:
+          "ایمیل را وارد کنید."
+      },
       400
     );
+
 
   if (
     !email.includes("@") ||
     !email.includes(".")
   )
     return json(
-      { error: "ایمیل معتبر نیست." },
+      {
+        error:
+          "ایمیل معتبر نیست."
+      },
       400
     );
 
-  if (password.length < 6)
+
+  if (
+    password.length < 6
+  )
     return json(
       {
         error:
@@ -1577,6 +3240,7 @@ async function signupApi(
       .bind(email)
       .first();
 
+
   if (existing)
     return json(
       {
@@ -1590,8 +3254,12 @@ async function signupApi(
   const id =
     randomHex(16);
 
+
   const passwordHash =
-    await hashPassword(password);
+    await hashPassword(
+      password
+    );
+
 
   await env.DB.prepare(`
     INSERT INTO users
@@ -1609,18 +3277,19 @@ async function signupApi(
 
 
   const secret =
-    env.JWT_SECRET ||
-    env.ADMIN_PASSWORD ||
-    "abzarak-default-secret";
+    getAuthSecret(env);
+
 
   const token =
     await createToken(
       {
         userId: id,
+
         exp:
           Date.now() +
           30 * 86400000
       },
+
       secret
     );
 
@@ -1642,15 +3311,23 @@ async function loginApi(
 ) {
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
+
   const password =
-    String(body.password || "");
+    String(
+      body.password || ""
+    );
 
 
   const user =
@@ -1674,7 +3351,10 @@ async function loginApi(
 
 
   const hash =
-    await hashPassword(password);
+    await hashPassword(
+      password
+    );
+
 
   if (
     hash !==
@@ -1690,18 +3370,20 @@ async function loginApi(
 
 
   const secret =
-    env.JWT_SECRET ||
-    env.ADMIN_PASSWORD ||
-    "abzarak-default-secret";
+    getAuthSecret(env);
+
 
   const token =
     await createToken(
       {
-        userId: user.id,
+        userId:
+          user.id,
+
         exp:
           Date.now() +
           30 * 86400000
       },
+
       secret
     );
 
@@ -1728,6 +3410,7 @@ async function meApi(
       env
     );
 
+
   if (!user)
     return json(
       {
@@ -1738,18 +3421,55 @@ async function meApi(
     );
 
 
-  const subscription =
-    await getSubscription(
-      env,
-      user.id
-    );
+  /*
+    User is already authenticated.
+    Subscription and usage are optional response data.
+    If one of them has an old DB/schema issue,
+    authentication itself should not be reported as logout.
+  */
+
+  let subscription =
+    null;
+
+  let usage = {
+    used: 0
+  };
 
 
-  const usage =
-    await getUsage(
-      env,
-      user.id
+  try {
+
+    subscription =
+      await getSubscription(
+        env,
+        user.id
+      );
+
+  } catch (error) {
+
+    console.error(
+      "ME SUBSCRIPTION ERROR:",
+      error
     );
+
+  }
+
+
+  try {
+
+    usage =
+      await getUsage(
+        env,
+        user.id
+      );
+
+  } catch (error) {
+
+    console.error(
+      "ME USAGE ERROR:",
+      error
+    );
+
+  }
 
 
   let subscriptionData =
@@ -1757,6 +3477,24 @@ async function meApi(
 
 
   if (subscription) {
+
+    let features = [];
+
+
+    try {
+
+      features =
+        JSON.parse(
+          subscription.features ||
+          "[]"
+        );
+
+    } catch {
+
+      features = [];
+
+    }
+
 
     subscriptionData = {
 
@@ -1767,17 +3505,15 @@ async function meApi(
         subscription.expires_at,
 
       plan: {
+
         id:
           subscription.plan_id,
 
         name:
           subscription.plan_name,
 
-        features:
-          JSON.parse(
-            subscription.features ||
-            "[]"
-          )
+        features
+
       }
 
     };
@@ -1788,23 +3524,38 @@ async function meApi(
   return json({
 
     user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      balance: user.balance
+
+      id:
+        user.id,
+
+      name:
+        user.name,
+
+      email:
+        user.email,
+
+      balance:
+        Number(
+          user.balance || 0
+        )
+
     },
 
     subscription:
       subscriptionData,
 
     usage: {
+
       used:
-        Number(usage.used || 0),
+        Number(
+          usage?.used || 0
+        ),
 
       limit:
         subscription
           ? 999999999
           : FREE_DAILY_LIMIT
+
     }
 
   });
@@ -1822,10 +3573,15 @@ async function forgotPasswordApi(
 ) {
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
@@ -1850,11 +3606,6 @@ async function forgotPasswordApi(
       .first();
 
 
-  /*
-    برای جلوگیری از افشای وجود حساب،
-    اگر ایمیل وجود نداشته باشد پاسخ عمومی می‌دهیم.
-  */
-
   if (!user) {
 
     return json({
@@ -1868,8 +3619,12 @@ async function forgotPasswordApi(
   const code =
     randomCode();
 
+
   const codeHash =
-    await hashPassword(code);
+    await hashPassword(
+      code
+    );
+
 
   const id =
     randomHex(16);
@@ -1881,7 +3636,9 @@ async function forgotPasswordApi(
     WHERE user_id = ?
       AND used = 0
   `)
-    .bind(user.id)
+    .bind(
+      user.id
+    )
     .run();
 
 
@@ -1894,10 +3651,12 @@ async function forgotPasswordApi(
       id,
       user.id,
       codeHash,
+
       new Date(
         Date.now() +
         15 * 60 * 1000
       ).toISOString(),
+
       new Date().toISOString()
     )
     .run();
@@ -1918,10 +3677,14 @@ async function forgotPasswordApi(
         error:
           mail.error ||
           "ارسال ایمیل ناموفق بود.",
+
         details:
-          mail.details || undefined
+          mail.details ||
+          undefined
       },
-      mail.status || 500
+
+      mail.status ||
+      500
     );
 
   }
@@ -1945,22 +3708,35 @@ async function resetPasswordApi(
 ) {
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
-    String(body.email || "")
+    String(
+      body.email || ""
+    )
       .trim()
       .toLowerCase();
 
+
   const code =
-    String(body.code || "")
-      .trim();
+    String(
+      body.code || ""
+    ).trim();
+
 
   const newPassword =
-    String(body.newPassword || "");
+    String(
+      body.newPassword || ""
+    );
 
 
-  if (!email || !code)
+  if (
+    !email ||
+    !code
+  )
     return json(
       {
         error:
@@ -1970,7 +3746,9 @@ async function resetPasswordApi(
     );
 
 
-  if (newPassword.length < 6)
+  if (
+    newPassword.length < 6
+  )
     return json(
       {
         error:
@@ -2035,8 +3813,11 @@ async function resetPasswordApi(
       SET used = 1
       WHERE id = ?
     `)
-      .bind(reset.id)
+      .bind(
+        reset.id
+      )
       .run();
+
 
     return json(
       {
@@ -2050,7 +3831,9 @@ async function resetPasswordApi(
 
 
   const codeHash =
-    await hashPassword(code);
+    await hashPassword(
+      code
+    );
 
 
   if (
@@ -2089,7 +3872,9 @@ async function resetPasswordApi(
     SET used = 1
     WHERE id = ?
   `)
-    .bind(reset.id)
+    .bind(
+      reset.id
+    )
     .run();
 
 
@@ -2127,24 +3912,50 @@ async function plansApi(
 
   const plans =
     (rows.results || [])
-      .map(x => ({
+      .map(
+        x => {
 
-        id: x.id,
+          let features = [];
 
-        name: x.name,
+          try {
 
-        price_toman:
-          Number(x.price_toman),
+            features =
+              JSON.parse(
+                x.features ||
+                "[]"
+              );
 
-        price_usd:
-          Number(x.price_usd),
+          } catch {
 
-        features:
-          JSON.parse(
-            x.features || "[]"
-          )
+            features = [];
 
-      }));
+          }
+
+
+          return {
+
+            id:
+              x.id,
+
+            name:
+              x.name,
+
+            price_toman:
+              Number(
+                x.price_toman
+              ),
+
+            price_usd:
+              Number(
+                x.price_usd
+              ),
+
+            features
+
+          };
+
+        }
+      );
 
 
   return json({
@@ -2174,6 +3985,7 @@ async function aiChatApi(
       env
     );
 
+
   if (!user)
     return json(
       {
@@ -2185,7 +3997,10 @@ async function aiChatApi(
 
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const message =
     String(
@@ -2203,7 +4018,10 @@ async function aiChatApi(
     );
 
 
-  if (message.length > 12000)
+  if (
+    message.length >
+    12000
+  )
     return json(
       {
         error:
@@ -2213,30 +4031,73 @@ async function aiChatApi(
     );
 
 
-  const subscription =
-    await getSubscription(
-      env,
-      user.id
+  let subscription =
+    null;
+
+
+  try {
+
+    subscription =
+      await getSubscription(
+        env,
+        user.id
+      );
+
+  } catch (error) {
+
+    console.error(
+      "AI SUBSCRIPTION ERROR:",
+      error
+    );
+
+  }
+
+
+  let usage = {
+    used: 0
+  };
+
+
+  try {
+
+    usage =
+      await getUsage(
+        env,
+        user.id
+      );
+
+  } catch (error) {
+
+    console.error(
+      "AI USAGE ERROR:",
+      error
     );
 
 
-  const usage =
-    await getUsage(
-      env,
-      user.id
+    return json(
+      {
+        error:
+          "خطا در بررسی سهمیه حساب."
+      },
+      500
     );
+
+  }
 
 
   if (
     !subscription &&
-    Number(usage.used || 0)
-      >= FREE_DAILY_LIMIT
+    Number(
+      usage.used || 0
+    ) >=
+      FREE_DAILY_LIMIT
   ) {
 
     return json(
       {
         error:
           "سهمیه روزانه شما تمام شده است.",
+
         upgrade_required:
           true
       },
@@ -2268,27 +4129,47 @@ async function aiChatApi(
       await env.AI.run(
         "@cf/meta/llama-3.1-8b-instruct-fast",
         {
+
           messages: [
+
             {
-              role: "system",
+              role:
+                "system",
+
               content:
                 "You are Abzarak AI, a helpful multilingual AI assistant. Answer in the same language as the user whenever possible. Be clear, useful and concise."
             },
+
             {
-              role: "user",
+              role:
+                "user",
+
               content:
                 message
             }
+
           ]
+
         }
       );
 
+
   } catch (error) {
+
+    console.error(
+      "AI PROVIDER ERROR:",
+      error
+    );
+
 
     return json(
       {
         error:
-          "خطا در سرویس هوش مصنوعی."
+          "خطا در سرویس هوش مصنوعی.",
+
+        details:
+          error?.message ||
+          String(error)
       },
       500
     );
@@ -2300,14 +4181,17 @@ async function aiChatApi(
 
 
   if (
-    typeof result === "string"
+    typeof result ===
+    "string"
   ) {
 
-    reply = result;
+    reply =
+      result;
 
   } else if (
     result &&
-    typeof result.response === "string"
+    typeof result.response ===
+      "string"
   ) {
 
     reply =
@@ -2315,7 +4199,8 @@ async function aiChatApi(
 
   } else if (
     result &&
-    typeof result.result === "string"
+    typeof result.result ===
+      "string"
   ) {
 
     reply =
@@ -2342,17 +4227,28 @@ async function aiChatApi(
 
   if (!subscription) {
 
-    await env.DB.prepare(`
-      UPDATE usage
-      SET used = used + 1
-      WHERE user_id = ?
-        AND usage_date = ?
-    `)
-      .bind(
-        user.id,
-        today()
-      )
-      .run();
+    try {
+
+      await env.DB.prepare(`
+        UPDATE usage
+        SET used = used + 1
+        WHERE user_id = ?
+          AND usage_date = ?
+      `)
+        .bind(
+          user.id,
+          today()
+        )
+        .run();
+
+    } catch (error) {
+
+      console.error(
+        "USAGE UPDATE ERROR:",
+        error
+      );
+
+    }
 
   }
 
@@ -2379,6 +4275,7 @@ async function paymentRequestApi(
       env
     );
 
+
   if (!user)
     return json(
       {
@@ -2390,7 +4287,10 @@ async function paymentRequestApi(
 
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const planId =
     String(
@@ -2417,7 +4317,9 @@ async function paymentRequestApi(
 
 
   const amount =
-    PLAN_PRICES[planId];
+    PLAN_PRICES[
+      planId
+    ];
 
 
   const paymentId =
@@ -2440,12 +4342,9 @@ async function paymentRequestApi(
     .run();
 
 
-  /*
-    اگر ZARINPAL_MERCHANT_ID هنوز تنظیم نشده باشد،
-    پرداخت را فعال نمی‌کنیم تا لینک ساختگی ایجاد نشود.
-  */
-
-  if (!env.ZARINPAL_MERCHANT_ID) {
+  if (
+    !env.ZARINPAL_MERCHANT_ID
+  ) {
 
     return json(
       {
@@ -2462,10 +4361,14 @@ async function paymentRequestApi(
     env.PUBLIC_BASE_URL
       ? env.PUBLIC_BASE_URL +
         "/api/payment/verify?payment_id=" +
-        encodeURIComponent(paymentId)
+        encodeURIComponent(
+          paymentId
+        )
       : new URL(
           "/api/payment/verify?payment_id=" +
-          encodeURIComponent(paymentId),
+          encodeURIComponent(
+            paymentId
+          ),
           request.url
         ).toString();
 
@@ -2476,7 +4379,9 @@ async function paymentRequestApi(
       await fetch(
         "https://payment.zarinpal.com/pg/v4/payment/request.json",
         {
-          method: "POST",
+
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
@@ -2492,17 +4397,22 @@ async function paymentRequestApi(
               amount,
 
               description:
-                `Abzarak AI - ${PLAN_NAMES[planId]}`,
+                "Abzarak AI - " +
+                PLAN_NAMES[
+                  planId
+                ],
 
               callback_url:
                 callback,
 
               metadata: {
+
                 email:
                   user.email,
 
                 mobile:
                   ""
+
               }
 
             })
@@ -2525,6 +4435,7 @@ async function paymentRequestApi(
         {
           error:
             "ایجاد درخواست پرداخت ناموفق بود.",
+
           details:
             data.errors ||
             data.data ||
@@ -2564,12 +4475,16 @@ async function paymentRequestApi(
     });
 
 
-  } catch {
+  } catch (error) {
 
     return json(
       {
         error:
-          "ارتباط با درگاه پرداخت ناموفق بود."
+          "ارتباط با درگاه پرداخت ناموفق بود.",
+
+        details:
+          error?.message ||
+          String(error)
       },
       502
     );
@@ -2589,17 +4504,22 @@ async function paymentVerifyApi(
 ) {
 
   const url =
-    new URL(request.url);
+    new URL(
+      request.url
+    );
+
 
   const paymentId =
     url.searchParams.get(
       "payment_id"
     );
 
+
   const authority =
     url.searchParams.get(
       "Authority"
     );
+
 
   const status =
     url.searchParams.get(
@@ -2626,7 +4546,9 @@ async function paymentVerifyApi(
       FROM payments
       WHERE id = ?
     `)
-      .bind(paymentId)
+      .bind(
+        paymentId
+      )
       .first();
 
 
@@ -2653,7 +4575,9 @@ async function paymentVerifyApi(
       SET status = 'cancelled'
       WHERE id = ?
     `)
-      .bind(paymentId)
+      .bind(
+        paymentId
+      )
       .run();
 
 
@@ -2668,7 +4592,9 @@ async function paymentVerifyApi(
   }
 
 
-  if (!env.ZARINPAL_MERCHANT_ID) {
+  if (
+    !env.ZARINPAL_MERCHANT_ID
+  ) {
 
     return Response.redirect(
       new URL(
@@ -2687,7 +4613,9 @@ async function paymentVerifyApi(
       await fetch(
         "https://payment.zarinpal.com/pg/v4/payment/verify.json",
         {
-          method: "POST",
+
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
@@ -2709,8 +4637,8 @@ async function paymentVerifyApi(
 
             })
 
-          }
-        );
+        }
+      );
 
 
     const data =
@@ -2749,7 +4677,9 @@ async function paymentVerifyApi(
         SET status = 'failed'
         WHERE id = ?
       `)
-        .bind(paymentId)
+        .bind(
+          paymentId
+        )
         .run();
 
 
@@ -2783,7 +4713,9 @@ async function paymentVerifyApi(
         .first();
 
 
-    if (existingSubscription) {
+    if (
+      existingSubscription
+    ) {
 
       await env.DB.prepare(`
         UPDATE subscriptions
@@ -2838,7 +4770,13 @@ async function paymentVerifyApi(
     );
 
 
-  } catch {
+  } catch (error) {
+
+    console.error(
+      "PAYMENT VERIFY ERROR:",
+      error
+    );
+
 
     return Response.redirect(
       new URL(
@@ -2868,6 +4806,7 @@ async function withdrawalApi(
       env
     );
 
+
   if (!user)
     return json(
       {
@@ -2879,19 +4818,28 @@ async function withdrawalApi(
 
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const amount =
-    Number(body.amount || 0);
+    Number(
+      body.amount || 0
+    );
+
 
   const method =
     String(
-      body.method || "bank"
+      body.method ||
+      "bank"
     );
+
 
   const destination =
     String(
-      body.destination || ""
+      body.destination ||
+      ""
     ).trim();
 
 
@@ -2920,7 +4868,9 @@ async function withdrawalApi(
 
   if (
     amount >
-    Number(user.balance || 0)
+    Number(
+      user.balance || 0
+    )
   )
     return json(
       {
@@ -2934,11 +4884,6 @@ async function withdrawalApi(
   const withdrawalId =
     randomHex(16);
 
-
-  /*
-    مبلغ در زمان ثبت درخواست از موجودی
-    رزرو می‌شود تا درخواست تکراری ایجاد نشود.
-  */
 
   const result =
     await env.DB.prepare(`
@@ -3007,6 +4952,7 @@ async function myWithdrawalsApi(
       env
     );
 
+
   if (!user)
     return json(
       {
@@ -3030,7 +4976,9 @@ async function myWithdrawalsApi(
       WHERE user_id = ?
       ORDER BY created_at DESC
     `)
-      .bind(user.id)
+      .bind(
+        user.id
+      )
       .all();
 
 
@@ -3052,7 +5000,10 @@ async function adminLoginApi(
 ) {
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const password =
     String(
@@ -3084,18 +5035,19 @@ async function adminLoginApi(
 
 
   const secret =
-    env.JWT_SECRET ||
-    env.ADMIN_PASSWORD;
+    getAuthSecret(env);
 
 
   const token =
     await createToken(
       {
         admin: true,
+
         exp:
           Date.now() +
           12 * 60 * 60 * 1000
       },
+
       secret
     );
 
@@ -3191,35 +5143,38 @@ async function adminPaymentsApi(
 
 
   return json({
+
     payments:
       (rows.results || [])
-        .map(x => ({
+        .map(
+          x => ({
 
-          id:
-            x.id,
+            id:
+              x.id,
 
-          email:
-            x.email,
+            email:
+              x.email,
 
-          plan_id:
-            x.plan_id,
+            plan_id:
+              x.plan_id,
 
-          amount_toman:
-            x.amount_toman,
+            amount_toman:
+              x.amount_toman,
 
-          status:
-            x.status,
+            status:
+              x.status,
 
-          authority:
-            x.authority,
+            authority:
+              x.authority,
 
-          created_at:
-            x.created_at,
+            created_at:
+              x.created_at,
 
-          paid_at:
-            x.paid_at
+            paid_at:
+              x.paid_at
 
-        }))
+          })
+        )
 
   });
 
@@ -3296,13 +5251,21 @@ async function adminProcessWithdrawalApi(
 
 
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const id =
-    String(body.id || "");
+    String(
+      body.id || ""
+    );
+
 
   const action =
-    String(body.action || "");
+    String(
+      body.action || ""
+    );
 
 
   if (
@@ -3407,17 +5370,24 @@ async function healthApi(
 ) {
 
   return json({
+
     ok: true,
+
     service:
       "Abzarak AI",
+
     time:
       new Date().toISOString(),
+
     database:
       !!env.DB,
+
     ai:
       !!env.AI,
+
     resend:
       !!env.RESEND_API_KEY
+
   });
 
 }
@@ -3437,6 +5407,10 @@ export default {
 
     try {
 
+      // -------------------------------------------------------
+      // CORS PREFLIGHT
+      // -------------------------------------------------------
+
       if (
         request.method ===
         "OPTIONS"
@@ -3454,11 +5428,20 @@ export default {
       }
 
 
-      await initDatabase(env);
+      // -------------------------------------------------------
+      // DATABASE
+      // -------------------------------------------------------
+
+      await initDatabase(
+        env
+      );
 
 
       const url =
-        new URL(request.url);
+        new URL(
+          request.url
+        );
+
 
       const path =
         url.pathname;
@@ -3477,19 +5460,22 @@ export default {
       ) {
 
         response =
-          await healthApi(env);
+          await healthApi(
+            env
+          );
 
       }
 
 
       // -------------------------------------------------------
-      // AUTH
+      // SIGNUP
       // -------------------------------------------------------
 
       else if (
         path ===
-        "/api/signup" &&
-        request.method === "POST"
+          "/api/signup" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3501,10 +5487,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // LOGIN
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/login" &&
-        request.method === "POST"
+          "/api/login" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3516,10 +5507,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // ME
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/me" &&
-        request.method === "GET"
+          "/api/me" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3532,13 +5528,14 @@ export default {
 
 
       // -------------------------------------------------------
-      // PASSWORD RECOVERY
+      // FORGOT PASSWORD
       // -------------------------------------------------------
 
       else if (
         path ===
-        "/api/forgot-password" &&
-        request.method === "POST"
+          "/api/forgot-password" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3550,10 +5547,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // RESET PASSWORD
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/reset-password" &&
-        request.method === "POST"
+          "/api/reset-password" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3571,8 +5573,9 @@ export default {
 
       else if (
         path ===
-        "/api/ai/chat" &&
-        request.method === "POST"
+          "/api/ai/chat" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3590,24 +5593,28 @@ export default {
 
       else if (
         path ===
-        "/api/plans" &&
-        request.method === "GET"
+          "/api/plans" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
-          await plansApi(env);
+          await plansApi(
+            env
+          );
 
       }
 
 
       // -------------------------------------------------------
-      // PAYMENT
+      // PAYMENT REQUEST
       // -------------------------------------------------------
 
       else if (
         path ===
-        "/api/payment/request" &&
-        request.method === "POST"
+          "/api/payment/request" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3619,10 +5626,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // PAYMENT VERIFY
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/payment/verify" &&
-        request.method === "GET"
+          "/api/payment/verify" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3640,8 +5652,9 @@ export default {
 
       else if (
         path ===
-        "/api/withdrawal" &&
-        request.method === "POST"
+          "/api/withdrawal" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3653,10 +5666,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // MY WITHDRAWALS
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/my-withdrawals" &&
-        request.method === "GET"
+          "/api/my-withdrawals" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3669,13 +5687,14 @@ export default {
 
 
       // -------------------------------------------------------
-      // ADMIN
+      // ADMIN LOGIN
       // -------------------------------------------------------
 
       else if (
         path ===
-        "/api/admin/login" &&
-        request.method === "POST"
+          "/api/admin/login" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3687,10 +5706,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // ADMIN USERS
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/admin/users" &&
-        request.method === "GET"
+          "/api/admin/users" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3702,10 +5726,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // ADMIN PAYMENTS
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/admin/payments" &&
-        request.method === "GET"
+          "/api/admin/payments" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3717,10 +5746,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // ADMIN WITHDRAWALS
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/admin/withdrawals" &&
-        request.method === "GET"
+          "/api/admin/withdrawals" &&
+        request.method ===
+          "GET"
       ) {
 
         response =
@@ -3732,10 +5766,15 @@ export default {
       }
 
 
+      // -------------------------------------------------------
+      // ADMIN PROCESS WITHDRAWAL
+      // -------------------------------------------------------
+
       else if (
         path ===
-        "/api/admin/withdrawals/process" &&
-        request.method === "POST"
+          "/api/admin/withdrawals/process" &&
+        request.method ===
+          "POST"
       ) {
 
         response =
@@ -3782,7 +5821,9 @@ export default {
       }
 
 
-      return cors(response);
+      return cors(
+        response
+      );
 
 
     } catch (error) {
@@ -3798,6 +5839,7 @@ export default {
           {
             error:
               "خطای داخلی سرور.",
+
             details:
               error?.message ||
               String(error)
