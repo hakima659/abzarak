@@ -1,6 +1,611 @@
 // =============================================================
+// ABZARAK AI — HOMEPAGE
+// =============================================================
+
+function renderHomepage() {
+
+  return `<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ابزارک AI — دستیار هوشمند فارسی</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --bg-soft: #16162a;
+    --card: #1b1b33;
+    --border: #2a2a45;
+    --text: #eef0ff;
+    --muted: #9797b8;
+    --accent: #6d6dff;
+    --accent-2: #8f5cff;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Tahoma, "Vazirmatn", Arial, sans-serif;
+    background:
+      radial-gradient(circle at 20% 0%, #2a2a55 0%, transparent 45%),
+      radial-gradient(circle at 100% 20%, #3a1e5e 0%, transparent 40%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0 32px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 20px;
+  }
+  .logo .dot {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  nav { display: flex; gap: 8px; }
+  .btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: .15s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: none;
+    font-weight: 700;
+  }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.block { width: 100%; }
+  .btn.ghost { background: transparent; }
+
+  .hero {
+    text-align: center;
+    padding: 40px 0 56px;
+  }
+  .hero h1 {
+    font-size: 38px;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 560px;
+    margin: 0 auto 26px;
+    line-height: 1.9;
+  }
+  .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+
+  /* Chat demo */
+  .chat-section { margin: 40px 0; }
+  .chat-box {
+    display: flex;
+    flex-direction: column;
+    height: 420px;
+  }
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 6px 4px 16px;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    line-height: 1.8;
+    font-size: 14.5px;
+    white-space: pre-wrap;
+  }
+  .msg.user {
+    align-self: flex-start;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-bottom-left-radius: 4px;
+  }
+  .msg.ai {
+    align-self: flex-end;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-bottom-right-radius: 4px;
+  }
+  .msg.system {
+    align-self: center;
+    color: var(--muted);
+    font-size: 13px;
+    background: transparent;
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .chat-input-row input {
+    flex: 1;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14.5px;
+  }
+  .chat-input-row input:focus { outline: none; border-color: var(--accent); }
+
+  /* Plans */
+  .plans-section { margin: 56px 0; }
+  .section-title { text-align: center; margin-bottom: 28px; }
+  .section-title h2 { font-size: 26px; margin-bottom: 8px; }
+  .section-title p { color: var(--muted); }
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .plan-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .plan-card h3 { margin: 0; font-size: 18px; }
+  .plan-price { font-size: 24px; font-weight: 900; }
+  .plan-price small { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .plan-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .plan-card li { color: var(--muted); font-size: 13.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .plan-card li::before { content: "✓"; color: var(--success); font-weight: 900; }
+  .plan-card.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,5,15,.7);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    width: 100%;
+    max-width: 380px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .modal h3 { margin: 0 0 18px; font-size: 18px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .field input {
+    width: 100%;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .modal-msg { font-size: 13px; margin: 10px 0; min-height: 18px; }
+  .modal-msg.err { color: var(--danger); }
+  .modal-msg.ok { color: var(--success); }
+  .switch-line { text-align: center; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .switch-line a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .modal-close {
+    position: absolute; left: 18px; top: 18px;
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer;
+  }
+  .modal { position: relative; }
+
+  #userBadge {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  #userBadge b { color: var(--text); }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 40px 0 20px;
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 28px; }
+    nav .btn span.long { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo"><span class="dot">🤖</span> ابزارک AI</div>
+    <nav id="navArea">
+      <button class="btn ghost" onclick="openModal('login')">ورود</button>
+      <button class="btn primary" onclick="openModal('signup')">ثبت‌نام رایگان</button>
+    </nav>
+    <div id="userBadge">
+      <span>خوش آمدی، <b id="userNameLabel"></b></span>
+      <button class="btn" onclick="logout()">خروج</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>دستیار هوشمند <span>فارسی</span> شما</h1>
+    <p>ابزارک، یک دستیار هوش مصنوعی چندزبانه برای گفتگو، تولید محتوا، ترجمه و ایده‌پردازی است. همین حالا رایگان امتحان کن.</p>
+    <div class="hero-actions">
+      <button class="btn primary" onclick="focusChat()">شروع گفتگو</button>
+      <button class="btn ghost" onclick="scrollToPlans()">مشاهده پلن‌ها</button>
+    </div>
+  </section>
+
+  <section class="chat-section card">
+    <div class="chat-box">
+      <div class="chat-log" id="chatLog">
+        <div class="msg system">سلام! من ابزارک هستم. هر سوالی داری بپرس 👋</div>
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" type="text" placeholder="پیامت را بنویس..." onkeydown="if(event.key==='Enter') sendMessage()">
+        <button class="btn primary" onclick="sendMessage()">ارسال</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="plans-section" id="plansSection">
+    <div class="section-title">
+      <h2>پلن‌های اشتراک</h2>
+      <p>متناسب با نیازت یک پلن انتخاب کن</p>
+    </div>
+    <div class="plans-grid" id="plansGrid">
+      <div class="msg system" style="align-self:center;">در حال بارگذاری پلن‌ها...</div>
+    </div>
+  </section>
+
+  <footer>
+    🤖 ابزارک AI — ساخته‌شده با هوش مصنوعی
+  </footer>
+
+</div>
+
+<!-- Auth Modal -->
+<div class="overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div id="loginForm">
+      <h3>ورود به حساب</h3>
+      <div class="field">
+        <label>ایمیل</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>رمز عبور</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <div class="modal-msg" id="loginMsg"></div>
+      <button class="btn primary block" onclick="doLogin()">ورود</button>
+      <div class="switch-line">
+        حساب نداری؟ <a onclick="openModal('signup')">ثبت‌نام کن</a><br>
+        <a onclick="openModal('forgot')">رمز عبور را فراموش کرده‌ام</a>
+      </div>
+    </div>
+
+    <div id="signupForm" style="display:none;">
+      <h3>ساخت حساب جدید</h3>
+      <div class="field">
+        <label>نام</label>
+        <input type="text" id="signupName" placeholder="نام شما">
+      </div>
+      <div class="field">
+        <label>ایمیل</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>رمز عبور</label>
+        <input type="password" id="signupPassword" placeholder="حداقل ۶ کاراکتر">
+      </div>
+      <div class="modal-msg" id="signupMsg"></div>
+      <button class="btn primary block" onclick="doSignup()">ثبت‌نام</button>
+      <div class="switch-line">
+        قبلاً ثبت‌نام کرده‌ای؟ <a onclick="openModal('login')">وارد شو</a>
+      </div>
+    </div>
+
+    <div id="forgotForm" style="display:none;">
+      <h3>بازیابی رمز عبور</h3>
+      <div class="field">
+        <label>ایمیل</label>
+        <input type="email" id="forgotEmail" placeholder="you@example.com">
+      </div>
+      <div class="modal-msg" id="forgotMsg"></div>
+      <button class="btn primary block" onclick="doForgot()">ارسال کد بازیابی</button>
+
+      <div id="resetFields" style="display:none; margin-top:14px;">
+        <div class="field">
+          <label>کد بازیابی</label>
+          <input type="text" id="resetCode" placeholder="۶ رقمی">
+        </div>
+        <div class="field">
+          <label>رمز عبور جدید</label>
+          <input type="password" id="resetNewPassword" placeholder="حداقل ۶ کاراکتر">
+        </div>
+        <button class="btn primary block" onclick="doReset()">تغییر رمز عبور</button>
+      </div>
+
+      <div class="switch-line">
+        <a onclick="openModal('login')">بازگشت به ورود</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = "";
+  let token = localStorage.getItem("abzarak_token") || null;
+  let currentUser = null;
+
+  function openModal(which) {
+    document.getElementById("authOverlay").classList.add("open");
+    document.getElementById("loginForm").style.display = which === "login" ? "block" : "none";
+    document.getElementById("signupForm").style.display = which === "signup" ? "block" : "none";
+    document.getElementById("forgotForm").style.display = which === "forgot" ? "block" : "none";
+  }
+  function closeModal() {
+    document.getElementById("authOverlay").classList.remove("open");
+  }
+
+  function setMsg(id, text, ok) {
+    const el = document.getElementById(id);
+    el.textContent = text || "";
+    el.className = "modal-msg " + (ok ? "ok" : "err");
+  }
+
+  async function api(path, options = {}) {
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      options.headers || {}
+    );
+    if (token) headers["Authorization"] = "Bearer " + token;
+    const res = await fetch(API + path, Object.assign({}, options, { headers }));
+    let data = {};
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error(data.error || "خطایی رخ داد.");
+    return data;
+  }
+
+  async function doSignup() {
+    const name = document.getElementById("signupName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    setMsg("signupMsg", "");
+    try {
+      const data = await api("/api/signup", { method: "POST", body: JSON.stringify({ name, email, password }) });
+      token = data.token;
+      localStorage.setItem("abzarak_token", token);
+      closeModal();
+      await loadMe();
+    } catch (e) {
+      setMsg("signupMsg", e.message);
+    }
+  }
+
+  async function doLogin() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    setMsg("loginMsg", "");
+    try {
+      const data = await api("/api/login", { method: "POST", body: JSON.stringify({ email, password }) });
+      token = data.token;
+      localStorage.setItem("abzarak_token", token);
+      closeModal();
+      await loadMe();
+    } catch (e) {
+      setMsg("loginMsg", e.message);
+    }
+  }
+
+  async function doForgot() {
+    const email = document.getElementById("forgotEmail").value.trim();
+    setMsg("forgotMsg", "");
+    try {
+      const data = await api("/api/forgot-password", { method: "POST", body: JSON.stringify({ email }) });
+      setMsg("forgotMsg", data.message, true);
+      document.getElementById("resetFields").style.display = "block";
+    } catch (e) {
+      setMsg("forgotMsg", e.message);
+    }
+  }
+
+  async function doReset() {
+    const email = document.getElementById("forgotEmail").value.trim();
+    const code = document.getElementById("resetCode").value.trim();
+    const newPassword = document.getElementById("resetNewPassword").value;
+    setMsg("forgotMsg", "");
+    try {
+      const data = await api("/api/reset-password", { method: "POST", body: JSON.stringify({ email, code, newPassword }) });
+      setMsg("forgotMsg", data.message, true);
+      setTimeout(() => openModal("login"), 1200);
+    } catch (e) {
+      setMsg("forgotMsg", e.message);
+    }
+  }
+
+  function logout() {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem("abzarak_token");
+    updateNav();
+  }
+
+  function updateNav() {
+    const navArea = document.getElementById("navArea");
+    const badge = document.getElementById("userBadge");
+    if (currentUser) {
+      navArea.style.display = "none";
+      badge.style.display = "flex";
+      document.getElementById("userNameLabel").textContent = currentUser.name;
+    } else {
+      navArea.style.display = "flex";
+      badge.style.display = "none";
+    }
+  }
+
+  async function loadMe() {
+    if (!token) { updateNav(); return; }
+    try {
+      const data = await api("/api/me");
+      currentUser = data.user;
+    } catch {
+      token = null;
+      localStorage.removeItem("abzarak_token");
+      currentUser = null;
+    }
+    updateNav();
+  }
+
+  function addMsg(text, cls) {
+    const log = document.getElementById("chatLog");
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function focusChat() {
+    document.getElementById("chatInput").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("chatInput").focus();
+  }
+
+  function scrollToPlans() {
+    document.getElementById("plansSection").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    if (!token) {
+      addMsg("برای گفتگو با ابزارک ابتدا وارد حساب شو یا ثبت‌نام کن.", "system");
+      openModal("login");
+      return;
+    }
+
+    addMsg(message, "user");
+    input.value = "";
+
+    const thinking = document.createElement("div");
+    thinking.className = "msg ai";
+    thinking.textContent = "در حال تایپ...";
+    document.getElementById("chatLog").appendChild(thinking);
+    document.getElementById("chatLog").scrollTop = document.getElementById("chatLog").scrollHeight;
+
+    try {
+      const data = await api("/api/ai/chat", { method: "POST", body: JSON.stringify({ message }) });
+      thinking.textContent = data.reply;
+    } catch (e) {
+      thinking.textContent = "خطا: " + e.message;
+    }
+  }
+
+  async function loadPlans() {
+    const grid = document.getElementById("plansGrid");
+    try {
+      const data = await api("/api/plans");
+      grid.innerHTML = "";
+      (data.plans || []).forEach((plan, i) => {
+        const card = document.createElement("div");
+        card.className = "card plan-card" + (i === 2 ? " featured" : "");
+        card.innerHTML =
+          "<h3>" + plan.name + "</h3>" +
+          "<div class='plan-price'>" + plan.price_toman.toLocaleString("fa-IR") + " تومان <small>/ ماه</small></div>" +
+          "<ul>" + plan.features.map(f => "<li>" + f + "</li>").join("") + "</ul>" +
+          "<button class='btn primary block' onclick='buyPlan(\\"" + plan.id + "\\")'>خرید این پلن</button>";
+        grid.appendChild(card);
+      });
+    } catch (e) {
+      grid.innerHTML = "<div class='msg system' style='align-self:center;'>بارگذاری پلن‌ها ناموفق بود.</div>";
+    }
+  }
+
+  async function buyPlan(planId) {
+    if (!token) { openModal("login"); return; }
+    try {
+      const data = await api("/api/payment/request", { method: "POST", body: JSON.stringify({ planId }) });
+      if (data.payment_url) window.location.href = data.payment_url;
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  loadMe();
+  loadPlans();
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("payment") === "success") {
+    setTimeout(() => alert("پرداخت با موفقیت انجام شد! اشتراک شما فعال است."), 300);
+  } else if (params.get("payment") === "failed" || params.get("payment") === "error") {
+    setTimeout(() => alert("پرداخت ناموفق بود. لطفاً دوباره تلاش کنید."), 300);
+  } else if (params.get("payment") === "cancel") {
+    setTimeout(() => alert("پرداخت لغو شد."), 300);
+  }
+</script>
+
+</body>
+</html>`;
+
+}
+// =============================================================
 // ABZARAK AI — BACKEND API
-// Added after renderHomepage()
 // Auth / D1 / AI / Plans / Resend / Admin / Withdrawals
 // =============================================================
 
