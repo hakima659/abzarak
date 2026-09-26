@@ -6,6 +6,7 @@
 // Safe payments-table migration
 // Payment V2 table for legacy D1 compatibility
 // Enamad verification meta tag added
+// Enamad verification txt file route added
 // =============================================================
 
 
@@ -1982,6 +1983,21 @@ function html(data, status = 200) {
       headers: {
         "Content-Type":
           "text/html; charset=utf-8",
+        "Cache-Control":
+          "no-store"
+      }
+    }
+  );
+}
+
+function plainText(data, status = 200) {
+  return new Response(
+    data,
+    {
+      status,
+      headers: {
+        "Content-Type":
+          "text/plain; charset=utf-8",
         "Cache-Control":
           "no-store"
       }
@@ -5128,6 +5144,18 @@ export default {
             request,
             env
           );
+      }
+
+      // ---------------------------------------------------------
+      // ENAMAD FILE VERIFICATION
+      // Serves an empty text file at the exact filename Enamad
+      // asks for, so it can confirm ownership of the domain.
+      // ---------------------------------------------------------
+      else if (
+        path === "/36032134.txt"
+      ) {
+        response =
+          plainText("");
       }
 
       else if (
