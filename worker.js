@@ -21,7 +21,7 @@ function renderHomepage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="enamad" content="17726638" />
+<meta name="enamad" content ="17726638"/>
 
 <title>ابزارک AI — دستیار هوشمند فارسی</title>
 
