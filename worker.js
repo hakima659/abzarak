@@ -5,6 +5,7 @@
 // Fixed ZarinPal v4 payment request + verify
 // Safe payments-table migration
 // Payment V2 table for legacy D1 compatibility
+// Enamad verification meta tag added
 // =============================================================
 
 
@@ -19,6 +20,7 @@ function renderHomepage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="enamad" content="36032134" />
 
 <title>ابزارک AI — دستیار هوشمند فارسی</title>
 
@@ -856,10 +858,6 @@ function renderHomepage() {
 
 <script>
 
-  // =========================================================
-  // FRONTEND AUTH
-  // =========================================================
-
   const API = "";
 
   let token =
@@ -867,10 +865,6 @@ function renderHomepage() {
 
   let currentUser = null;
 
-
-  // =========================================================
-  // MODAL
-  // =========================================================
 
   function openModal(which) {
 
@@ -913,10 +907,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // MESSAGE
-  // =========================================================
-
   function setMsg(
     id,
     text,
@@ -938,10 +928,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // API
-  // =========================================================
 
   async function api(
     path,
@@ -1012,10 +998,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // SIGNUP
-  // =========================================================
 
   async function doSignup() {
 
@@ -1114,10 +1096,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
-
   async function doLogin() {
 
     const email =
@@ -1208,10 +1186,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // FORGOT PASSWORD
-  // =========================================================
-
   async function doForgot() {
 
     const email =
@@ -1267,10 +1241,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // RESET PASSWORD
-  // =========================================================
 
   async function doReset() {
 
@@ -1341,10 +1311,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
-
   function logout() {
 
     token = null;
@@ -1364,10 +1330,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // NAV
-  // =========================================================
 
   function updateNav() {
 
@@ -1411,10 +1373,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // LOAD ME
-  // =========================================================
 
   async function loadMe() {
 
@@ -1492,10 +1450,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // ADD MESSAGE
-  // =========================================================
-
   function addMsg(
     text,
     cls
@@ -1530,10 +1484,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // FOCUS CHAT
-  // =========================================================
-
   function focusChat() {
 
     const input =
@@ -1553,10 +1503,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // PLANS SCROLL
-  // =========================================================
-
   function scrollToPlans() {
 
     document
@@ -1569,10 +1515,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // SEND AI MESSAGE
-  // =========================================================
 
   async function sendMessage() {
 
@@ -1709,10 +1651,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // LOAD PLANS
-  // =========================================================
-
   async function loadPlans() {
 
     const grid =
@@ -1821,10 +1759,6 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // HTML ESCAPE
-  // =========================================================
-
   function escapeHtml(value) {
 
     return String(value)
@@ -1836,10 +1770,6 @@ function renderHomepage() {
 
   }
 
-
-  // =========================================================
-  // BUY PLAN
-  // =========================================================
 
   async function buyPlan(
     planId
@@ -1902,18 +1832,10 @@ function renderHomepage() {
   }
 
 
-  // =========================================================
-  // STARTUP
-  // =========================================================
-
   loadMe();
 
   loadPlans();
 
-
-  // =========================================================
-  // PAYMENT RESULT
-  // =========================================================
 
   const params =
     new URLSearchParams(
@@ -1978,61 +1900,39 @@ function renderHomepage() {
 
 const FREE_DAILY_LIMIT = 10;
 
-
 const PLAN_PRICES = {
-
   basic: 400000,
-
   standard: 1000000,
-
   pro: 2000000,
-
   special: 3000000
-
 };
-
 
 const PLAN_USD = {
-
   basic: 5,
-
   standard: 10,
-
   pro: 15,
-
   special: 20
-
 };
-
 
 const PLAN_NAMES = {
-
   basic: "Basic",
-
   standard: "Standard",
-
   pro: "Pro",
-
   special: "Special"
-
 };
 
-
 const PLAN_FEATURES = {
-
   basic: [
     "استفاده بیشتر از هوش مصنوعی",
     "گفتگو با دستیار هوشمند",
     "پشتیبانی چندزبانه"
   ],
-
   standard: [
     "استفاده گسترده‌تر از هوش مصنوعی",
     "گفتگو و تولید محتوا",
     "ترجمه و بازنویسی",
     "پشتیبانی چندزبانه"
   ],
-
   pro: [
     "استفاده حرفه‌ای از هوش مصنوعی",
     "تولید و بازنویسی متن",
@@ -2040,23 +1940,15 @@ const PLAN_FEATURES = {
     "ایده‌پردازی و خلاصه‌سازی",
     "دسترسی گسترده"
   ],
-
   special: [
     "استفاده ویژه از هوش مصنوعی",
     "تمام امکانات حرفه‌ای",
     "استفاده گسترده",
     "پشتیبانی چندزبانه"
   ]
-
 };
 
-
-// =============================================================
-// AUTH SECRET
-// =============================================================
-
 function getAuthSecret(env) {
-
   const secret =
     String(
       env.JWT_SECRET ||
@@ -2064,145 +1956,85 @@ function getAuthSecret(env) {
       "abzarak-default-secret"
     ).trim();
 
-
   return secret;
-
 }
 
-
-// =============================================================
-// RESPONSE HELPERS
-// =============================================================
-
-function json(
-  data,
-  status = 200
-) {
-
+function json(data, status = 200) {
   return new Response(
     JSON.stringify(data),
     {
       status,
-
       headers: {
         "Content-Type":
           "application/json; charset=utf-8",
-
         "Cache-Control":
           "no-store"
       }
     }
   );
-
 }
 
-
-function html(
-  data,
-  status = 200
-) {
-
+function html(data, status = 200) {
   return new Response(
     data,
     {
       status,
-
       headers: {
         "Content-Type":
           "text/html; charset=utf-8",
-
         "Cache-Control":
           "no-store"
       }
     }
   );
-
 }
 
-
-function cors(
-  response
-) {
-
+function cors(response) {
   const headers =
     new Headers(
       response.headers
     );
-
 
   headers.set(
     "Access-Control-Allow-Origin",
     "*"
   );
 
-
   headers.set(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization"
   );
-
 
   headers.set(
     "Access-Control-Allow-Methods",
     "GET,POST,PUT,DELETE,OPTIONS"
   );
 
-
   return new Response(
     response.body,
     {
       status:
         response.status,
-
       statusText:
         response.statusText,
-
       headers
     }
   );
-
 }
 
-
-// =============================================================
-// BODY
-// =============================================================
-
-async function bodyJson(
-  request
-) {
-
+async function bodyJson(request) {
   try {
-
     return await request.json();
-
   } catch {
-
     return {};
-
   }
-
 }
 
-
-// =============================================================
-// RANDOM
-// =============================================================
-
-function randomHex(
-  bytes = 32
-) {
-
+function randomHex(bytes = 32) {
   const data =
-    new Uint8Array(
-      bytes
-    );
+    new Uint8Array(bytes);
 
-
-  crypto.getRandomValues(
-    data
-  );
-
+  crypto.getRandomValues(data);
 
   return Array
     .from(data)
@@ -2212,49 +2044,31 @@ function randomHex(
           .padStart(2, "0")
     )
     .join("");
-
 }
 
-
 function randomCode() {
-
   const data =
     new Uint32Array(1);
 
-
-  crypto.getRandomValues(
-    data
-  );
-
+  crypto.getRandomValues(data);
 
   return String(
     100000 +
     (data[0] % 900000)
   );
-
 }
 
-
-// =============================================================
-// PASSWORD HASH
-// =============================================================
-
-async function hashPassword(
-  password
-) {
-
+async function hashPassword(password) {
   const data =
     new TextEncoder().encode(
       password
     );
-
 
   const hash =
     await crypto.subtle.digest(
       "SHA-256",
       data
     );
-
 
   return Array
     .from(
@@ -2266,129 +2080,77 @@ async function hashPassword(
           .padStart(2, "0")
     )
     .join("");
-
 }
 
-
-// =============================================================
-// BASE64URL
-// =============================================================
-
-function base64url(
-  data
-) {
-
+function base64url(data) {
   let binary = "";
-
 
   if (
     typeof data ===
     "string"
   ) {
-
     binary =
       btoa(data);
-
   } else {
-
     binary =
       btoa(
         String.fromCharCode(
           ...data
         )
       );
-
   }
-
 
   return binary
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
-
 }
 
-
-function decodeBase64url(
-  value
-) {
-
+function decodeBase64url(value) {
   value =
     value
       .replaceAll("-", "+")
       .replaceAll("_", "/");
 
-
   while (
     value.length % 4
   ) {
-
     value += "=";
-
   }
 
-
   return atob(value);
-
 }
 
-
-// =============================================================
-// HMAC
-// =============================================================
-
-async function hmacSign(
-  value,
-  secret
-) {
-
+async function hmacSign(value, secret) {
   const key =
     await crypto.subtle.importKey(
       "raw",
-
       new TextEncoder()
         .encode(secret),
-
       {
         name: "HMAC",
         hash: "SHA-256"
       },
-
       false,
-
       ["sign"]
     );
-
 
   const signature =
     await crypto.subtle.sign(
       "HMAC",
-
       key,
-
       new TextEncoder()
         .encode(value)
     );
-
 
   return base64url(
     new Uint8Array(
       signature
     )
   );
-
 }
 
-
-// =============================================================
-// TOKEN
-// =============================================================
-
-async function createToken(
-  payload,
-  secret
-) {
-
+async function createToken(payload, secret) {
   const encoded =
     base64url(
       JSON.stringify(
@@ -2396,49 +2158,36 @@ async function createToken(
       )
     );
 
-
   const signature =
     await hmacSign(
       encoded,
       secret
     );
 
-
   return (
     encoded +
     "." +
     signature
   );
-
 }
 
-
-async function verifyToken(
-  token,
-  secret
-) {
-
+async function verifyToken(token, secret) {
   if (!token)
     return null;
 
-
   const parts =
     token.split(".");
-
 
   if (
     parts.length !== 2
   )
     return null;
 
-
   const payloadPart =
     parts[0];
 
-
   const signature =
     parts[1];
-
 
   const expected =
     await hmacSign(
@@ -2446,16 +2195,13 @@ async function verifyToken(
       secret
     );
 
-
   if (
     signature !==
     expected
   )
     return null;
 
-
   try {
-
     const payload =
       JSON.parse(
         decodeBase64url(
@@ -2463,46 +2209,28 @@ async function verifyToken(
         )
       );
 
-
     if (
       payload.exp &&
       Date.now() >
         Number(payload.exp)
     ) {
-
       return null;
-
     }
 
-
     return payload;
-
   } catch {
-
     return null;
-
   }
-
 }
 
-
-// =============================================================
-// BEARER
-// =============================================================
-
-function bearerToken(
-  request
-) {
-
+function bearerToken(request) {
   const auth =
     request.headers.get(
       "Authorization"
     );
 
-
   if (!auth)
     return "";
-
 
   if (
     !auth
@@ -2511,34 +2239,18 @@ function bearerToken(
   )
     return "";
 
-
   return auth
     .slice(7)
     .trim();
-
 }
-
-
-// =============================================================
-// DATABASE
-// =============================================================
 
 let dbReady = false;
 
-
-// =============================================================
-// SAFE PAYMENTS TABLE MIGRATION
-// =============================================================
-
-async function migratePaymentsTable(
-  env
-) {
-
+async function migratePaymentsTable(env) {
   const tableInfo =
     await env.DB.prepare(`
       PRAGMA table_info(payments)
     `).all();
-
 
   const columns =
     new Set(
@@ -2551,117 +2263,78 @@ async function migratePaymentsTable(
         )
     );
 
-
   if (!columns.has("user_id")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN user_id TEXT
     `).run();
-
   }
 
-
   if (!columns.has("plan_id")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN plan_id TEXT
     `).run();
-
   }
 
-
   if (!columns.has("amount_toman")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN amount_toman INTEGER
     `).run();
-
   }
 
-
   if (!columns.has("authority")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN authority TEXT
     `).run();
-
   }
 
-
   if (!columns.has("status")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN status TEXT DEFAULT 'pending'
     `).run();
-
   }
 
-
   if (!columns.has("created_at")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN created_at TEXT
     `).run();
-
   }
 
-
   if (!columns.has("paid_at")) {
-
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN paid_at TEXT
     `).run();
-
   }
 
-
   try {
-
     await env.DB.prepare(`
       UPDATE payments
       SET status = 'pending'
       WHERE status IS NULL
     `).run();
-
   } catch (error) {
-
     console.error(
       "PAYMENTS STATUS MIGRATION ERROR:",
       error
     );
-
   }
-
 }
 
-
-// =============================================================
-// DATABASE INITIALIZATION
-// =============================================================
-
-async function initDatabase(
-  env
-) {
-
+async function initDatabase(env) {
   if (!env.DB) {
-
     throw new Error(
       "D1 binding DB تنظیم نشده است."
     );
-
   }
-
 
   if (dbReady)
     return;
-
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS users (
@@ -2674,7 +2347,6 @@ async function initDatabase(
     )
   `).run();
 
-
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS plans (
       id TEXT PRIMARY KEY,
@@ -2684,7 +2356,6 @@ async function initDatabase(
       features TEXT NOT NULL
     )
   `).run();
-
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -2697,7 +2368,6 @@ async function initDatabase(
     )
   `).run();
 
-
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS usage (
       id TEXT PRIMARY KEY,
@@ -2707,7 +2377,6 @@ async function initDatabase(
       UNIQUE(user_id, usage_date)
     )
   `).run();
-
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS password_resets (
@@ -2719,14 +2388,6 @@ async function initDatabase(
       created_at TEXT NOT NULL
     )
   `).run();
-
-
-  // -----------------------------------------------------------
-  // OLD PAYMENTS TABLE
-  //
-  // Kept for backward compatibility.
-  // New payments DO NOT use this table.
-  // -----------------------------------------------------------
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS payments (
@@ -2741,20 +2402,7 @@ async function initDatabase(
     )
   `).run();
 
-
-  await migratePaymentsTable(
-    env
-  );
-
-
-  // -----------------------------------------------------------
-  // PAYMENTS V2
-  //
-  // IMPORTANT:
-  // This is the active payment table.
-  // It is intentionally separate from the old payments table
-  // because the old D1 table may have an incompatible schema.
-  // -----------------------------------------------------------
+  await migratePaymentsTable(env);
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS payments_v2 (
@@ -2769,7 +2417,6 @@ async function initDatabase(
     )
   `).run();
 
-
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS withdrawals (
       id TEXT PRIMARY KEY,
@@ -2783,7 +2430,6 @@ async function initDatabase(
     )
   `).run();
 
-
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS admin_sessions (
       id TEXT PRIMARY KEY,
@@ -2791,16 +2437,10 @@ async function initDatabase(
     )
   `).run();
 
-
-  // -----------------------------------------------------------
-  // PLANS
-  // -----------------------------------------------------------
-
   for (
     const id of
     Object.keys(PLAN_PRICES)
   ) {
-
     const exists =
       await env.DB.prepare(
         "SELECT id FROM plans WHERE id = ?"
@@ -2808,9 +2448,7 @@ async function initDatabase(
         .bind(id)
         .first();
 
-
     if (!exists) {
-
       await env.DB.prepare(`
         INSERT INTO plans
         (id,name,price_toman,price_usd,features)
@@ -2826,9 +2464,7 @@ async function initDatabase(
           )
         )
         .run();
-
     } else {
-
       await env.DB.prepare(`
         UPDATE plans
         SET
@@ -2848,37 +2484,21 @@ async function initDatabase(
           id
         )
         .run();
-
     }
-
   }
 
-
   dbReady = true;
-
 }
 
-
-// =============================================================
-// USER AUTH
-// =============================================================
-
-async function requireUser(
-  request,
-  env
-) {
-
+async function requireUser(request, env) {
   const token =
     bearerToken(request);
-
 
   if (!token)
     return null;
 
-
   const secret =
     getAuthSecret(env);
-
 
   const payload =
     await verifyToken(
@@ -2886,13 +2506,11 @@ async function requireUser(
       secret
     );
 
-
   if (
     !payload ||
     !payload.userId
   )
     return null;
-
 
   const user =
     await env.DB.prepare(`
@@ -2905,32 +2523,18 @@ async function requireUser(
       )
       .first();
 
-
   return user || null;
-
 }
 
-
-// =============================================================
-// ADMIN AUTH
-// =============================================================
-
-async function requireAdmin(
-  request,
-  env
-) {
-
+async function requireAdmin(request, env) {
   const token =
     bearerToken(request);
-
 
   if (!token)
     return false;
 
-
   const secret =
     getAuthSecret(env);
-
 
   const payload =
     await verifyToken(
@@ -2938,52 +2542,28 @@ async function requireAdmin(
       secret
     );
 
-
   return !!(
     payload &&
     payload.admin === true
   );
-
 }
 
-
-// =============================================================
-// DATE
-// =============================================================
-
 function today() {
-
   return new Date()
     .toISOString()
     .slice(0, 10);
-
 }
 
-
-function addDays(
-  days
-) {
-
+function addDays(days) {
   return new Date(
     Date.now() +
     days * 86400000
   ).toISOString();
-
 }
 
-
-// =============================================================
-// USAGE
-// =============================================================
-
-async function getUsage(
-  env,
-  userId
-) {
-
+async function getUsage(env, userId) {
   const date =
     today();
-
 
   let row =
     await env.DB.prepare(`
@@ -2998,11 +2578,8 @@ async function getUsage(
       )
       .first();
 
-
   if (!row) {
-
     try {
-
       await env.DB.prepare(`
         INSERT INTO usage
         (id,user_id,usage_date,used)
@@ -3014,16 +2591,12 @@ async function getUsage(
           date
         )
         .run();
-
     } catch (error) {
-
       console.error(
         "USAGE INSERT:",
         error
       );
-
     }
-
 
     row =
       await env.DB.prepare(`
@@ -3038,32 +2611,17 @@ async function getUsage(
         )
         .first();
 
-
     if (!row) {
-
       row = {
         used: 0
       };
-
     }
-
   }
 
-
   return row;
-
 }
 
-
-// =============================================================
-// SUBSCRIPTION
-// =============================================================
-
-async function getSubscription(
-  env,
-  userId
-) {
-
+async function getSubscription(env, userId) {
   return await env.DB.prepare(`
     SELECT
       s.*,
@@ -3086,84 +2644,55 @@ async function getSubscription(
       new Date().toISOString()
     )
     .first();
-
 }
 
-
-// =============================================================
-// RESEND
-// =============================================================
-
-async function sendRecoveryEmail(
-  env,
-  email,
-  code
-) {
-
+async function sendRecoveryEmail(env, email, code) {
   if (!env.RESEND_API_KEY) {
-
     return {
       ok: false,
       status: 500,
       error:
         "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)"
     };
-
   }
-
 
   const from =
     env.RESEND_FROM_EMAIL;
 
-
   if (!from) {
-
     return {
       ok: false,
       status: 500,
       error:
         "آدرس ارسال ایمیل تنظیم نشده است (RESEND_FROM_EMAIL وجود ندارد)"
     };
-
   }
 
-
   try {
-
     const response =
       await fetch(
         "https://api.resend.com/emails",
         {
           method: "POST",
-
           headers: {
             "Authorization":
               "Bearer " +
               env.RESEND_API_KEY,
-
             "Content-Type":
               "application/json"
           },
-
           body:
             JSON.stringify({
-
               from,
-
-              to: [
-                email
-              ],
-
+              to: [email],
               subject:
                 "کد بازیابی رمز عبور ابزارک",
-
               html: `
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 </head>
-
 <body style="
 margin:0;
 padding:30px;
@@ -3171,7 +2700,6 @@ background:#f6f8ff;
 font-family:Tahoma,Arial,sans-serif;
 direction:rtl;
 ">
-
 <div style="
 max-width:560px;
 margin:auto;
@@ -3180,21 +2708,18 @@ border-radius:20px;
 padding:30px;
 box-shadow:0 10px 40px rgba(15,23,42,.08);
 ">
-
 <h2 style="
 color:#1e1b4b;
 margin-top:0;
 ">
 🔐 بازیابی رمز عبور ابزارک
 </h2>
-
 <p style="
 color:#475569;
 line-height:2;
 ">
 کد بازیابی رمز عبور شما:
 </p>
-
 <div style="
 font-size:36px;
 font-weight:900;
@@ -3207,14 +2732,12 @@ color:#3730a3;
 ">
 ${code}
 </div>
-
 <p style="
 color:#64748b;
 line-height:2;
 ">
 این کد تا ۱۵ دقیقه معتبر است.
 </p>
-
 <p style="
 color:#64748b;
 line-height:2;
@@ -3222,43 +2745,32 @@ line-height:2;
 اگر این درخواست توسط شما انجام نشده است،
 این ایمیل را نادیده بگیرید.
 </p>
-
 <hr style="
 border:0;
 border-top:1px solid #e5e7eb;
 margin:25px 0;
 ">
-
 <div style="
 text-align:center;
 color:#64748b;
 ">
 🤖 Abzarak AI
 </div>
-
 </div>
-
 </body>
 </html>
 `
-
             })
-
         }
       );
 
-
     if (!response.ok) {
-
       let details = "";
 
       try {
-
         details =
           await response.text();
-
       } catch {}
-
 
       return {
         ok: false,
@@ -3268,17 +2780,12 @@ color:#64748b;
           "ارسال ایمیل ناموفق بود",
         details
       };
-
     }
-
 
     return {
       ok: true
     };
-
-
   } catch (error) {
-
     return {
       ok: false,
       status: 502,
@@ -3288,32 +2795,17 @@ color:#64748b;
         error?.message ||
         String(error)
     };
-
   }
-
 }
 
-
-// =============================================================
-// SIGNUP
-// =============================================================
-
-async function signupApi(
-  request,
-  env
-) {
-
+async function signupApi(request, env) {
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const name =
     String(
       body.name || ""
     ).trim();
-
 
   const email =
     String(
@@ -3322,12 +2814,10 @@ async function signupApi(
       .trim()
       .toLowerCase();
 
-
   const password =
     String(
       body.password || ""
     );
-
 
   if (!name)
     return json(
@@ -3338,7 +2828,6 @@ async function signupApi(
       400
     );
 
-
   if (!email)
     return json(
       {
@@ -3347,7 +2836,6 @@ async function signupApi(
       },
       400
     );
-
 
   if (
     !email.includes("@") ||
@@ -3361,7 +2849,6 @@ async function signupApi(
       400
     );
 
-
   if (
     password.length < 6
   )
@@ -3373,7 +2860,6 @@ async function signupApi(
       400
     );
 
-
   const existing =
     await env.DB.prepare(`
       SELECT id
@@ -3382,7 +2868,6 @@ async function signupApi(
     `)
       .bind(email)
       .first();
-
 
   if (existing)
     return json(
@@ -3393,16 +2878,13 @@ async function signupApi(
       409
     );
 
-
   const id =
     randomHex(16);
-
 
   const passwordHash =
     await hashPassword(
       password
     );
-
 
   await env.DB.prepare(`
     INSERT INTO users
@@ -3418,46 +2900,28 @@ async function signupApi(
     )
     .run();
 
-
   const secret =
     getAuthSecret(env);
-
 
   const token =
     await createToken(
       {
         userId: id,
-
         exp:
           Date.now() +
           30 * 86400000
       },
-
       secret
     );
-
 
   return json({
     token
   });
-
 }
 
-
-// =============================================================
-// LOGIN
-// =============================================================
-
-async function loginApi(
-  request,
-  env
-) {
-
+async function loginApi(request, env) {
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const email =
     String(
@@ -3466,12 +2930,10 @@ async function loginApi(
       .trim()
       .toLowerCase();
 
-
   const password =
     String(
       body.password || ""
     );
-
 
   const user =
     await env.DB.prepare(`
@@ -3482,7 +2944,6 @@ async function loginApi(
       .bind(email)
       .first();
 
-
   if (!user)
     return json(
       {
@@ -3492,12 +2953,10 @@ async function loginApi(
       401
     );
 
-
   const hash =
     await hashPassword(
       password
     );
-
 
   if (
     hash !==
@@ -3511,48 +2970,32 @@ async function loginApi(
       401
     );
 
-
   const secret =
     getAuthSecret(env);
-
 
   const token =
     await createToken(
       {
         userId:
           user.id,
-
         exp:
           Date.now() +
           30 * 86400000
       },
-
       secret
     );
-
 
   return json({
     token
   });
-
 }
 
-
-// =============================================================
-// ME
-// =============================================================
-
-async function meApi(
-  request,
-  env
-) {
-
+async function meApi(request, env) {
   const user =
     await requireUser(
       request,
       env
     );
-
 
   if (!user)
     return json(
@@ -3563,7 +3006,6 @@ async function meApi(
       401
     );
 
-
   let subscription =
     null;
 
@@ -3571,148 +3013,94 @@ async function meApi(
     used: 0
   };
 
-
   try {
-
     subscription =
       await getSubscription(
         env,
         user.id
       );
-
   } catch (error) {
-
     console.error(
       "ME SUBSCRIPTION ERROR:",
       error
     );
-
   }
 
-
   try {
-
     usage =
       await getUsage(
         env,
         user.id
       );
-
   } catch (error) {
-
     console.error(
       "ME USAGE ERROR:",
       error
     );
-
   }
-
 
   let subscriptionData =
     null;
 
-
   if (subscription) {
-
     let features = [];
 
-
     try {
-
       features =
         JSON.parse(
           subscription.features ||
           "[]"
         );
-
     } catch {
-
       features = [];
-
     }
 
-
     subscriptionData = {
-
       plan_id:
         subscription.plan_id,
-
       expires_at:
         subscription.expires_at,
-
       plan: {
-
         id:
           subscription.plan_id,
-
         name:
           subscription.plan_name,
-
         features
-
       }
-
     };
-
   }
 
-
   return json({
-
     user: {
-
       id:
         user.id,
-
       name:
         user.name,
-
       email:
         user.email,
-
       balance:
         Number(
           user.balance || 0
         )
-
     },
-
     subscription:
       subscriptionData,
-
     usage: {
-
       used:
         Number(
           usage?.used || 0
         ),
-
       limit:
         subscription
           ? 999999999
           : FREE_DAILY_LIMIT
-
     }
-
   });
-
 }
 
-
-// =============================================================
-// FORGOT PASSWORD
-// =============================================================
-
-async function forgotPasswordApi(
-  request,
-  env
-) {
-
+async function forgotPasswordApi(request, env) {
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const email =
     String(
@@ -3720,7 +3108,6 @@ async function forgotPasswordApi(
     )
       .trim()
       .toLowerCase();
-
 
   if (!email)
     return json(
@@ -3731,7 +3118,6 @@ async function forgotPasswordApi(
       400
     );
 
-
   const user =
     await env.DB.prepare(`
       SELECT id,email,name
@@ -3741,30 +3127,23 @@ async function forgotPasswordApi(
       .bind(email)
       .first();
 
-
   if (!user) {
-
     return json({
       message:
         "اگر این ایمیل در ابزارک ثبت شده باشد، کد بازیابی ارسال خواهد شد."
     });
-
   }
-
 
   const code =
     randomCode();
-
 
   const codeHash =
     await hashPassword(
       code
     );
 
-
   const id =
     randomHex(16);
-
 
   await env.DB.prepare(`
     UPDATE password_resets
@@ -3777,7 +3156,6 @@ async function forgotPasswordApi(
     )
     .run();
 
-
   await env.DB.prepare(`
     INSERT INTO password_resets
     (id,user_id,code_hash,expires_at,used,created_at)
@@ -3787,16 +3165,13 @@ async function forgotPasswordApi(
       id,
       user.id,
       codeHash,
-
       new Date(
         Date.now() +
         15 * 60 * 1000
       ).toISOString(),
-
       new Date().toISOString()
     )
     .run();
-
 
   const mail =
     await sendRecoveryEmail(
@@ -3805,49 +3180,30 @@ async function forgotPasswordApi(
       code
     );
 
-
   if (!mail.ok) {
-
     return json(
       {
         error:
           mail.error ||
           "ارسال ایمیل ناموفق بود.",
-
         details:
           mail.details ||
           undefined
       },
-
       mail.status ||
       500
     );
-
   }
-
 
   return json({
     message:
       "کد بازیابی به ایمیل شما ارسال شد."
   });
-
 }
 
-
-// =============================================================
-// RESET PASSWORD
-// =============================================================
-
-async function resetPasswordApi(
-  request,
-  env
-) {
-
+async function resetPasswordApi(request, env) {
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const email =
     String(
@@ -3856,18 +3212,15 @@ async function resetPasswordApi(
       .trim()
       .toLowerCase();
 
-
   const code =
     String(
       body.code || ""
     ).trim();
 
-
   const newPassword =
     String(
       body.newPassword || ""
     );
-
 
   if (
     !email ||
@@ -3881,7 +3234,6 @@ async function resetPasswordApi(
       400
     );
 
-
   if (
     newPassword.length < 6
   )
@@ -3893,7 +3245,6 @@ async function resetPasswordApi(
       400
     );
 
-
   const user =
     await env.DB.prepare(`
       SELECT id
@@ -3903,7 +3254,6 @@ async function resetPasswordApi(
       .bind(email)
       .first();
 
-
   if (!user)
     return json(
       {
@@ -3912,7 +3262,6 @@ async function resetPasswordApi(
       },
       400
     );
-
 
   const reset =
     await env.DB.prepare(`
@@ -3926,7 +3275,6 @@ async function resetPasswordApi(
       .bind(user.id)
       .first();
 
-
   if (!reset)
     return json(
       {
@@ -3936,14 +3284,12 @@ async function resetPasswordApi(
       400
     );
 
-
   if (
     Date.now() >
     new Date(
       reset.expires_at
     ).getTime()
   ) {
-
     await env.DB.prepare(`
       UPDATE password_resets
       SET used = 1
@@ -3954,7 +3300,6 @@ async function resetPasswordApi(
       )
       .run();
 
-
     return json(
       {
         error:
@@ -3962,15 +3307,12 @@ async function resetPasswordApi(
       },
       400
     );
-
   }
-
 
   const codeHash =
     await hashPassword(
       code
     );
-
 
   if (
     codeHash !==
@@ -3984,12 +3326,10 @@ async function resetPasswordApi(
       400
     );
 
-
   const passwordHash =
     await hashPassword(
       newPassword
     );
-
 
   await env.DB.prepare(`
     UPDATE users
@@ -4002,7 +3342,6 @@ async function resetPasswordApi(
     )
     .run();
 
-
   await env.DB.prepare(`
     UPDATE password_resets
     SET used = 1
@@ -4013,23 +3352,13 @@ async function resetPasswordApi(
     )
     .run();
 
-
   return json({
     message:
       "رمز عبور با موفقیت تغییر کرد."
   });
-
 }
 
-
-// =============================================================
-// PLANS
-// =============================================================
-
-async function plansApi(
-  env
-) {
-
+async function plansApi(env) {
   const rows =
     await env.DB.prepare(`
       SELECT *
@@ -4045,82 +3374,53 @@ async function plansApi(
     `)
       .all();
 
-
   const plans =
     (rows.results || [])
       .map(
         x => {
-
           let features = [];
 
           try {
-
             features =
               JSON.parse(
                 x.features ||
                 "[]"
               );
-
           } catch {
-
             features = [];
-
           }
 
-
           return {
-
             id:
               x.id,
-
             name:
               x.name,
-
             price_toman:
               Number(
                 x.price_toman
               ),
-
             price_usd:
               Number(
                 x.price_usd
               ),
-
             features
-
           };
-
         }
       );
 
-
   return json({
-
     plans,
-
     plans_usd:
       plans
-
   });
-
 }
 
-
-// =============================================================
-// AI CHAT
-// =============================================================
-
-async function aiChatApi(
-  request,
-  env
-) {
-
+async function aiChatApi(request, env) {
   const user =
     await requireUser(
       request,
       env
     );
-
 
   if (!user)
     return json(
@@ -4131,18 +3431,13 @@ async function aiChatApi(
       401
     );
 
-
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const message =
     String(
       body.message || ""
     ).trim();
-
 
   if (!message)
     return json(
@@ -4152,7 +3447,6 @@ async function aiChatApi(
       },
       400
     );
-
 
   if (
     message.length >
@@ -4166,49 +3460,37 @@ async function aiChatApi(
       400
     );
 
-
   let subscription =
     null;
 
-
   try {
-
     subscription =
       await getSubscription(
         env,
         user.id
       );
-
   } catch (error) {
-
     console.error(
       "AI SUBSCRIPTION ERROR:",
       error
     );
-
   }
-
 
   let usage = {
     used: 0
   };
 
-
   try {
-
     usage =
       await getUsage(
         env,
         user.id
       );
-
   } catch (error) {
-
     console.error(
       "AI USAGE ERROR:",
       error
     );
-
 
     return json(
       {
@@ -4217,9 +3499,7 @@ async function aiChatApi(
       },
       500
     );
-
   }
-
 
   if (
     !subscription &&
@@ -4228,23 +3508,18 @@ async function aiChatApi(
     ) >=
       FREE_DAILY_LIMIT
   ) {
-
     return json(
       {
         error:
           "سهمیه روزانه شما تمام شده است.",
-
         upgrade_required:
           true
       },
       429
     );
-
   }
 
-
   if (!env.AI) {
-
     return json(
       {
         error:
@@ -4252,119 +3527,85 @@ async function aiChatApi(
       },
       500
     );
-
   }
-
 
   let result;
 
-
   try {
-
     result =
       await env.AI.run(
         "@cf/meta/llama-3.1-8b-instruct-fast",
         {
-
           messages: [
-
             {
               role:
                 "system",
-
               content:
                 "You are Abzarak AI, a helpful multilingual AI assistant. Answer in the same language as the user whenever possible. Be clear, useful and concise."
             },
-
             {
               role:
                 "user",
-
               content:
                 message
             }
-
           ]
-
         }
       );
-
-
   } catch (error) {
-
     console.error(
       "AI PROVIDER ERROR:",
       error
     );
 
-
     return json(
       {
         error:
           "خطا در سرویس هوش مصنوعی.",
-
         details:
           error?.message ||
           String(error)
       },
       500
     );
-
   }
 
-
   let reply = "";
-
 
   if (
     typeof result ===
     "string"
   ) {
-
     reply =
       result;
-
   } else if (
     result &&
     typeof result.response ===
       "string"
   ) {
-
     reply =
       result.response;
-
   } else if (
     result &&
     typeof result.result ===
       "string"
   ) {
-
     reply =
       result.result;
-
   } else {
-
     try {
-
       reply =
         JSON.stringify(
           result
         );
-
     } catch {
-
       reply =
         "پاسخی دریافت نشد.";
-
     }
-
   }
 
-
   if (!subscription) {
-
     try {
-
       await env.DB.prepare(`
         UPDATE usage
         SET used = used + 1
@@ -4376,48 +3617,26 @@ async function aiChatApi(
           today()
         )
         .run();
-
     } catch (error) {
-
       console.error(
         "USAGE UPDATE ERROR:",
         error
       );
-
     }
-
   }
-
 
   return json({
     reply
   });
-
 }
 
-
-// =============================================================
-// PAYMENT REQUEST — ZARINPAL V4
-// ACTIVE TABLE: payments_v2
-// =============================================================
-
-async function paymentRequestApi(
-  request,
-  env
-) {
-
+async function paymentRequestApi(request, env) {
   try {
-
-    // ---------------------------------------------------------
-    // USER
-    // ---------------------------------------------------------
-
     const user =
       await requireUser(
         request,
         env
       );
-
 
     if (!user)
       return json(
@@ -4428,26 +3647,13 @@ async function paymentRequestApi(
         401
       );
 
-
-    // ---------------------------------------------------------
-    // BODY
-    // ---------------------------------------------------------
-
     const body =
-      await bodyJson(
-        request
-      );
-
+      await bodyJson(request);
 
     const planId =
       String(
         body.planId || ""
       ).trim();
-
-
-    // ---------------------------------------------------------
-    // PLAN VALIDATION
-    // ---------------------------------------------------------
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -4455,7 +3661,6 @@ async function paymentRequestApi(
         planId
       )
     ) {
-
       return json(
         {
           error:
@@ -4463,19 +3668,12 @@ async function paymentRequestApi(
         },
         400
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // AMOUNT STORED IN ABZARAK = TOMAN
-    // ---------------------------------------------------------
 
     const amountToman =
       Number(
         PLAN_PRICES[planId]
       );
-
 
     if (
       !Number.isSafeInteger(
@@ -4483,7 +3681,6 @@ async function paymentRequestApi(
       ) ||
       amountToman <= 0
     ) {
-
       return json(
         {
           error:
@@ -4491,13 +3688,7 @@ async function paymentRequestApi(
         },
         400
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // MERCHANT
-    // ---------------------------------------------------------
 
     const merchantId =
       String(
@@ -4505,9 +3696,7 @@ async function paymentRequestApi(
         ""
       ).trim();
 
-
     if (!merchantId) {
-
       return json(
         {
           error:
@@ -4515,31 +3704,15 @@ async function paymentRequestApi(
         },
         503
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // PAYMENT ID
-    // ---------------------------------------------------------
 
     const paymentId =
       randomHex(16);
 
-
     const createdAt =
       new Date().toISOString();
 
-
-    // ---------------------------------------------------------
-    // SAVE PENDING PAYMENT
-    //
-    // IMPORTANT:
-    // Use payments_v2 instead of legacy payments table.
-    // ---------------------------------------------------------
-
     try {
-
       await env.DB.prepare(`
         INSERT INTO payments_v2
         (
@@ -4563,33 +3736,23 @@ async function paymentRequestApi(
           createdAt
         )
         .run();
-
     } catch (dbError) {
-
       console.error(
         "PAYMENT V2 DB INSERT ERROR:",
         dbError
       );
 
-
       return json(
         {
           error:
             "ثبت درخواست پرداخت در پایگاه داده انجام نشد.",
-
           details:
             dbError?.message ||
             String(dbError)
         },
         500
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // CALLBACK
-    // ---------------------------------------------------------
 
     const baseUrl =
       String(
@@ -4602,7 +3765,6 @@ async function paymentRequestApi(
         ""
       );
 
-
     const callback =
       baseUrl +
       "/api/payment/verify?payment_id=" +
@@ -4610,113 +3772,55 @@ async function paymentRequestApi(
         paymentId
       );
 
-
-    // ---------------------------------------------------------
-    // TOMAN -> RIAL
-    // ---------------------------------------------------------
-
     const amountRial =
       amountToman * 10;
 
-
-    // ---------------------------------------------------------
-    // REQUEST PAYLOAD
-    // ---------------------------------------------------------
-
     const payload = {
-
       merchant_id:
         merchantId,
-
       amount:
         amountRial,
-
       description:
         "Abzarak AI - " +
         PLAN_NAMES[planId],
-
       callback_url:
         callback,
-
       metadata: {
-
         email:
           user.email,
-
         mobile:
           ""
-
       }
-
     };
-
-
-    console.log(
-      "ABZARAK ZARINPAL REQUEST:",
-      JSON.stringify({
-        payment_id:
-          paymentId,
-
-        plan_id:
-          planId,
-
-        amount_toman:
-          amountToman,
-
-        amount_rial:
-          amountRial,
-
-        callback_url:
-          callback
-      })
-    );
-
-
-    // ---------------------------------------------------------
-    // ZARINPAL REQUEST
-    // ---------------------------------------------------------
 
     let response;
 
-
     try {
-
       response =
         await fetch(
           "https://api.zarinpal.com/pg/v4/payment/request.json",
           {
-
             method:
               "POST",
-
             headers: {
-
               "Content-Type":
                 "application/json",
-
               "Accept":
                 "application/json"
-
             },
-
             body:
               JSON.stringify(
                 payload
               )
-
           }
         );
-
     } catch (networkError) {
-
       console.error(
         "ZARINPAL NETWORK ERROR:",
         networkError
       );
 
-
       try {
-
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -4727,62 +3831,44 @@ async function paymentRequestApi(
             paymentId
           )
           .run();
-
       } catch (updateError) {
-
         console.error(
           "PAYMENT V2 NETWORK FAILURE UPDATE ERROR:",
           updateError
         );
-
       }
-
 
       return json(
         {
           error:
             "ارتباط با درگاه زرین‌پال برقرار نشد.",
-
           details:
             networkError?.message ||
             String(networkError)
         },
         502
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // READ RESPONSE SAFELY
-    // ---------------------------------------------------------
 
     const rawResponse =
       await response.text();
 
-
     let data = {};
 
-
     try {
-
       data =
         rawResponse
           ? JSON.parse(
               rawResponse
             )
           : {};
-
     } catch (parseError) {
-
       console.error(
         "ZARINPAL INVALID JSON:",
         rawResponse
       );
 
-
       try {
-
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -4793,58 +3879,35 @@ async function paymentRequestApi(
             paymentId
           )
           .run();
-
       } catch (updateError) {
-
         console.error(
           "PAYMENT V2 INVALID JSON UPDATE ERROR:",
           updateError
         );
-
       }
-
 
       return json(
         {
           error:
             "پاسخ نامعتبر از زرین‌پال دریافت شد.",
-
           http_status:
             response.status
         },
         502
       );
-
     }
-
-
-    console.log(
-      "ABZARAK ZARINPAL RESPONSE:",
-      JSON.stringify(
-        data
-      )
-    );
-
-
-    // ---------------------------------------------------------
-    // CHECK RESULT
-    // ---------------------------------------------------------
 
     const gatewayCode =
       data?.data?.code;
 
-
     const authority =
       data?.data?.authority;
-
 
     const errorCode =
       data?.errors?.code;
 
-
     const errorMessage =
       data?.errors?.message;
-
 
     if (
       !response.ok ||
@@ -4856,9 +3919,7 @@ async function paymentRequestApi(
         ) !== 100
       )
     ) {
-
       try {
-
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -4869,64 +3930,30 @@ async function paymentRequestApi(
             paymentId
           )
           .run();
-
       } catch (updateError) {
-
         console.error(
           "PAYMENT V2 GATEWAY FAILURE UPDATE ERROR:",
           updateError
         );
-
       }
-
-
-      console.error(
-        "ZARINPAL REQUEST FAILED:",
-        JSON.stringify({
-          http_status:
-            response.status,
-
-          gateway_code:
-            gatewayCode ??
-            null,
-
-          error_code:
-            errorCode ??
-            null,
-
-          error_message:
-            errorMessage ??
-            null
-        })
-      );
-
 
       return json(
         {
           error:
             errorMessage ||
             "ایجاد درخواست پرداخت ناموفق بود.",
-
           gateway_code:
             errorCode ??
             gatewayCode ??
             null,
-
           http_status:
             response.status
         },
         502
       );
-
     }
 
-
-    // ---------------------------------------------------------
-    // SAVE AUTHORITY
-    // ---------------------------------------------------------
-
     try {
-
       await env.DB.prepare(`
         UPDATE payments_v2
         SET authority = ?
@@ -4939,123 +3966,82 @@ async function paymentRequestApi(
           paymentId
         )
         .run();
-
     } catch (dbError) {
-
       console.error(
         "PAYMENT V2 AUTHORITY SAVE ERROR:",
         dbError
       );
 
-
       return json(
         {
           error:
             "شناسه پرداخت دریافت شد اما ذخیره آن ناموفق بود.",
-
           details:
             dbError?.message ||
             String(dbError)
         },
         500
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // PAYMENT URL
-    // ---------------------------------------------------------
 
     const paymentUrl =
       "https://www.zarinpal.com/pg/StartPay/" +
       authority;
 
-
     return json({
-
       ok:
         true,
-
       payment_url:
         paymentUrl,
-
       payment_id:
         paymentId,
-
       authority:
         String(
           authority
         )
-
     });
 
-
   } catch (error) {
-
     console.error(
       "PAYMENT REQUEST UNHANDLED ERROR:",
       error
     );
 
-
     return json(
       {
         error:
           "خطای داخلی در ایجاد درخواست پرداخت.",
-
         details:
           error?.message ||
           String(error)
       },
       500
     );
-
   }
-
 }
 
-
-// =============================================================
-// PAYMENT VERIFY — ZARINPAL V4
-// ACTIVE TABLE: payments_v2
-// =============================================================
-
-async function paymentVerifyApi(
-  request,
-  env
-) {
-
+async function paymentVerifyApi(request, env) {
   const url =
     new URL(
       request.url
     );
-
 
   const paymentId =
     url.searchParams.get(
       "payment_id"
     );
 
-
   const authority =
     url.searchParams.get(
       "Authority"
     );
-
 
   const status =
     url.searchParams.get(
       "Status"
     );
 
-
-  // -----------------------------------------------------------
-  // PAYMENT ID
-  // -----------------------------------------------------------
-
   if (!paymentId) {
-
     return Response.redirect(
       new URL(
         "/?payment=error",
@@ -5063,13 +4049,7 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // FIND PAYMENT
-  // -----------------------------------------------------------
 
   const payment =
     await env.DB.prepare(`
@@ -5082,9 +4062,7 @@ async function paymentVerifyApi(
       )
       .first();
 
-
   if (!payment) {
-
     return Response.redirect(
       new URL(
         "/?payment=error&reason=payment-not-found",
@@ -5092,19 +4070,12 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // PREVENT DOUBLE PROCESSING
-  // -----------------------------------------------------------
 
   if (
     payment.status ===
     "paid"
   ) {
-
     return Response.redirect(
       new URL(
         "/?payment=success",
@@ -5112,21 +4083,13 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // CANCELLED BY USER
-  // -----------------------------------------------------------
 
   if (
     status !== "OK" ||
     !authority
   ) {
-
     try {
-
       await env.DB.prepare(`
         UPDATE payments_v2
         SET status = 'cancelled'
@@ -5137,16 +4100,12 @@ async function paymentVerifyApi(
           paymentId
         )
         .run();
-
     } catch (error) {
-
       console.error(
         "PAYMENT V2 CANCEL UPDATE ERROR:",
         error
       );
-
     }
-
 
     return Response.redirect(
       new URL(
@@ -5155,13 +4114,7 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // MERCHANT
-  // -----------------------------------------------------------
 
   const merchantId =
     String(
@@ -5169,9 +4122,7 @@ async function paymentVerifyApi(
       ""
     ).trim();
 
-
   if (!merchantId) {
-
     return Response.redirect(
       new URL(
         "/?payment=error&reason=merchant-not-configured",
@@ -5179,13 +4130,7 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // CHECK AUTHORITY
-  // -----------------------------------------------------------
 
   if (
     payment.authority &&
@@ -5195,21 +4140,17 @@ async function paymentVerifyApi(
       authority
     )
   ) {
-
     console.error(
       "ZARINPAL AUTHORITY MISMATCH:",
       JSON.stringify({
         payment_id:
           paymentId,
-
         stored:
           payment.authority,
-
         received:
           authority
       })
     );
-
 
     return Response.redirect(
       new URL(
@@ -5218,22 +4159,12 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
-
-  // -----------------------------------------------------------
-  // AMOUNT
-  //
-  // Database amount = TOMAN
-  // ZarinPal verification = RIAL
-  // -----------------------------------------------------------
 
   const amountToman =
     Number(
       payment.amount_toman
     );
-
 
   if (
     !Number.isSafeInteger(
@@ -5241,19 +4172,6 @@ async function paymentVerifyApi(
     ) ||
     amountToman <= 0
   ) {
-
-    console.error(
-      "INVALID PAYMENT AMOUNT:",
-      JSON.stringify({
-        payment_id:
-          paymentId,
-
-        amount_toman:
-          payment.amount_toman
-      })
-    );
-
-
     return Response.redirect(
       new URL(
         "/?payment=error&reason=invalid-amount",
@@ -5261,100 +4179,53 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
 
   const amountRial =
     amountToman * 10;
 
-
-  // -----------------------------------------------------------
-  // VERIFY
-  // -----------------------------------------------------------
-
   try {
-
-    console.log(
-      "ABZARAK ZARINPAL VERIFY:",
-      JSON.stringify({
-        payment_id:
-          paymentId,
-
-        plan_id:
-          payment.plan_id,
-
-        amount_toman:
-          amountToman,
-
-        amount_rial:
-          amountRial,
-
-        authority:
-          authority
-      })
-    );
-
-
     const response =
       await fetch(
         "https://api.zarinpal.com/pg/v4/payment/verify.json",
         {
-
           method:
             "POST",
-
           headers: {
-
             "Content-Type":
               "application/json",
-
             "Accept":
               "application/json"
-
           },
-
           body:
             JSON.stringify({
-
               merchant_id:
                 merchantId,
-
               amount:
                 amountRial,
-
               authority:
                 authority
-
             })
-
         }
       );
-
 
     const rawResponse =
       await response.text();
 
-
     let data = {};
 
-
     try {
-
       data =
         rawResponse
           ? JSON.parse(
               rawResponse
             )
           : {};
-
     } catch (parseError) {
-
       console.error(
         "ZARINPAL VERIFY INVALID JSON:",
         rawResponse
       );
-
 
       return Response.redirect(
         new URL(
@@ -5363,29 +4234,13 @@ async function paymentVerifyApi(
         ).toString(),
         302
       );
-
     }
-
-
-    console.log(
-      "ABZARAK ZARINPAL VERIFY RESPONSE:",
-      JSON.stringify(
-        data
-      )
-    );
-
-
-    // ---------------------------------------------------------
-    // RESPONSE CHECK
-    // ---------------------------------------------------------
 
     if (
       !response.ok ||
       !data.data
     ) {
-
       try {
-
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -5396,16 +4251,12 @@ async function paymentVerifyApi(
             paymentId
           )
           .run();
-
       } catch (error) {
-
         console.error(
           "PAYMENT V2 FAILED UPDATE ERROR:",
           error
         );
-
       }
-
 
       return Response.redirect(
         new URL(
@@ -5414,28 +4265,18 @@ async function paymentVerifyApi(
         ).toString(),
         302
       );
-
     }
-
 
     const code =
       Number(
         data.data.code
       );
 
-
-    // ---------------------------------------------------------
-    // 100 = SUCCESS
-    // 101 = ALREADY VERIFIED
-    // ---------------------------------------------------------
-
     if (
       code !== 100 &&
       code !== 101
     ) {
-
       try {
-
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -5446,16 +4287,12 @@ async function paymentVerifyApi(
             paymentId
           )
           .run();
-
       } catch (error) {
-
         console.error(
           "PAYMENT V2 FAILED STATUS UPDATE ERROR:",
           error
         );
-
       }
-
 
       return Response.redirect(
         new URL(
@@ -5464,13 +4301,7 @@ async function paymentVerifyApi(
         ).toString(),
         302
       );
-
     }
-
-
-    // ---------------------------------------------------------
-    // FIND ACTIVE SUBSCRIPTION
-    // ---------------------------------------------------------
 
     const existingSubscription =
       await env.DB.prepare(`
@@ -5490,20 +4321,13 @@ async function paymentVerifyApi(
         )
         .first();
 
-
-    // ---------------------------------------------------------
-    // ACTIVATE / EXTEND SUBSCRIPTION
-    // ---------------------------------------------------------
-
     if (
       existingSubscription
     ) {
-
       const currentExpiry =
         new Date(
           existingSubscription.expires_at
         );
-
 
       const baseTime =
         Math.max(
@@ -5511,13 +4335,11 @@ async function paymentVerifyApi(
           Date.now()
         );
 
-
       const newExpiry =
         new Date(
           baseTime +
           30 * 86400000
         ).toISOString();
-
 
       await env.DB.prepare(`
         UPDATE subscriptions
@@ -5531,7 +4353,6 @@ async function paymentVerifyApi(
         .run();
 
     } else {
-
       await env.DB.prepare(`
         INSERT INTO subscriptions
         (
@@ -5553,13 +4374,7 @@ async function paymentVerifyApi(
           addDays(30)
         )
         .run();
-
     }
-
-
-    // ---------------------------------------------------------
-    // MARK PAYMENT PAID
-    // ---------------------------------------------------------
 
     await env.DB.prepare(`
       UPDATE payments_v2
@@ -5577,11 +4392,6 @@ async function paymentVerifyApi(
       )
       .run();
 
-
-    // ---------------------------------------------------------
-    // SUCCESS
-    // ---------------------------------------------------------
-
     return Response.redirect(
       new URL(
         "/?payment=success",
@@ -5590,14 +4400,11 @@ async function paymentVerifyApi(
       302
     );
 
-
   } catch (error) {
-
     console.error(
       "PAYMENT VERIFY ERROR:",
       error
     );
-
 
     return Response.redirect(
       new URL(
@@ -5606,27 +4413,15 @@ async function paymentVerifyApi(
       ).toString(),
       302
     );
-
   }
-
 }
 
-
-// =============================================================
-// WITHDRAWAL
-// =============================================================
-
-async function withdrawalApi(
-  request,
-  env
-) {
-
+async function withdrawalApi(request, env) {
   const user =
     await requireUser(
       request,
       env
     );
-
 
   if (!user)
     return json(
@@ -5637,18 +4432,13 @@ async function withdrawalApi(
       401
     );
 
-
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const amount =
     Number(
       body.amount || 0
     );
-
 
   const method =
     String(
@@ -5656,13 +4446,11 @@ async function withdrawalApi(
       "bank"
     );
 
-
   const destination =
     String(
       body.destination ||
       ""
     ).trim();
-
 
   if (
     !Number.isFinite(amount) ||
@@ -5676,7 +4464,6 @@ async function withdrawalApi(
       400
     );
 
-
   if (!destination)
     return json(
       {
@@ -5685,7 +4472,6 @@ async function withdrawalApi(
       },
       400
     );
-
 
   if (
     amount >
@@ -5701,10 +4487,8 @@ async function withdrawalApi(
       400
     );
 
-
   const withdrawalId =
     randomHex(16);
-
 
   const result =
     await env.DB.prepare(`
@@ -5720,7 +4504,6 @@ async function withdrawalApi(
       )
       .run();
 
-
   if (
     !result.meta ||
     result.meta.changes !== 1
@@ -5732,7 +4515,6 @@ async function withdrawalApi(
       },
       400
     );
-
 
   await env.DB.prepare(`
     INSERT INTO withdrawals
@@ -5749,30 +4531,18 @@ async function withdrawalApi(
     )
     .run();
 
-
   return json({
     message:
       "درخواست برداشت ثبت شد."
   });
-
 }
 
-
-// =============================================================
-// MY WITHDRAWALS
-// =============================================================
-
-async function myWithdrawalsApi(
-  request,
-  env
-) {
-
+async function myWithdrawalsApi(request, env) {
   const user =
     await requireUser(
       request,
       env
     );
-
 
   if (!user)
     return json(
@@ -5782,7 +4552,6 @@ async function myWithdrawalsApi(
       },
       401
     );
-
 
   const rows =
     await env.DB.prepare(`
@@ -5802,35 +4571,20 @@ async function myWithdrawalsApi(
       )
       .all();
 
-
   return json({
     withdrawals:
       rows.results || []
   });
-
 }
 
-
-// =============================================================
-// ADMIN LOGIN
-// =============================================================
-
-async function adminLoginApi(
-  request,
-  env
-) {
-
+async function adminLoginApi(request, env) {
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const password =
     String(
       body.password || ""
     );
-
 
   if (!env.ADMIN_PASSWORD)
     return json(
@@ -5840,7 +4594,6 @@ async function adminLoginApi(
       },
       500
     );
-
 
   if (
     password !==
@@ -5854,41 +4607,26 @@ async function adminLoginApi(
       401
     );
 
-
   const secret =
     getAuthSecret(env);
-
 
   const token =
     await createToken(
       {
         admin: true,
-
         exp:
           Date.now() +
           12 * 60 * 60 * 1000
       },
-
       secret
     );
-
 
   return json({
     token
   });
-
 }
 
-
-// =============================================================
-// ADMIN USERS
-// =============================================================
-
-async function adminUsersApi(
-  request,
-  env
-) {
-
+async function adminUsersApi(request, env) {
   if (
     !(await requireAdmin(
       request,
@@ -5902,7 +4640,6 @@ async function adminUsersApi(
       },
       403
     );
-
 
   const rows =
     await env.DB.prepare(`
@@ -5917,25 +4654,13 @@ async function adminUsersApi(
     `)
       .all();
 
-
   return json({
     users:
       rows.results || []
   });
-
 }
 
-
-// =============================================================
-// ADMIN PAYMENTS
-// ACTIVE TABLE: payments_v2
-// =============================================================
-
-async function adminPaymentsApi(
-  request,
-  env
-) {
-
+async function adminPaymentsApi(request, env) {
   if (
     !(await requireAdmin(
       request,
@@ -5949,7 +4674,6 @@ async function adminPaymentsApi(
       },
       403
     );
-
 
   const rows =
     await env.DB.prepare(`
@@ -5963,55 +4687,33 @@ async function adminPaymentsApi(
     `)
       .all();
 
-
   return json({
-
     payments:
       (rows.results || [])
         .map(
           x => ({
-
             id:
               x.id,
-
             email:
               x.email,
-
             plan_id:
               x.plan_id,
-
             amount_toman:
               x.amount_toman,
-
             status:
               x.status,
-
             authority:
               x.authority,
-
             created_at:
               x.created_at,
-
             paid_at:
               x.paid_at
-
           })
         )
-
   });
-
 }
 
-
-// =============================================================
-// ADMIN WITHDRAWALS
-// =============================================================
-
-async function adminWithdrawalsApi(
-  request,
-  env
-) {
-
+async function adminWithdrawalsApi(request, env) {
   if (
     !(await requireAdmin(
       request,
@@ -6025,7 +4727,6 @@ async function adminWithdrawalsApi(
       },
       403
     );
-
 
   const rows =
     await env.DB.prepare(`
@@ -6039,24 +4740,13 @@ async function adminWithdrawalsApi(
     `)
       .all();
 
-
   return json({
     withdrawals:
       rows.results || []
   });
-
 }
 
-
-// =============================================================
-// ADMIN PROCESS WITHDRAWAL
-// =============================================================
-
-async function adminProcessWithdrawalApi(
-  request,
-  env
-) {
-
+async function adminProcessWithdrawalApi(request, env) {
   if (
     !(await requireAdmin(
       request,
@@ -6071,24 +4761,18 @@ async function adminProcessWithdrawalApi(
       403
     );
 
-
   const body =
-    await bodyJson(
-      request
-    );
-
+    await bodyJson(request);
 
   const id =
     String(
       body.id || ""
     );
 
-
   const action =
     String(
       body.action || ""
     );
-
 
   if (
     !id ||
@@ -6105,7 +4789,6 @@ async function adminProcessWithdrawalApi(
       400
     );
 
-
   const withdrawal =
     await env.DB.prepare(`
       SELECT *
@@ -6115,7 +4798,6 @@ async function adminProcessWithdrawalApi(
       .bind(id)
       .first();
 
-
   if (!withdrawal)
     return json(
       {
@@ -6124,7 +4806,6 @@ async function adminProcessWithdrawalApi(
       },
       404
     );
-
 
   if (
     withdrawal.status !==
@@ -6138,12 +4819,10 @@ async function adminProcessWithdrawalApi(
       400
     );
 
-
   if (
     action ===
     "rejected"
   ) {
-
     await env.DB.prepare(`
       UPDATE users
       SET balance = balance + ?
@@ -6154,9 +4833,7 @@ async function adminProcessWithdrawalApi(
         withdrawal.user_id
       )
       .run();
-
   }
-
 
   await env.DB.prepare(`
     UPDATE withdrawals
@@ -6172,55 +4849,31 @@ async function adminProcessWithdrawalApi(
     )
     .run();
 
-
   return json({
     message:
       action === "paid"
         ? "برداشت پرداخت شد."
         : "درخواست برداشت رد شد و مبلغ به موجودی برگشت."
   });
-
 }
 
-
-// =============================================================
-// HEALTH
-// =============================================================
-
-async function healthApi(
-  env
-) {
-
+async function healthApi(env) {
   return json({
-
     ok: true,
-
     service:
       "Abzarak AI",
-
     time:
       new Date().toISOString(),
-
     database:
       !!env.DB,
-
     ai:
       !!env.AI,
-
     resend:
       !!env.RESEND_API_KEY,
-
     zarinpal:
       !!env.ZARINPAL_MERCHANT_ID
-
   });
-
 }
-
-
-// =============================================================
-// MAIN WORKER
-// =============================================================
 
 export default {
 
@@ -6232,15 +4885,10 @@ export default {
 
     try {
 
-      // -------------------------------------------------------
-      // CORS PREFLIGHT
-      // -------------------------------------------------------
-
       if (
         request.method ===
         "OPTIONS"
       ) {
-
         return cors(
           new Response(
             null,
@@ -6249,52 +4897,31 @@ export default {
             }
           )
         );
-
       }
-
-
-      // -------------------------------------------------------
-      // DATABASE
-      // -------------------------------------------------------
 
       await initDatabase(
         env
       );
-
 
       const url =
         new URL(
           request.url
         );
 
-
       const path =
         url.pathname;
 
-
       let response;
-
-
-      // -------------------------------------------------------
-      // HEALTH
-      // -------------------------------------------------------
 
       if (
         path ===
         "/health"
       ) {
-
         response =
           await healthApi(
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // SIGNUP
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6302,19 +4929,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await signupApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // LOGIN
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6322,19 +4942,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await loginApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ME
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6342,19 +4955,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await meApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // FORGOT PASSWORD
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6362,19 +4968,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await forgotPasswordApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // RESET PASSWORD
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6382,19 +4981,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await resetPasswordApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // AI
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6402,19 +4994,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await aiChatApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // PLANS
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6422,18 +5007,11 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await plansApi(
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // PAYMENT REQUEST
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6441,19 +5019,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await paymentRequestApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // PAYMENT VERIFY
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6461,19 +5032,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await paymentVerifyApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // WITHDRAWAL
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6481,19 +5045,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await withdrawalApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // MY WITHDRAWALS
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6501,19 +5058,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await myWithdrawalsApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ADMIN LOGIN
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6521,19 +5071,12 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await adminLoginApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ADMIN USERS
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6541,19 +5084,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await adminUsersApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ADMIN PAYMENTS
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6561,19 +5097,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await adminPaymentsApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ADMIN WITHDRAWALS
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6581,19 +5110,12 @@ export default {
         request.method ===
           "GET"
       ) {
-
         response =
           await adminWithdrawalsApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // ADMIN PROCESS WITHDRAWAL
-      // -------------------------------------------------------
 
       else if (
         path ===
@@ -6601,39 +5123,24 @@ export default {
         request.method ===
           "POST"
       ) {
-
         response =
           await adminProcessWithdrawalApi(
             request,
             env
           );
-
       }
-
-
-      // -------------------------------------------------------
-      // HOMEPAGE
-      // -------------------------------------------------------
 
       else if (
         path === "/" ||
         path === "/index.html"
       ) {
-
         response =
           html(
             renderHomepage()
           );
-
       }
 
-
-      // -------------------------------------------------------
-      // 404
-      // -------------------------------------------------------
-
       else {
-
         response =
           json(
             {
@@ -6642,14 +5149,11 @@ export default {
             },
             404
           );
-
       }
-
 
       return cors(
         response
       );
-
 
     } catch (error) {
 
@@ -6658,13 +5162,11 @@ export default {
         error
       );
 
-
       return cors(
         json(
           {
             error:
               "خطای داخلی سرور.",
-
             details:
               error?.message ||
               String(error)
@@ -6672,9 +5174,6 @@ export default {
           500
         )
       );
-
     }
-
   }
-
 };
