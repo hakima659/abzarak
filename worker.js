@@ -6,7 +6,7 @@
 // Safe payments-table migration
 // Payment V2 table for legacy D1 compatibility
 // Enamad verification meta tag added
-// Enamad verification txt file route added
+// Enamad verification txt file route added (checked before DB init)
 // =============================================================
 
 
@@ -4915,10 +4915,6 @@ export default {
         );
       }
 
-      await initDatabase(
-        env
-      );
-
       const url =
         new URL(
           request.url
@@ -4926,6 +4922,27 @@ export default {
 
       const path =
         url.pathname;
+
+      // ---------------------------------------------------------
+      // ENAMAD FILE VERIFICATION — checked first, before DB init,
+      // so it always works even if the database has a problem.
+      // ---------------------------------------------------------
+      if (
+        path === "/17726638.txt"
+      ) {
+        return cors(
+          plainText("17726638")
+        );
+      }
+
+      try {
+        await initDatabase(env);
+      } catch (dbInitError) {
+        console.error(
+          "DB INIT ERROR:",
+          dbInitError
+        );
+      }
 
       let response;
 
@@ -5144,16 +5161,6 @@ export default {
             request,
             env
           );
-      }
-
-      // ---------------------------------------------------------
-      // ENAMAD FILE VERIFICATION
-      // ---------------------------------------------------------
-      else if (
-        path === "/17726638.txt"
-      ) {
-        response =
-          plainText("17726638");
       }
 
       else if (
