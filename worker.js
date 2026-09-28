@@ -6,8 +6,11 @@
 // Safe payments-table migration
 // Payment V2 table for legacy D1 compatibility
 // Enamad verification meta tag added
-// Enamad verification txt file route added (checked before DB init)
+// Enamad verification txt file route added
 // Fixed plans API to work without D1 plans-table dependency
+// Improved AI chat responses
+// Added in-session conversation memory
+// Improved Persian / multilingual AI behavior
 // =============================================================
 
 
@@ -867,6 +870,13 @@ function renderHomepage() {
 
   let currentUser = null;
 
+  // =========================================================
+  // AI CHAT MEMORY
+  // حافظه مکالمه در نشست فعلی مرورگر
+  // =========================================================
+
+  let chatHistory = [];
+
 
   function openModal(which) {
 
@@ -1319,6 +1329,8 @@ function renderHomepage() {
 
     currentUser = null;
 
+    chatHistory = [];
+
     localStorage.removeItem(
       "abzarak_token"
     );
@@ -1439,6 +1451,8 @@ function renderHomepage() {
 
         currentUser = null;
 
+        chatHistory = [];
+
       }
 
 
@@ -1518,6 +1532,10 @@ function renderHomepage() {
   }
 
 
+  // =========================================================
+  // IMPROVED AI CHAT
+  // =========================================================
+
   async function sendMessage() {
 
     const input =
@@ -1568,22 +1586,22 @@ function renderHomepage() {
 
 
     thinking.textContent =
-      "در حال تایپ...";
+      "در حال فکر کردن...";
 
 
-    document
-      .getElementById("chatLog")
-      .appendChild(
-        thinking
+    const log =
+      document.getElementById(
+        "chatLog"
       );
 
 
-    document
-      .getElementById("chatLog")
-      .scrollTop =
-        document
-          .getElementById("chatLog")
-          .scrollHeight;
+    log.appendChild(
+      thinking
+    );
+
+
+    log.scrollTop =
+      log.scrollHeight;
 
 
     try {
@@ -1596,15 +1614,58 @@ function renderHomepage() {
 
             body:
               JSON.stringify({
-                message
+                message,
+                history:
+                  chatHistory
               })
           }
         );
 
 
+      const reply =
+        String(
+          data.reply ||
+          "متأسفم، نتوانستم پاسخ مناسبی تولید کنم."
+        );
+
+
       thinking.textContent =
-        data.reply ||
-        "پاسخی دریافت نشد.";
+        reply;
+
+
+      // ذخیره مکالمه برای پیام بعدی
+      chatHistory.push({
+        role:
+          "user",
+        content:
+          message
+      });
+
+
+      chatHistory.push({
+        role:
+          "assistant",
+        content:
+          reply
+      });
+
+
+      // فقط آخرین ۲۰ پیام نگهداری شود
+      if (
+        chatHistory.length >
+        20
+      ) {
+
+        chatHistory =
+          chatHistory.slice(
+            -20
+          );
+
+      }
+
+
+      log.scrollTop =
+        log.scrollHeight;
 
 
     } catch (e) {
@@ -1622,6 +1683,8 @@ function renderHomepage() {
         token = null;
 
         currentUser = null;
+
+        chatHistory = [];
 
         localStorage.removeItem(
           "abzarak_token"
@@ -1644,7 +1707,10 @@ function renderHomepage() {
 
         thinking.textContent =
           "خطا: " +
-          e.message;
+          (
+            e.message ||
+            "خطا در ارتباط با هوش مصنوعی."
+          );
 
       }
 
@@ -1973,7 +2039,9 @@ const PLAN_FEATURES = {
   ]
 };
 
+
 function getAuthSecret(env) {
+
   const secret =
     String(
       env.JWT_SECRET ||
@@ -1982,9 +2050,15 @@ function getAuthSecret(env) {
     ).trim();
 
   return secret;
+
 }
 
-function json(data, status = 200) {
+
+function json(
+  data,
+  status = 200
+) {
+
   return new Response(
     JSON.stringify(data),
     {
@@ -1997,9 +2071,15 @@ function json(data, status = 200) {
       }
     }
   );
+
 }
 
-function html(data, status = 200) {
+
+function html(
+  data,
+  status = 200
+) {
+
   return new Response(
     data,
     {
@@ -2012,9 +2092,15 @@ function html(data, status = 200) {
       }
     }
   );
+
 }
 
-function plainText(data, status = 200) {
+
+function plainText(
+  data,
+  status = 200
+) {
+
   return new Response(
     data,
     {
@@ -2027,28 +2113,35 @@ function plainText(data, status = 200) {
       }
     }
   );
+
 }
 
+
 function cors(response) {
+
   const headers =
     new Headers(
       response.headers
     );
+
 
   headers.set(
     "Access-Control-Allow-Origin",
     "*"
   );
 
+
   headers.set(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization"
   );
 
+
   headers.set(
     "Access-Control-Allow-Methods",
     "GET,POST,PUT,DELETE,OPTIONS"
   );
+
 
   return new Response(
     response.body,
@@ -2060,21 +2153,39 @@ function cors(response) {
       headers
     }
   );
+
 }
+
 
 async function bodyJson(request) {
+
   try {
+
     return await request.json();
+
   } catch {
+
     return {};
+
   }
+
 }
 
-function randomHex(bytes = 32) {
-  const data =
-    new Uint8Array(bytes);
 
-  crypto.getRandomValues(data);
+function randomHex(
+  bytes = 32
+) {
+
+  const data =
+    new Uint8Array(
+      bytes
+    );
+
+
+  crypto.getRandomValues(
+    data
+  );
+
 
   return Array
     .from(data)
@@ -2084,31 +2195,45 @@ function randomHex(bytes = 32) {
           .padStart(2, "0")
     )
     .join("");
+
 }
 
+
 function randomCode() {
+
   const data =
     new Uint32Array(1);
 
-  crypto.getRandomValues(data);
+
+  crypto.getRandomValues(
+    data
+  );
+
 
   return String(
     100000 +
     (data[0] % 900000)
   );
+
 }
 
-async function hashPassword(password) {
+
+async function hashPassword(
+  password
+) {
+
   const data =
     new TextEncoder().encode(
       password
     );
+
 
   const hash =
     await crypto.subtle.digest(
       "SHA-256",
       data
     );
+
 
   return Array
     .from(
@@ -2120,48 +2245,72 @@ async function hashPassword(password) {
           .padStart(2, "0")
     )
     .join("");
+
 }
 
+
 function base64url(data) {
+
   let binary = "";
+
 
   if (
     typeof data ===
     "string"
   ) {
+
     binary =
       btoa(data);
+
   } else {
+
     binary =
       btoa(
         String.fromCharCode(
           ...data
         )
       );
+
   }
+
 
   return binary
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
+
 }
 
-function decodeBase64url(value) {
+
+function decodeBase64url(
+  value
+) {
+
   value =
     value
       .replaceAll("-", "+")
       .replaceAll("_", "/");
 
+
   while (
     value.length % 4
   ) {
+
     value += "=";
+
   }
 
+
   return atob(value);
+
 }
 
-async function hmacSign(value, secret) {
+
+async function hmacSign(
+  value,
+  secret
+) {
+
   const key =
     await crypto.subtle.importKey(
       "raw",
@@ -2175,6 +2324,7 @@ async function hmacSign(value, secret) {
       ["sign"]
     );
 
+
   const signature =
     await crypto.subtle.sign(
       "HMAC",
@@ -2183,14 +2333,21 @@ async function hmacSign(value, secret) {
         .encode(value)
     );
 
+
   return base64url(
     new Uint8Array(
       signature
     )
   );
+
 }
 
-async function createToken(payload, secret) {
+
+async function createToken(
+  payload,
+  secret
+) {
+
   const encoded =
     base64url(
       JSON.stringify(
@@ -2198,36 +2355,49 @@ async function createToken(payload, secret) {
       )
     );
 
+
   const signature =
     await hmacSign(
       encoded,
       secret
     );
 
+
   return (
     encoded +
     "." +
     signature
   );
+
 }
 
-async function verifyToken(token, secret) {
+
+async function verifyToken(
+  token,
+  secret
+) {
+
   if (!token)
     return null;
 
+
   const parts =
     token.split(".");
+
 
   if (
     parts.length !== 2
   )
     return null;
 
+
   const payloadPart =
     parts[0];
 
+
   const signature =
     parts[1];
+
 
   const expected =
     await hmacSign(
@@ -2235,13 +2405,16 @@ async function verifyToken(token, secret) {
       secret
     );
 
+
   if (
     signature !==
     expected
   )
     return null;
 
+
   try {
+
     const payload =
       JSON.parse(
         decodeBase64url(
@@ -2249,28 +2422,44 @@ async function verifyToken(token, secret) {
         )
       );
 
+
     if (
       payload.exp &&
       Date.now() >
-        Number(payload.exp)
+        Number(
+          payload.exp
+        )
     ) {
+
       return null;
+
     }
 
+
     return payload;
+
   } catch {
+
     return null;
+
   }
+
 }
 
-function bearerToken(request) {
+
+function bearerToken(
+  request
+) {
+
   const auth =
     request.headers.get(
       "Authorization"
     );
 
+
   if (!auth)
     return "";
+
 
   if (
     !auth
@@ -2279,18 +2468,26 @@ function bearerToken(request) {
   )
     return "";
 
+
   return auth
     .slice(7)
     .trim();
+
 }
+
 
 let dbReady = false;
 
-async function migratePaymentsTable(env) {
+
+async function migratePaymentsTable(
+  env
+) {
+
   const tableInfo =
     await env.DB.prepare(`
       PRAGMA table_info(payments)
     `).all();
+
 
   const columns =
     new Set(
@@ -2303,78 +2500,127 @@ async function migratePaymentsTable(env) {
         )
     );
 
-  if (!columns.has("user_id")) {
+
+  if (
+    !columns.has("user_id")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN user_id TEXT
     `).run();
+
   }
 
-  if (!columns.has("plan_id")) {
+
+  if (
+    !columns.has("plan_id")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN plan_id TEXT
     `).run();
+
   }
 
-  if (!columns.has("amount_toman")) {
+
+  if (
+    !columns.has("amount_toman")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN amount_toman INTEGER
     `).run();
+
   }
 
-  if (!columns.has("authority")) {
+
+  if (
+    !columns.has("authority")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN authority TEXT
     `).run();
+
   }
 
-  if (!columns.has("status")) {
+
+  if (
+    !columns.has("status")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN status TEXT DEFAULT 'pending'
     `).run();
+
   }
 
-  if (!columns.has("created_at")) {
+
+  if (
+    !columns.has("created_at")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN created_at TEXT
     `).run();
+
   }
 
-  if (!columns.has("paid_at")) {
+
+  if (
+    !columns.has("paid_at")
+  ) {
+
     await env.DB.prepare(`
       ALTER TABLE payments
       ADD COLUMN paid_at TEXT
     `).run();
+
   }
 
+
   try {
+
     await env.DB.prepare(`
       UPDATE payments
       SET status = 'pending'
       WHERE status IS NULL
     `).run();
+
   } catch (error) {
+
     console.error(
       "PAYMENTS STATUS MIGRATION ERROR:",
       error
     );
+
   }
+
 }
 
-async function initDatabase(env) {
+
+async function initDatabase(
+  env
+) {
+
   if (!env.DB) {
+
     throw new Error(
       "D1 binding DB تنظیم نشده است."
     );
+
   }
+
 
   if (dbReady)
     return;
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS users (
@@ -2387,6 +2633,7 @@ async function initDatabase(env) {
     )
   `).run();
 
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS plans (
       id TEXT PRIMARY KEY,
@@ -2396,6 +2643,7 @@ async function initDatabase(env) {
       features TEXT NOT NULL
     )
   `).run();
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -2408,6 +2656,7 @@ async function initDatabase(env) {
     )
   `).run();
 
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS usage (
       id TEXT PRIMARY KEY,
@@ -2417,6 +2666,7 @@ async function initDatabase(env) {
       UNIQUE(user_id, usage_date)
     )
   `).run();
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS password_resets (
@@ -2428,6 +2678,7 @@ async function initDatabase(env) {
       created_at TEXT NOT NULL
     )
   `).run();
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS payments (
@@ -2442,7 +2693,11 @@ async function initDatabase(env) {
     )
   `).run();
 
-  await migratePaymentsTable(env);
+
+  await migratePaymentsTable(
+    env
+  );
+
 
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS payments_v2 (
@@ -2457,6 +2712,7 @@ async function initDatabase(env) {
     )
   `).run();
 
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS withdrawals (
       id TEXT PRIMARY KEY,
@@ -2470,6 +2726,7 @@ async function initDatabase(env) {
     )
   `).run();
 
+
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS admin_sessions (
       id TEXT PRIMARY KEY,
@@ -2477,10 +2734,14 @@ async function initDatabase(env) {
     )
   `).run();
 
+
   for (
     const id of
-    Object.keys(PLAN_PRICES)
+    Object.keys(
+      PLAN_PRICES
+    )
   ) {
+
     const exists =
       await env.DB.prepare(
         "SELECT id FROM plans WHERE id = ?"
@@ -2488,7 +2749,9 @@ async function initDatabase(env) {
         .bind(id)
         .first();
 
+
     if (!exists) {
+
       await env.DB.prepare(`
         INSERT INTO plans
         (id,name,price_toman,price_usd,features)
@@ -2504,7 +2767,9 @@ async function initDatabase(env) {
           )
         )
         .run();
+
     } else {
+
       await env.DB.prepare(`
         UPDATE plans
         SET
@@ -2524,21 +2789,37 @@ async function initDatabase(env) {
           id
         )
         .run();
+
     }
+
   }
 
+
   dbReady = true;
+
 }
 
-async function requireUser(request, env) {
+
+async function requireUser(
+  request,
+  env
+) {
+
   const token =
-    bearerToken(request);
+    bearerToken(
+      request
+    );
+
 
   if (!token)
     return null;
 
+
   const secret =
-    getAuthSecret(env);
+    getAuthSecret(
+      env
+    );
+
 
   const payload =
     await verifyToken(
@@ -2546,11 +2827,13 @@ async function requireUser(request, env) {
       secret
     );
 
+
   if (
     !payload ||
     !payload.userId
   )
     return null;
+
 
   const user =
     await env.DB.prepare(`
@@ -2563,18 +2846,32 @@ async function requireUser(request, env) {
       )
       .first();
 
+
   return user || null;
+
 }
 
-async function requireAdmin(request, env) {
+
+async function requireAdmin(
+  request,
+  env
+) {
+
   const token =
-    bearerToken(request);
+    bearerToken(
+      request
+    );
+
 
   if (!token)
     return false;
 
+
   const secret =
-    getAuthSecret(env);
+    getAuthSecret(
+      env
+    );
+
 
   const payload =
     await verifyToken(
@@ -2582,28 +2879,44 @@ async function requireAdmin(request, env) {
       secret
     );
 
+
   return !!(
     payload &&
     payload.admin === true
   );
+
 }
 
+
 function today() {
+
   return new Date()
     .toISOString()
     .slice(0, 10);
+
 }
 
-function addDays(days) {
+
+function addDays(
+  days
+) {
+
   return new Date(
     Date.now() +
     days * 86400000
   ).toISOString();
+
 }
 
-async function getUsage(env, userId) {
+
+async function getUsage(
+  env,
+  userId
+) {
+
   const date =
     today();
+
 
   let row =
     await env.DB.prepare(`
@@ -2618,8 +2931,11 @@ async function getUsage(env, userId) {
       )
       .first();
 
+
   if (!row) {
+
     try {
+
       await env.DB.prepare(`
         INSERT INTO usage
         (id,user_id,usage_date,used)
@@ -2631,12 +2947,16 @@ async function getUsage(env, userId) {
           date
         )
         .run();
+
     } catch (error) {
+
       console.error(
         "USAGE INSERT:",
         error
       );
+
     }
+
 
     row =
       await env.DB.prepare(`
@@ -2651,17 +2971,28 @@ async function getUsage(env, userId) {
         )
         .first();
 
+
     if (!row) {
+
       row = {
         used: 0
       };
+
     }
+
   }
 
+
   return row;
+
 }
 
-async function getSubscription(env, userId) {
+
+async function getSubscription(
+  env,
+  userId
+) {
+
   return await env.DB.prepare(`
     SELECT
       s.*,
@@ -2684,31 +3015,46 @@ async function getSubscription(env, userId) {
       new Date().toISOString()
     )
     .first();
+
 }
 
-async function sendRecoveryEmail(env, email, code) {
+
+async function sendRecoveryEmail(
+  env,
+  email,
+  code
+) {
+
   if (!env.RESEND_API_KEY) {
+
     return {
       ok: false,
       status: 500,
       error:
         "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)"
     };
+
   }
+
 
   const from =
     env.RESEND_FROM_EMAIL;
 
+
   if (!from) {
+
     return {
       ok: false,
       status: 500,
       error:
         "آدرس ارسال ایمیل تنظیم نشده است (RESEND_FROM_EMAIL وجود ندارد)"
     };
+
   }
 
+
   try {
+
     const response =
       await fetch(
         "https://api.resend.com/emails",
@@ -2804,13 +3150,18 @@ color:#64748b;
         }
       );
 
+
     if (!response.ok) {
+
       let details = "";
 
       try {
+
         details =
           await response.text();
+
       } catch {}
+
 
       return {
         ok: false,
@@ -2820,12 +3171,17 @@ color:#64748b;
           "ارسال ایمیل ناموفق بود",
         details
       };
+
     }
+
 
     return {
       ok: true
     };
+
+
   } catch (error) {
+
     return {
       ok: false,
       status: 502,
@@ -2835,17 +3191,28 @@ color:#64748b;
         error?.message ||
         String(error)
     };
+
   }
+
 }
 
-async function signupApi(request, env) {
+
+async function signupApi(
+  request,
+  env
+) {
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const name =
     String(
       body.name || ""
     ).trim();
+
 
   const email =
     String(
@@ -2854,10 +3221,12 @@ async function signupApi(request, env) {
       .trim()
       .toLowerCase();
 
+
   const password =
     String(
       body.password || ""
     );
+
 
   if (!name)
     return json(
@@ -2868,6 +3237,7 @@ async function signupApi(request, env) {
       400
     );
 
+
   if (!email)
     return json(
       {
@@ -2876,6 +3246,7 @@ async function signupApi(request, env) {
       },
       400
     );
+
 
   if (
     !email.includes("@") ||
@@ -2889,6 +3260,7 @@ async function signupApi(request, env) {
       400
     );
 
+
   if (
     password.length < 6
   )
@@ -2900,14 +3272,18 @@ async function signupApi(request, env) {
       400
     );
 
+
   const existing =
     await env.DB.prepare(`
       SELECT id
       FROM users
       WHERE email = ?
     `)
-      .bind(email)
+      .bind(
+        email
+      )
       .first();
+
 
   if (existing)
     return json(
@@ -2918,13 +3294,16 @@ async function signupApi(request, env) {
       409
     );
 
+
   const id =
     randomHex(16);
+
 
   const passwordHash =
     await hashPassword(
       password
     );
+
 
   await env.DB.prepare(`
     INSERT INTO users
@@ -2940,13 +3319,18 @@ async function signupApi(request, env) {
     )
     .run();
 
+
   const secret =
-    getAuthSecret(env);
+    getAuthSecret(
+      env
+    );
+
 
   const token =
     await createToken(
       {
-        userId: id,
+        userId:
+          id,
         exp:
           Date.now() +
           30 * 86400000
@@ -2954,14 +3338,24 @@ async function signupApi(request, env) {
       secret
     );
 
+
   return json({
     token
   });
+
 }
 
-async function loginApi(request, env) {
+
+async function loginApi(
+  request,
+  env
+) {
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
     String(
@@ -2970,10 +3364,12 @@ async function loginApi(request, env) {
       .trim()
       .toLowerCase();
 
+
   const password =
     String(
       body.password || ""
     );
+
 
   const user =
     await env.DB.prepare(`
@@ -2981,8 +3377,11 @@ async function loginApi(request, env) {
       FROM users
       WHERE email = ?
     `)
-      .bind(email)
+      .bind(
+        email
+      )
       .first();
+
 
   if (!user)
     return json(
@@ -2993,10 +3392,12 @@ async function loginApi(request, env) {
       401
     );
 
+
   const hash =
     await hashPassword(
       password
     );
+
 
   if (
     hash !==
@@ -3010,8 +3411,12 @@ async function loginApi(request, env) {
       401
     );
 
+
   const secret =
-    getAuthSecret(env);
+    getAuthSecret(
+      env
+    );
+
 
   const token =
     await createToken(
@@ -3025,17 +3430,25 @@ async function loginApi(request, env) {
       secret
     );
 
+
   return json({
     token
   });
+
 }
 
-async function meApi(request, env) {
+
+async function meApi(
+  request,
+  env
+) {
+
   const user =
     await requireUser(
       request,
       env
     );
+
 
   if (!user)
     return json(
@@ -3046,101 +3459,153 @@ async function meApi(request, env) {
       401
     );
 
+
   let subscription =
     null;
+
 
   let usage = {
     used: 0
   };
 
+
   try {
+
     subscription =
       await getSubscription(
         env,
         user.id
       );
+
   } catch (error) {
+
     console.error(
       "ME SUBSCRIPTION ERROR:",
       error
     );
+
   }
 
+
   try {
+
     usage =
       await getUsage(
         env,
         user.id
       );
+
   } catch (error) {
+
     console.error(
       "ME USAGE ERROR:",
       error
     );
+
   }
+
 
   let subscriptionData =
     null;
 
+
   if (subscription) {
+
     let features = [];
 
+
     try {
+
       features =
         JSON.parse(
           subscription.features ||
           "[]"
         );
+
     } catch {
+
       features = [];
+
     }
 
+
     subscriptionData = {
+
       plan_id:
         subscription.plan_id,
+
       expires_at:
         subscription.expires_at,
+
       plan: {
+
         id:
           subscription.plan_id,
+
         name:
           subscription.plan_name,
+
         features
+
       }
+
     };
+
   }
 
+
   return json({
+
     user: {
+
       id:
         user.id,
+
       name:
         user.name,
+
       email:
         user.email,
+
       balance:
         Number(
           user.balance || 0
         )
+
     },
+
     subscription:
       subscriptionData,
+
     usage: {
+
       used:
         Number(
           usage?.used || 0
         ),
+
       limit:
         subscription
           ? 999999999
           : FREE_DAILY_LIMIT
+
     }
+
   });
+
 }
 
-async function forgotPasswordApi(request, env) {
+
+async function forgotPasswordApi(
+  request,
+  env
+) {
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
     String(
@@ -3148,6 +3613,7 @@ async function forgotPasswordApi(request, env) {
     )
       .trim()
       .toLowerCase();
+
 
   if (!email)
     return json(
@@ -3158,32 +3624,44 @@ async function forgotPasswordApi(request, env) {
       400
     );
 
+
   const user =
     await env.DB.prepare(`
       SELECT id,email,name
       FROM users
       WHERE email = ?
     `)
-      .bind(email)
+      .bind(
+        email
+      )
       .first();
 
+
   if (!user) {
+
     return json({
+
       message:
         "اگر این ایمیل در ابزارک ثبت شده باشد، کد بازیابی ارسال خواهد شد."
+
     });
+
   }
+
 
   const code =
     randomCode();
+
 
   const codeHash =
     await hashPassword(
       code
     );
 
+
   const id =
     randomHex(16);
+
 
   await env.DB.prepare(`
     UPDATE password_resets
@@ -3195,6 +3673,7 @@ async function forgotPasswordApi(request, env) {
       user.id
     )
     .run();
+
 
   await env.DB.prepare(`
     INSERT INTO password_resets
@@ -3213,6 +3692,7 @@ async function forgotPasswordApi(request, env) {
     )
     .run();
 
+
   const mail =
     await sendRecoveryEmail(
       env,
@@ -3220,7 +3700,9 @@ async function forgotPasswordApi(request, env) {
       code
     );
 
+
   if (!mail.ok) {
+
     return json(
       {
         error:
@@ -3233,17 +3715,30 @@ async function forgotPasswordApi(request, env) {
       mail.status ||
       500
     );
+
   }
 
+
   return json({
+
     message:
       "کد بازیابی به ایمیل شما ارسال شد."
+
   });
+
 }
 
-async function resetPasswordApi(request, env) {
+
+async function resetPasswordApi(
+  request,
+  env
+) {
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const email =
     String(
@@ -3252,15 +3747,18 @@ async function resetPasswordApi(request, env) {
       .trim()
       .toLowerCase();
 
+
   const code =
     String(
       body.code || ""
     ).trim();
 
+
   const newPassword =
     String(
       body.newPassword || ""
     );
+
 
   if (
     !email ||
@@ -3274,6 +3772,7 @@ async function resetPasswordApi(request, env) {
       400
     );
 
+
   if (
     newPassword.length < 6
   )
@@ -3285,14 +3784,18 @@ async function resetPasswordApi(request, env) {
       400
     );
 
+
   const user =
     await env.DB.prepare(`
       SELECT id
       FROM users
       WHERE email = ?
     `)
-      .bind(email)
+      .bind(
+        email
+      )
       .first();
+
 
   if (!user)
     return json(
@@ -3303,6 +3806,7 @@ async function resetPasswordApi(request, env) {
       400
     );
 
+
   const reset =
     await env.DB.prepare(`
       SELECT *
@@ -3312,8 +3816,11 @@ async function resetPasswordApi(request, env) {
       ORDER BY created_at DESC
       LIMIT 1
     `)
-      .bind(user.id)
+      .bind(
+        user.id
+      )
       .first();
+
 
   if (!reset)
     return json(
@@ -3324,12 +3831,14 @@ async function resetPasswordApi(request, env) {
       400
     );
 
+
   if (
     Date.now() >
     new Date(
       reset.expires_at
     ).getTime()
   ) {
+
     await env.DB.prepare(`
       UPDATE password_resets
       SET used = 1
@@ -3340,6 +3849,7 @@ async function resetPasswordApi(request, env) {
       )
       .run();
 
+
     return json(
       {
         error:
@@ -3347,12 +3857,15 @@ async function resetPasswordApi(request, env) {
       },
       400
     );
+
   }
+
 
   const codeHash =
     await hashPassword(
       code
     );
+
 
   if (
     codeHash !==
@@ -3366,10 +3879,12 @@ async function resetPasswordApi(request, env) {
       400
     );
 
+
   const passwordHash =
     await hashPassword(
       newPassword
     );
+
 
   await env.DB.prepare(`
     UPDATE users
@@ -3382,6 +3897,7 @@ async function resetPasswordApi(request, env) {
     )
     .run();
 
+
   await env.DB.prepare(`
     UPDATE password_resets
     SET used = 1
@@ -3392,28 +3908,31 @@ async function resetPasswordApi(request, env) {
     )
     .run();
 
+
   return json({
+
     message:
       "رمز عبور با موفقیت تغییر کرد."
+
   });
+
 }
 
 
 // =============================================================
 // FIXED PLANS API
 // =============================================================
-// نمایش پلن‌ها مستقیماً از ثابت‌های Worker انجام می‌شود.
-// بنابراین حتی اگر جدول plans در D1 مشکل داشته باشد،
-// /api/plans همچنان باید چهار پلن را برگرداند.
-// =============================================================
 
-async function plansApi(env) {
+async function plansApi(
+  env
+) {
 
   const plans =
     Object.keys(
       PLAN_PRICES
     ).map(
       id => ({
+
         id:
           id,
 
@@ -3436,10 +3955,13 @@ async function plansApi(env) {
           )
             ? PLAN_FEATURES[id]
             : []
+
       })
     );
 
+
   return json({
+
     ok:
       true,
 
@@ -3448,18 +3970,30 @@ async function plansApi(env) {
 
     plans_usd:
       plans
+
   });
+
 }
 
 
-async function aiChatApi(request, env) {
+// =============================================================
+// IMPROVED AI CHAT API
+// =============================================================
+
+async function aiChatApi(
+  request,
+  env
+) {
+
   const user =
     await requireUser(
       request,
       env
     );
 
-  if (!user)
+
+  if (!user) {
+
     return json(
       {
         error:
@@ -3468,15 +4002,23 @@ async function aiChatApi(request, env) {
       401
     );
 
+  }
+
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const message =
     String(
       body.message || ""
     ).trim();
 
-  if (!message)
+
+  if (!message) {
+
     return json(
       {
         error:
@@ -3485,10 +4027,14 @@ async function aiChatApi(request, env) {
       400
     );
 
+  }
+
+
   if (
     message.length >
     12000
-  )
+  ) {
+
     return json(
       {
         error:
@@ -3497,152 +4043,444 @@ async function aiChatApi(request, env) {
       400
     );
 
+  }
+
+
+  // =========================================================
+  // CONVERSATION HISTORY
+  // =========================================================
+
+  let history =
+    Array.isArray(
+      body.history
+    )
+      ? body.history
+      : [];
+
+
+  history =
+    history
+      .filter(
+        item =>
+          item &&
+          (
+            item.role ===
+              "user" ||
+            item.role ===
+              "assistant"
+          ) &&
+          typeof item.content ===
+            "string" &&
+          item.content.trim()
+      )
+      .slice(-20);
+
+
+  // =========================================================
+  // SUBSCRIPTION
+  // =========================================================
+  // اینجا عمداً فقط subscriptions را بررسی می‌کنیم
+  // تا مشکل احتمالی JOIN با plans باعث خطای AI نشود.
+  // =========================================================
+
   let subscription =
     null;
 
+
   try {
+
     subscription =
-      await getSubscription(
-        env,
-        user.id
-      );
+      await env.DB.prepare(`
+        SELECT
+          id,
+          plan_id,
+          starts_at,
+          expires_at,
+          status
+        FROM subscriptions
+        WHERE user_id = ?
+          AND status = 'active'
+          AND expires_at > ?
+        ORDER BY expires_at DESC
+        LIMIT 1
+      `)
+        .bind(
+          user.id,
+          new Date().toISOString()
+        )
+        .first();
+
   } catch (error) {
+
     console.error(
-      "AI SUBSCRIPTION ERROR:",
+      "AI SUBSCRIPTION CHECK ERROR:",
       error
     );
+
+    // اگر بررسی اشتراک خطا داد،
+    // کاربر را متوقف نمی‌کنیم و مانند کاربر رایگان
+    // ادامه می‌دهیم.
+    subscription = null;
+
   }
+
+
+  // =========================================================
+  // USAGE
+  // =========================================================
 
   let usage = {
     used: 0
   };
 
+
   try {
+
     usage =
       await getUsage(
         env,
         user.id
       );
+
   } catch (error) {
+
     console.error(
       "AI USAGE ERROR:",
       error
     );
 
-    return json(
-      {
-        error:
-          "خطا در بررسی سهمیه حساب."
-      },
-      500
-    );
+
+    // تلاش مجدد برای اطمینان از وجود جدول
+    try {
+
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS usage (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          usage_date TEXT NOT NULL,
+          used INTEGER NOT NULL DEFAULT 0,
+          UNIQUE(user_id, usage_date)
+        )
+      `).run();
+
+
+      usage =
+        await getUsage(
+          env,
+          user.id
+        );
+
+    } catch (secondError) {
+
+      console.error(
+        "AI USAGE SECOND ERROR:",
+        secondError
+      );
+
+
+      return json(
+        {
+          error:
+            "خطا در بررسی سهمیه حساب.",
+          details:
+            secondError?.message ||
+            String(secondError)
+        },
+        500
+      );
+
+    }
+
   }
+
+
+  // =========================================================
+  // FREE DAILY LIMIT
+  // =========================================================
 
   if (
     !subscription &&
     Number(
-      usage.used || 0
+      usage?.used || 0
     ) >=
       FREE_DAILY_LIMIT
   ) {
+
     return json(
       {
         error:
-          "سهمیه روزانه شما تمام شده است.",
+          "سهمیه رایگان روزانه شما تمام شده است. برای ادامه یکی از پلن‌های اشتراک را انتخاب کنید.",
         upgrade_required:
           true
       },
       429
     );
+
   }
 
+
+  // =========================================================
+  // CHECK AI BINDING
+  // =========================================================
+
   if (!env.AI) {
+
+    console.error(
+      "ABZARAK AI BINDING IS MISSING"
+    );
+
+
     return json(
       {
         error:
-          "سرویس هوش مصنوعی تنظیم نشده است."
+          "اتصال هوش مصنوعی در Worker تنظیم نشده است."
       },
       500
     );
+
   }
+
+
+  // =========================================================
+  // PROFESSIONAL SYSTEM PROMPT
+  // =========================================================
+
+  const systemPrompt = `
+تو «ابزارک AI» هستی؛ یک دستیار هوش مصنوعی حرفه‌ای، فارسی‌زبان و چندزبانه.
+
+وظیفه تو این است که به کاربر پاسخ دقیق، طبیعی، مفید و کامل بدهی.
+
+قوانین پاسخ‌دهی:
+
+1. اگر کاربر فارسی صحبت می‌کند، پاسخ را فارسی و روان بده.
+
+2. اگر کاربر انگلیسی یا زبان دیگری استفاده کرد، تا حد امکان به همان زبان پاسخ بده.
+
+3. پاسخ‌ها را فقط در یک جمله کوتاه خلاصه نکن. اگر سؤال نیاز به توضیح دارد، توضیح کامل بده.
+
+4. برای سؤال‌های آموزشی، مرحله‌به‌مرحله توضیح بده.
+
+5. برای درخواست‌های نوشتاری، متن آماده و قابل استفاده تولید کن.
+
+6. برای ترجمه، ترجمه طبیعی و دقیق ارائه کن و معنی را بی‌دلیل تغییر نده.
+
+7. برای ایده‌پردازی، چند ایده کاربردی ارائه کن.
+
+8. اگر کاربر سؤال چندبخشی پرسید، به همه بخش‌ها پاسخ بده.
+
+9. اگر اطلاعات کافی برای پاسخ وجود ندارد، سؤال کوتاه و مشخصی برای روشن شدن موضوع بپرس.
+
+10. از تکرار بی‌دلیل حرف‌های کاربر خودداری کن.
+
+11. پاسخ‌ها را مرتب و خوانا بنویس.
+
+12. در پاسخ‌های طولانی از عنوان، شماره‌گذاری و فهرست استفاده کن.
+
+13. لحن دوستانه، حرفه‌ای و کمک‌کننده داشته باش.
+
+14. ادعاهای ساختگی یا اطلاعاتی که از آن مطمئن نیستی را به‌عنوان حقیقت قطعی بیان نکن.
+
+15. اگر کاربر فقط سلام کرد، دوستانه پاسخ بده و آماده کمک باش.
+
+16. مکالمه را بر اساس پیام‌های قبلی ادامه بده و ارتباط بین سؤال‌های کاربر را حفظ کن.
+
+17. اگر کاربر گفت «ادامه بده»، «کوتاه‌ترش کن»، «بیشتر توضیح بده»، «اصلاحش کن»، «بهترش کن»، «همین را تغییر بده» یا عبارت مشابه، منظور را با توجه به مکالمه قبلی درک کن.
+
+18. اگر کاربر درخواست متن، تبلیغ، ایمیل، کپشن، توضیح محصول یا متن قابل انتشار کرد، متن کامل و آماده استفاده تولید کن.
+
+19. اگر کاربر سؤال فنی یا برنامه‌نویسی پرسید، تا حد امکان راه‌حل عملی و قابل اجرا ارائه بده.
+
+20. اگر کاربر درخواست محاسبه یا مقایسه کرد، اطلاعات را منظم و واضح ارائه کن.
+
+21. هدف تو کمک واقعی به کاربر است، نه صرفاً تولید یک پاسخ کوتاه.
+
+22. پاسخ را متناسب با سؤال کاربر تولید کن و از پاسخ‌های کلی و تکراری خودداری کن.
+`;
+
+
+  // =========================================================
+  // BUILD FULL MESSAGE CONTEXT
+  // =========================================================
+
+  const messages = [
+
+    {
+      role:
+        "system",
+
+      content:
+        systemPrompt
+    }
+
+  ];
+
+
+  for (
+    const item of history
+  ) {
+
+    messages.push({
+
+      role:
+        item.role,
+
+      content:
+        item.content
+
+    });
+
+  }
+
+
+  // پیام جدید کاربر
+  messages.push({
+
+    role:
+      "user",
+
+    content:
+      message
+
+  });
+
+
+  // =========================================================
+  // RUN CLOUDFLARE AI
+  // =========================================================
 
   let result;
 
+
   try {
+
     result =
       await env.AI.run(
         "@cf/meta/llama-3.1-8b-instruct-fast",
         {
-          messages: [
-            {
-              role:
-                "system",
-              content:
-                "You are Abzarak AI, a helpful multilingual AI assistant. Answer in the same language as the user whenever possible. Be clear, useful and concise."
-            },
-            {
-              role:
-                "user",
-              content:
-                message
-            }
-          ]
+
+          messages,
+
+          max_tokens:
+            1200,
+
+          temperature:
+            0.7
+
         }
       );
+
   } catch (error) {
+
     console.error(
-      "AI PROVIDER ERROR:",
+      "ABZARAK AI PROVIDER ERROR:",
       error
     );
+
 
     return json(
       {
         error:
-          "خطا در سرویس هوش مصنوعی.",
+          "ارتباط با سرویس هوش مصنوعی برقرار نشد.",
         details:
           error?.message ||
           String(error)
       },
       500
     );
+
   }
 
+
+  // =========================================================
+  // EXTRACT AI RESPONSE
+  // =========================================================
+
   let reply = "";
+
 
   if (
     typeof result ===
     "string"
   ) {
+
     reply =
       result;
-  } else if (
+
+  }
+
+  else if (
     result &&
     typeof result.response ===
       "string"
   ) {
+
     reply =
       result.response;
-  } else if (
+
+  }
+
+  else if (
     result &&
     typeof result.result ===
       "string"
   ) {
+
     reply =
       result.result;
-  } else {
-    try {
-      reply =
-        JSON.stringify(
-          result
-        );
-    } catch {
-      reply =
-        "پاسخی دریافت نشد.";
-    }
+
   }
 
+  else if (
+    result &&
+    result.result &&
+    typeof result.result.response ===
+      "string"
+  ) {
+
+    reply =
+      result.result.response;
+
+  }
+
+  else {
+
+    console.error(
+      "ABZARAK AI UNKNOWN RESPONSE:",
+      JSON.stringify(
+        result
+      )
+    );
+
+  }
+
+
+  reply =
+    String(
+      reply || ""
+    ).trim();
+
+
+  if (!reply) {
+
+    return json(
+      {
+        error:
+          "هوش مصنوعی پاسخی تولید نکرد."
+      },
+      502
+    );
+
+  }
+
+
+  // =========================================================
+  // UPDATE USAGE
+  // =========================================================
+
   if (!subscription) {
+
     try {
+
       await env.DB.prepare(`
         UPDATE usage
         SET used = used + 1
@@ -3654,26 +4492,68 @@ async function aiChatApi(request, env) {
           today()
         )
         .run();
+
     } catch (error) {
+
       console.error(
         "USAGE UPDATE ERROR:",
         error
       );
+
     }
+
   }
 
+
+  // =========================================================
+  // FINAL RESPONSE
+  // =========================================================
+
   return json({
-    reply
+
+    ok:
+      true,
+
+    reply:
+      reply,
+
+    usage: {
+
+      used:
+        Number(
+          usage?.used || 0
+        ) +
+        (
+          subscription
+            ? 0
+            : 1
+        ),
+
+      limit:
+        subscription
+          ? 999999999
+          : FREE_DAILY_LIMIT
+
+    }
+
   });
+
 }
 
-async function paymentRequestApi(request, env) {
+
+async function paymentRequestApi(
+  request,
+  env
+) {
+
   try {
+
     const user =
       await requireUser(
         request,
         env
       );
+
 
     if (!user)
       return json(
@@ -3684,13 +4564,18 @@ async function paymentRequestApi(request, env) {
         401
       );
 
+
     const body =
-      await bodyJson(request);
+      await bodyJson(
+        request
+      );
+
 
     const planId =
       String(
         body.planId || ""
       ).trim();
+
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -3698,6 +4583,7 @@ async function paymentRequestApi(request, env) {
         planId
       )
     ) {
+
       return json(
         {
           error:
@@ -3705,12 +4591,15 @@ async function paymentRequestApi(request, env) {
         },
         400
       );
+
     }
+
 
     const amountToman =
       Number(
         PLAN_PRICES[planId]
       );
+
 
     if (
       !Number.isSafeInteger(
@@ -3718,6 +4607,7 @@ async function paymentRequestApi(request, env) {
       ) ||
       amountToman <= 0
     ) {
+
       return json(
         {
           error:
@@ -3725,7 +4615,9 @@ async function paymentRequestApi(request, env) {
         },
         400
       );
+
     }
+
 
     const merchantId =
       String(
@@ -3733,7 +4625,9 @@ async function paymentRequestApi(request, env) {
         ""
       ).trim();
 
+
     if (!merchantId) {
+
       return json(
         {
           error:
@@ -3741,15 +4635,20 @@ async function paymentRequestApi(request, env) {
         },
         503
       );
+
     }
+
 
     const paymentId =
       randomHex(16);
 
+
     const createdAt =
       new Date().toISOString();
 
+
     try {
+
       await env.DB.prepare(`
         INSERT INTO payments_v2
         (
@@ -3773,11 +4672,14 @@ async function paymentRequestApi(request, env) {
           createdAt
         )
         .run();
+
     } catch (dbError) {
+
       console.error(
         "PAYMENT V2 DB INSERT ERROR:",
         dbError
       );
+
 
       return json(
         {
@@ -3789,7 +4691,9 @@ async function paymentRequestApi(request, env) {
         },
         500
       );
+
     }
+
 
     const baseUrl =
       String(
@@ -3802,6 +4706,7 @@ async function paymentRequestApi(request, env) {
         ""
       );
 
+
     const callback =
       baseUrl +
       "/api/payment/verify?payment_id=" +
@@ -3809,55 +4714,79 @@ async function paymentRequestApi(request, env) {
         paymentId
       );
 
+
     const amountRial =
       amountToman * 10;
 
+
     const payload = {
+
       merchant_id:
         merchantId,
+
       amount:
         amountRial,
+
       description:
         "Abzarak AI - " +
         PLAN_NAMES[planId],
+
       callback_url:
         callback,
+
       metadata: {
+
         email:
           user.email,
+
         mobile:
           ""
+
       }
+
     };
+
 
     let response;
 
+
     try {
+
       response =
         await fetch(
           "https://api.zarinpal.com/pg/v4/payment/request.json",
           {
             method:
               "POST",
+
             headers: {
+
               "Content-Type":
                 "application/json",
+
               "Accept":
                 "application/json"
+
             },
+
             body:
               JSON.stringify(
                 payload
               )
+
           }
         );
+
     } catch (networkError) {
+
       console.error(
         "ZARINPAL NETWORK ERROR:",
         networkError
       );
 
+
       try {
+
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -3868,12 +4797,16 @@ async function paymentRequestApi(request, env) {
             paymentId
           )
           .run();
+
       } catch (updateError) {
+
         console.error(
           "PAYMENT V2 NETWORK FAILURE UPDATE ERROR:",
           updateError
         );
+
       }
+
 
       return json(
         {
@@ -3885,27 +4818,36 @@ async function paymentRequestApi(request, env) {
         },
         502
       );
+
     }
+
 
     const rawResponse =
       await response.text();
 
+
     let data = {};
 
+
     try {
+
       data =
         rawResponse
           ? JSON.parse(
               rawResponse
             )
           : {};
+
     } catch (parseError) {
+
       console.error(
         "ZARINPAL INVALID JSON:",
         rawResponse
       );
 
+
       try {
+
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -3916,12 +4858,16 @@ async function paymentRequestApi(request, env) {
             paymentId
           )
           .run();
+
       } catch (updateError) {
+
         console.error(
           "PAYMENT V2 INVALID JSON UPDATE ERROR:",
           updateError
         );
+
       }
+
 
       return json(
         {
@@ -3932,19 +4878,25 @@ async function paymentRequestApi(request, env) {
         },
         502
       );
+
     }
+
 
     const gatewayCode =
       data?.data?.code;
 
+
     const authority =
       data?.data?.authority;
+
 
     const errorCode =
       data?.errors?.code;
 
+
     const errorMessage =
       data?.errors?.message;
+
 
     if (
       !response.ok ||
@@ -3956,7 +4908,9 @@ async function paymentRequestApi(request, env) {
         ) !== 100
       )
     ) {
+
       try {
+
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -3967,30 +4921,40 @@ async function paymentRequestApi(request, env) {
             paymentId
           )
           .run();
+
       } catch (updateError) {
+
         console.error(
           "PAYMENT V2 GATEWAY FAILURE UPDATE ERROR:",
           updateError
         );
+
       }
+
 
       return json(
         {
           error:
             errorMessage ||
             "ایجاد درخواست پرداخت ناموفق بود.",
+
           gateway_code:
             errorCode ??
             gatewayCode ??
             null,
+
           http_status:
             response.status
+
         },
         502
       );
+
     }
 
+
     try {
+
       await env.DB.prepare(`
         UPDATE payments_v2
         SET authority = ?
@@ -4003,11 +4967,14 @@ async function paymentRequestApi(request, env) {
           paymentId
         )
         .run();
+
     } catch (dbError) {
+
       console.error(
         "PAYMENT V2 AUTHORITY SAVE ERROR:",
         dbError
       );
+
 
       return json(
         {
@@ -4019,30 +4986,41 @@ async function paymentRequestApi(request, env) {
         },
         500
       );
+
     }
+
 
     const paymentUrl =
       "https://www.zarinpal.com/pg/StartPay/" +
       authority;
 
+
     return json({
+
       ok:
         true,
+
       payment_url:
         paymentUrl,
+
       payment_id:
         paymentId,
+
       authority:
         String(
           authority
         )
+
     });
 
+
   } catch (error) {
+
     console.error(
       "PAYMENT REQUEST UNHANDLED ERROR:",
       error
     );
+
 
     return json(
       {
@@ -4054,31 +5032,43 @@ async function paymentRequestApi(request, env) {
       },
       500
     );
+
   }
+
 }
 
-async function paymentVerifyApi(request, env) {
+
+async function paymentVerifyApi(
+  request,
+  env
+) {
+
   const url =
     new URL(
       request.url
     );
+
 
   const paymentId =
     url.searchParams.get(
       "payment_id"
     );
 
+
   const authority =
     url.searchParams.get(
       "Authority"
     );
+
 
   const status =
     url.searchParams.get(
       "Status"
     );
 
+
   if (!paymentId) {
+
     return Response.redirect(
       new URL(
         "/?payment=error",
@@ -4086,7 +5076,9 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   const payment =
     await env.DB.prepare(`
@@ -4099,7 +5091,9 @@ async function paymentVerifyApi(request, env) {
       )
       .first();
 
+
   if (!payment) {
+
     return Response.redirect(
       new URL(
         "/?payment=error&reason=payment-not-found",
@@ -4107,12 +5101,15 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   if (
     payment.status ===
     "paid"
   ) {
+
     return Response.redirect(
       new URL(
         "/?payment=success",
@@ -4120,13 +5117,17 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   if (
     status !== "OK" ||
     !authority
   ) {
+
     try {
+
       await env.DB.prepare(`
         UPDATE payments_v2
         SET status = 'cancelled'
@@ -4137,12 +5138,16 @@ async function paymentVerifyApi(request, env) {
           paymentId
         )
         .run();
+
     } catch (error) {
+
       console.error(
         "PAYMENT V2 CANCEL UPDATE ERROR:",
         error
       );
+
     }
+
 
     return Response.redirect(
       new URL(
@@ -4151,7 +5156,9 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   const merchantId =
     String(
@@ -4159,7 +5166,9 @@ async function paymentVerifyApi(request, env) {
       ""
     ).trim();
 
+
   if (!merchantId) {
+
     return Response.redirect(
       new URL(
         "/?payment=error&reason=merchant-not-configured",
@@ -4167,7 +5176,9 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   if (
     payment.authority &&
@@ -4177,6 +5188,7 @@ async function paymentVerifyApi(request, env) {
       authority
     )
   ) {
+
     console.error(
       "ZARINPAL AUTHORITY MISMATCH:",
       JSON.stringify({
@@ -4189,6 +5201,7 @@ async function paymentVerifyApi(request, env) {
       })
     );
 
+
     return Response.redirect(
       new URL(
         "/?payment=error&reason=authority-mismatch",
@@ -4196,12 +5209,15 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   const amountToman =
     Number(
       payment.amount_toman
     );
+
 
   if (
     !Number.isSafeInteger(
@@ -4209,6 +5225,7 @@ async function paymentVerifyApi(request, env) {
     ) ||
     amountToman <= 0
   ) {
+
     return Response.redirect(
       new URL(
         "/?payment=error&reason=invalid-amount",
@@ -4216,53 +5233,74 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 
   const amountRial =
     amountToman * 10;
 
+
   try {
+
     const response =
       await fetch(
         "https://api.zarinpal.com/pg/v4/payment/verify.json",
         {
           method:
             "POST",
+
           headers: {
+
             "Content-Type":
               "application/json",
+
             "Accept":
               "application/json"
+
           },
+
           body:
             JSON.stringify({
+
               merchant_id:
                 merchantId,
+
               amount:
                 amountRial,
+
               authority:
                 authority
+
             })
+
         }
       );
+
 
     const rawResponse =
       await response.text();
 
+
     let data = {};
 
+
     try {
+
       data =
         rawResponse
           ? JSON.parse(
               rawResponse
             )
           : {};
+
     } catch (parseError) {
+
       console.error(
         "ZARINPAL VERIFY INVALID JSON:",
         rawResponse
       );
+
 
       return Response.redirect(
         new URL(
@@ -4271,13 +5309,17 @@ async function paymentVerifyApi(request, env) {
         ).toString(),
         302
       );
+
     }
+
 
     if (
       !response.ok ||
       !data.data
     ) {
+
       try {
+
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -4288,12 +5330,16 @@ async function paymentVerifyApi(request, env) {
             paymentId
           )
           .run();
+
       } catch (error) {
+
         console.error(
           "PAYMENT V2 FAILED UPDATE ERROR:",
           error
         );
+
       }
+
 
       return Response.redirect(
         new URL(
@@ -4302,18 +5348,23 @@ async function paymentVerifyApi(request, env) {
         ).toString(),
         302
       );
+
     }
+
 
     const code =
       Number(
         data.data.code
       );
 
+
     if (
       code !== 100 &&
       code !== 101
     ) {
+
       try {
+
         await env.DB.prepare(`
           UPDATE payments_v2
           SET status = 'failed'
@@ -4324,12 +5375,16 @@ async function paymentVerifyApi(request, env) {
             paymentId
           )
           .run();
+
       } catch (error) {
+
         console.error(
           "PAYMENT V2 FAILED STATUS UPDATE ERROR:",
           error
         );
+
       }
+
 
       return Response.redirect(
         new URL(
@@ -4338,7 +5393,9 @@ async function paymentVerifyApi(request, env) {
         ).toString(),
         302
       );
+
     }
+
 
     const existingSubscription =
       await env.DB.prepare(`
@@ -4358,13 +5415,16 @@ async function paymentVerifyApi(request, env) {
         )
         .first();
 
+
     if (
       existingSubscription
     ) {
+
       const currentExpiry =
         new Date(
           existingSubscription.expires_at
         );
+
 
       const baseTime =
         Math.max(
@@ -4372,11 +5432,13 @@ async function paymentVerifyApi(request, env) {
           Date.now()
         );
 
+
       const newExpiry =
         new Date(
           baseTime +
           30 * 86400000
         ).toISOString();
+
 
       await env.DB.prepare(`
         UPDATE subscriptions
@@ -4389,7 +5451,9 @@ async function paymentVerifyApi(request, env) {
         )
         .run();
 
+
     } else {
+
       await env.DB.prepare(`
         INSERT INTO subscriptions
         (
@@ -4411,7 +5475,9 @@ async function paymentVerifyApi(request, env) {
           addDays(30)
         )
         .run();
+
     }
+
 
     await env.DB.prepare(`
       UPDATE payments_v2
@@ -4429,6 +5495,7 @@ async function paymentVerifyApi(request, env) {
       )
       .run();
 
+
     return Response.redirect(
       new URL(
         "/?payment=success",
@@ -4437,11 +5504,14 @@ async function paymentVerifyApi(request, env) {
       302
     );
 
+
   } catch (error) {
+
     console.error(
       "PAYMENT VERIFY ERROR:",
       error
     );
+
 
     return Response.redirect(
       new URL(
@@ -4450,15 +5520,23 @@ async function paymentVerifyApi(request, env) {
       ).toString(),
       302
     );
+
   }
+
 }
 
-async function withdrawalApi(request, env) {
+
+async function withdrawalApi(
+  request,
+  env
+) {
+
   const user =
     await requireUser(
       request,
       env
     );
+
 
   if (!user)
     return json(
@@ -4469,13 +5547,18 @@ async function withdrawalApi(request, env) {
       401
     );
 
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const amount =
     Number(
       body.amount || 0
     );
+
 
   const method =
     String(
@@ -4483,11 +5566,13 @@ async function withdrawalApi(request, env) {
       "bank"
     );
 
+
   const destination =
     String(
       body.destination ||
       ""
     ).trim();
+
 
   if (
     !Number.isFinite(amount) ||
@@ -4501,6 +5586,7 @@ async function withdrawalApi(request, env) {
       400
     );
 
+
   if (!destination)
     return json(
       {
@@ -4509,6 +5595,7 @@ async function withdrawalApi(request, env) {
       },
       400
     );
+
 
   if (
     amount >
@@ -4524,8 +5611,10 @@ async function withdrawalApi(request, env) {
       400
     );
 
+
   const withdrawalId =
     randomHex(16);
+
 
   const result =
     await env.DB.prepare(`
@@ -4541,6 +5630,7 @@ async function withdrawalApi(request, env) {
       )
       .run();
 
+
   if (
     !result.meta ||
     result.meta.changes !== 1
@@ -4552,6 +5642,7 @@ async function withdrawalApi(request, env) {
       },
       400
     );
+
 
   await env.DB.prepare(`
     INSERT INTO withdrawals
@@ -4568,18 +5659,28 @@ async function withdrawalApi(request, env) {
     )
     .run();
 
+
   return json({
+
     message:
       "درخواست برداشت ثبت شد."
+
   });
+
 }
 
-async function myWithdrawalsApi(request, env) {
+
+async function myWithdrawalsApi(
+  request,
+  env
+) {
+
   const user =
     await requireUser(
       request,
       env
     );
+
 
   if (!user)
     return json(
@@ -4589,6 +5690,7 @@ async function myWithdrawalsApi(request, env) {
       },
       401
     );
+
 
   const rows =
     await env.DB.prepare(`
@@ -4608,20 +5710,33 @@ async function myWithdrawalsApi(request, env) {
       )
       .all();
 
+
   return json({
+
     withdrawals:
       rows.results || []
+
   });
+
 }
 
-async function adminLoginApi(request, env) {
+
+async function adminLoginApi(
+  request,
+  env
+) {
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const password =
     String(
       body.password || ""
     );
+
 
   if (!env.ADMIN_PASSWORD)
     return json(
@@ -4631,6 +5746,7 @@ async function adminLoginApi(request, env) {
       },
       500
     );
+
 
   if (
     password !==
@@ -4644,8 +5760,12 @@ async function adminLoginApi(request, env) {
       401
     );
 
+
   const secret =
-    getAuthSecret(env);
+    getAuthSecret(
+      env
+    );
+
 
   const token =
     await createToken(
@@ -4658,12 +5778,21 @@ async function adminLoginApi(request, env) {
       secret
     );
 
+
   return json({
+
     token
+
   });
+
 }
 
-async function adminUsersApi(request, env) {
+
+async function adminUsersApi(
+  request,
+  env
+) {
+
   if (
     !(await requireAdmin(
       request,
@@ -4677,6 +5806,7 @@ async function adminUsersApi(request, env) {
       },
       403
     );
+
 
   const rows =
     await env.DB.prepare(`
@@ -4691,13 +5821,22 @@ async function adminUsersApi(request, env) {
     `)
       .all();
 
+
   return json({
+
     users:
       rows.results || []
+
   });
+
 }
 
-async function adminPaymentsApi(request, env) {
+
+async function adminPaymentsApi(
+  request,
+  env
+) {
+
   if (
     !(await requireAdmin(
       request,
@@ -4711,6 +5850,7 @@ async function adminPaymentsApi(request, env) {
       },
       403
     );
+
 
   const rows =
     await env.DB.prepare(`
@@ -4724,33 +5864,51 @@ async function adminPaymentsApi(request, env) {
     `)
       .all();
 
+
   return json({
+
     payments:
       (rows.results || [])
         .map(
           x => ({
+
             id:
               x.id,
+
             email:
               x.email,
+
             plan_id:
               x.plan_id,
+
             amount_toman:
               x.amount_toman,
+
             status:
               x.status,
+
             authority:
               x.authority,
+
             created_at:
               x.created_at,
+
             paid_at:
               x.paid_at
+
           })
         )
+
   });
+
 }
 
-async function adminWithdrawalsApi(request, env) {
+
+async function adminWithdrawalsApi(
+  request,
+  env
+) {
+
   if (
     !(await requireAdmin(
       request,
@@ -4764,6 +5922,7 @@ async function adminWithdrawalsApi(request, env) {
       },
       403
     );
+
 
   const rows =
     await env.DB.prepare(`
@@ -4777,13 +5936,22 @@ async function adminWithdrawalsApi(request, env) {
     `)
       .all();
 
+
   return json({
+
     withdrawals:
       rows.results || []
+
   });
+
 }
 
-async function adminProcessWithdrawalApi(request, env) {
+
+async function adminProcessWithdrawalApi(
+  request,
+  env
+) {
+
   if (
     !(await requireAdmin(
       request,
@@ -4798,25 +5966,33 @@ async function adminProcessWithdrawalApi(request, env) {
       403
     );
 
+
   const body =
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const id =
     String(
       body.id || ""
     );
 
+
   const action =
     String(
       body.action || ""
     );
+
 
   if (
     !id ||
     ![
       "paid",
       "rejected"
-    ].includes(action)
+    ].includes(
+      action
+    )
   )
     return json(
       {
@@ -4826,14 +6002,18 @@ async function adminProcessWithdrawalApi(request, env) {
       400
     );
 
+
   const withdrawal =
     await env.DB.prepare(`
       SELECT *
       FROM withdrawals
       WHERE id = ?
     `)
-      .bind(id)
+      .bind(
+        id
+      )
       .first();
+
 
   if (!withdrawal)
     return json(
@@ -4843,6 +6023,7 @@ async function adminProcessWithdrawalApi(request, env) {
       },
       404
     );
+
 
   if (
     withdrawal.status !==
@@ -4856,10 +6037,12 @@ async function adminProcessWithdrawalApi(request, env) {
       400
     );
 
+
   if (
     action ===
     "rejected"
   ) {
+
     await env.DB.prepare(`
       UPDATE users
       SET balance = balance + ?
@@ -4870,7 +6053,9 @@ async function adminProcessWithdrawalApi(request, env) {
         withdrawal.user_id
       )
       .run();
+
   }
+
 
   await env.DB.prepare(`
     UPDATE withdrawals
@@ -4886,31 +6071,50 @@ async function adminProcessWithdrawalApi(request, env) {
     )
     .run();
 
+
   return json({
+
     message:
       action === "paid"
         ? "برداشت پرداخت شد."
         : "درخواست برداشت رد شد و مبلغ به موجودی برگشت."
+
   });
+
 }
 
-async function healthApi(env) {
+
+async function healthApi(
+  env
+) {
+
   return json({
-    ok: true,
+
+    ok:
+      true,
+
     service:
       "Abzarak AI",
+
     time:
       new Date().toISOString(),
+
     database:
       !!env.DB,
+
     ai:
       !!env.AI,
+
     resend:
       !!env.RESEND_API_KEY,
+
     zarinpal:
       !!env.ZARINPAL_MERCHANT_ID
+
   });
+
 }
+
 
 export default {
 
@@ -4926,6 +6130,7 @@ export default {
         request.method ===
         "OPTIONS"
       ) {
+
         return cors(
           new Response(
             null,
@@ -4934,48 +6139,73 @@ export default {
             }
           )
         );
+
       }
+
 
       const url =
         new URL(
           request.url
         );
 
+
       const path =
         url.pathname;
 
+
       // ---------------------------------------------------------
-      // ENAMAD FILE VERIFICATION — checked first, before DB init,
-      // so it always works even if the database has a problem.
+      // ENAMAD FILE VERIFICATION
       // ---------------------------------------------------------
+
       if (
-        path === "/17726638.txt"
+        path ===
+        "/17726638.txt"
       ) {
+
         return cors(
-          plainText("17726638")
+          plainText(
+            "17726638"
+          )
         );
+
       }
 
+
+      // ---------------------------------------------------------
+      // DATABASE INIT
+      // ---------------------------------------------------------
+
       try {
-        await initDatabase(env);
+
+        await initDatabase(
+          env
+        );
+
       } catch (dbInitError) {
+
         console.error(
           "DB INIT ERROR:",
           dbInitError
         );
+
       }
 
+
       let response;
+
 
       if (
         path ===
         "/health"
       ) {
+
         response =
           await healthApi(
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -4983,12 +6213,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await signupApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -4996,12 +6229,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await loginApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5009,12 +6245,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await meApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5022,12 +6261,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await forgotPasswordApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5035,12 +6277,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await resetPasswordApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5048,12 +6293,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await aiChatApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5061,11 +6309,14 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await plansApi(
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5073,12 +6324,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await paymentRequestApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5086,12 +6340,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await paymentVerifyApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5099,12 +6356,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await withdrawalApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5112,12 +6372,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await myWithdrawalsApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5125,12 +6388,15 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await adminLoginApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5138,12 +6404,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await adminUsersApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5151,12 +6420,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await adminPaymentsApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5164,12 +6436,15 @@ export default {
         request.method ===
           "GET"
       ) {
+
         response =
           await adminWithdrawalsApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path ===
@@ -5177,24 +6452,31 @@ export default {
         request.method ===
           "POST"
       ) {
+
         response =
           await adminProcessWithdrawalApi(
             request,
             env
           );
+
       }
+
 
       else if (
         path === "/" ||
         path === "/index.html"
       ) {
+
         response =
           html(
             renderHomepage()
           );
+
       }
 
+
       else {
+
         response =
           json(
             {
@@ -5203,11 +6485,14 @@ export default {
             },
             404
           );
+
       }
+
 
       return cors(
         response
       );
+
 
     } catch (error) {
 
@@ -5215,6 +6500,7 @@ export default {
         "WORKER ERROR:",
         error
       );
+
 
       return cors(
         json(
@@ -5228,6 +6514,9 @@ export default {
           500
         )
       );
+
     }
+
   }
+
 };
