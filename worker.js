@@ -7,6 +7,7 @@
 // Payment V2 table for legacy D1 compatibility
 // Enamad verification meta tag added
 // Enamad verification txt file route added (checked before DB init)
+// Fixed plans API to work without D1 plans-table dependency
 // =============================================================
 
 
@@ -1668,10 +1669,33 @@ function renderHomepage() {
         );
 
 
+      if (
+        !data ||
+        !Array.isArray(data.plans)
+      ) {
+        throw new Error(
+          "پاسخ نامعتبر از سرور برای پلن‌ها."
+        );
+      }
+
+
       grid.innerHTML = "";
 
 
-      (data.plans || [])
+      if (
+        data.plans.length === 0
+      ) {
+
+        grid.innerHTML =
+          "<div class='msg system' style='align-self:center;'>" +
+          "در حال حاضر پلنی برای نمایش وجود ندارد." +
+          "</div>";
+
+        return;
+      }
+
+
+      data.plans
         .forEach(
           (plan, i) => {
 
@@ -3374,62 +3398,59 @@ async function resetPasswordApi(request, env) {
   });
 }
 
+
+// =============================================================
+// FIXED PLANS API
+// =============================================================
+// نمایش پلن‌ها مستقیماً از ثابت‌های Worker انجام می‌شود.
+// بنابراین حتی اگر جدول plans در D1 مشکل داشته باشد،
+// /api/plans همچنان باید چهار پلن را برگرداند.
+// =============================================================
+
 async function plansApi(env) {
-  const rows =
-    await env.DB.prepare(`
-      SELECT *
-      FROM plans
-      ORDER BY
-        CASE id
-          WHEN 'basic' THEN 1
-          WHEN 'standard' THEN 2
-          WHEN 'pro' THEN 3
-          WHEN 'special' THEN 4
-          ELSE 99
-        END
-    `)
-      .all();
 
   const plans =
-    (rows.results || [])
-      .map(
-        x => {
-          let features = [];
+    Object.keys(
+      PLAN_PRICES
+    ).map(
+      id => ({
+        id:
+          id,
 
-          try {
-            features =
-              JSON.parse(
-                x.features ||
-                "[]"
-              );
-          } catch {
-            features = [];
-          }
+        name:
+          PLAN_NAMES[id],
 
-          return {
-            id:
-              x.id,
-            name:
-              x.name,
-            price_toman:
-              Number(
-                x.price_toman
-              ),
-            price_usd:
-              Number(
-                x.price_usd
-              ),
-            features
-          };
-        }
-      );
+        price_toman:
+          Number(
+            PLAN_PRICES[id]
+          ),
+
+        price_usd:
+          Number(
+            PLAN_USD[id]
+          ),
+
+        features:
+          Array.isArray(
+            PLAN_FEATURES[id]
+          )
+            ? PLAN_FEATURES[id]
+            : []
+      })
+    );
 
   return json({
-    plans,
+    ok:
+      true,
+
+    plans:
+      plans,
+
     plans_usd:
       plans
   });
 }
+
 
 async function aiChatApi(request, env) {
   const user =
