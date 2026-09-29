@@ -1,6 +1,6 @@
 // =============================================================
 // ABZARAK AI — HOMEPAGE + BACKEND API
-// Enamad logo added to footer (colors unchanged)
+// Enamad logo removed from footer
 // =============================================================
 
 function renderHomepage() {
@@ -185,9 +185,6 @@ function renderHomepage() {
 
   <footer>
     🤖 ابزارک AI — ساخته‌شده با هوش مصنوعی
-    <div style="margin-top:14px;">
-      <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM' alt='نماد اعتماد الکترونیکی' style='cursor:pointer' code='9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'></a>
-    </div>
   </footer>
 
 </div>
@@ -578,7 +575,7 @@ function html(data, status = 200) {
 function plainText(data, status = 200) {
   return new Response(data, {
     status,
-    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+    headers: { "Content-Type": "text/plain; charset=utf-8" }
   });
 }
 
