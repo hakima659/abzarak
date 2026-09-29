@@ -8,6 +8,8 @@
 <meta name="keywords" content="ابزار آنلاین, ابزار رایگان, online tools, free tools, calculator, currency converter, percentage calculator, discount calculator, profit calculator">
 
 <link rel="canonical" href="https://abzarakai.ir/">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 
 <title>ابزارک | Abzarak - ابزارهای رایگان آنلاین</title>
 
@@ -165,21 +167,10 @@ body.en .lang-btn {
 <section class="card">
   <h2 id="percentTitle">🧮 محاسبه درصد</h2>
 
-  <input
-    id="num"
-    type="number"
-    placeholder="عدد"
-  >
+  <input id="num" type="number" placeholder="عدد">
+  <input id="per" type="number" placeholder="درصد">
 
-  <input
-    id="per"
-    type="number"
-    placeholder="درصد"
-  >
-
-  <button onclick="percent()" id="percentButton">
-    محاسبه
-  </button>
+  <button onclick="percent()" id="percentButton">محاسبه</button>
 
   <div class="result" id="r1"></div>
 </section>
@@ -188,21 +179,10 @@ body.en .lang-btn {
 <section class="card">
   <h2 id="currencyTitle">💱 تبدیل ارز</h2>
 
-  <input
-    id="amount"
-    type="number"
-    placeholder="مقدار"
-  >
+  <input id="amount" type="number" placeholder="مقدار">
+  <input id="rate" type="number" placeholder="نرخ تبدیل">
 
-  <input
-    id="rate"
-    type="number"
-    placeholder="نرخ تبدیل"
-  >
-
-  <button onclick="currency()" id="currencyButton">
-    محاسبه
-  </button>
+  <button onclick="currency()" id="currencyButton">محاسبه</button>
 
   <div class="result" id="r2"></div>
 </section>
@@ -211,21 +191,10 @@ body.en .lang-btn {
 <section class="card">
   <h2 id="discountTitle">🏷️ محاسبه تخفیف</h2>
 
-  <input
-    id="price"
-    type="number"
-    placeholder="قیمت"
-  >
+  <input id="price" type="number" placeholder="قیمت">
+  <input id="discount" type="number" placeholder="درصد تخفیف">
 
-  <input
-    id="discount"
-    type="number"
-    placeholder="درصد تخفیف"
-  >
-
-  <button onclick="off()" id="discountButton">
-    محاسبه
-  </button>
+  <button onclick="off()" id="discountButton">محاسبه</button>
 
   <div class="result" id="r3"></div>
 </section>
@@ -234,21 +203,10 @@ body.en .lang-btn {
 <section class="card">
   <h2 id="profitTitle">💰 محاسبه سود</h2>
 
-  <input
-    id="buy"
-    type="number"
-    placeholder="قیمت خرید"
-  >
+  <input id="buy" type="number" placeholder="قیمت خرید">
+  <input id="sell" type="number" placeholder="قیمت فروش">
 
-  <input
-    id="sell"
-    type="number"
-    placeholder="قیمت فروش"
-  >
-
-  <button onclick="profit()" id="profitButton">
-    محاسبه
-  </button>
+  <button onclick="profit()" id="profitButton">محاسبه</button>
 
   <div class="result" id="r4"></div>
 </section>
@@ -257,25 +215,182 @@ body.en .lang-btn {
 <section class="card">
   <h2 id="increaseTitle">📊 محاسبه افزایش قیمت</h2>
 
-  <input
-    id="base"
-    type="number"
-    placeholder="قیمت اولیه"
-  >
+  <input id="base" type="number" placeholder="قیمت اولیه">
+  <input id="increase" type="number" placeholder="درصد افزایش">
 
-  <input
-    id="increase"
-    type="number"
-    placeholder="درصد افزایش"
-  >
-
-  <button onclick="increasePrice()" id="increaseButton">
-    محاسبه
-  </button>
+  <button onclick="increasePrice()" id="increaseButton">محاسبه</button>
 
   <div class="result" id="r5"></div>
 </section>
 
 
 <section class="card">
-  <h2 id="textTitle">📝 تولید متن معرفی</h
+  <h2 id="textTitle">📝 تولید متن معرفی</h2>
+
+  <input id="toolName" type="text" placeholder="نام ابزار یا محصول">
+
+  <button onclick="genText()" id="textButton">تولید متن</button>
+
+  <div class="result" id="r6"></div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <p id="copyright">© ابزارک | Abzarak</p>
+
+  <div style="text-align:center; margin:20px 0;">
+    <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM' alt='' style='cursor:pointer' code='9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'></a>
+  </div>
+</footer>
+
+<script>
+var isEnglish = false;
+
+var texts = {
+  fa: {
+    subtitle: "ابزارهای رایگان، سریع و کاربردی آنلاین",
+    introTitle: "ابزارهای کاربردی، رایگان و سریع",
+    introText: "در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل ارز، تخفیف، سود و افزایش قیمت را به‌صورت آنلاین انجام دهید.",
+    percentTitle: "🧮 محاسبه درصد",
+    currencyTitle: "💱 تبدیل ارز",
+    discountTitle: "🏷️ محاسبه تخفیف",
+    profitTitle: "💰 محاسبه سود",
+    increaseTitle: "📊 محاسبه افزایش قیمت",
+    textTitle: "📝 تولید متن معرفی",
+    percentButton: "محاسبه",
+    currencyButton: "محاسبه",
+    discountButton: "محاسبه",
+    profitButton: "محاسبه",
+    increaseButton: "محاسبه",
+    textButton: "تولید متن",
+    langButton: "English",
+    copyright: "© ابزارک | Abzarak"
+  },
+  en: {
+    subtitle: "Free, fast and useful online tools",
+    introTitle: "Useful, free and fast tools",
+    introText: "With Abzarak you can do everyday calculations: percentages, currency conversion, discounts, profit and price increases, all online.",
+    percentTitle: "🧮 Percentage Calculator",
+    currencyTitle: "💱 Currency Converter",
+    discountTitle: "🏷️ Discount Calculator",
+    profitTitle: "💰 Profit Calculator",
+    increaseTitle: "📊 Price Increase Calculator",
+    textTitle: "📝 Intro Text Generator",
+    percentButton: "Calculate",
+    currencyButton: "Calculate",
+    discountButton: "Calculate",
+    profitButton: "Calculate",
+    increaseButton: "Calculate",
+    textButton: "Generate text",
+    langButton: "فارسی",
+    copyright: "© Abzarak"
+  }
+};
+
+var placeholders = {
+  fa: {
+    num: "عدد", per: "درصد",
+    amount: "مقدار", rate: "نرخ تبدیل",
+    price: "قیمت", discount: "درصد تخفیف",
+    buy: "قیمت خرید", sell: "قیمت فروش",
+    base: "قیمت اولیه", increase: "درصد افزایش",
+    toolName: "نام ابزار یا محصول"
+  },
+  en: {
+    num: "Number", per: "Percent",
+    amount: "Amount", rate: "Exchange rate",
+    price: "Price", discount: "Discount %",
+    buy: "Buy price", sell: "Sell price",
+    base: "Original price", increase: "Increase %",
+    toolName: "Tool or product name"
+  }
+};
+
+function val(id) {
+  return parseFloat(document.getElementById(id).value);
+}
+
+function show(id, value) {
+  var el = document.getElementById(id);
+  if (typeof value === "number") {
+    el.textContent = isNaN(value) ? "" : Math.round(value * 100) / 100;
+  } else {
+    el.textContent = value;
+  }
+}
+
+function percent() {
+  show("r1", val("num") * val("per") / 100);
+}
+
+function currency() {
+  show("r2", val("amount") * val("rate"));
+}
+
+function off() {
+  var p = val("price");
+  var d = val("discount");
+  show("r3", p - (p * d / 100));
+}
+
+function profit() {
+  var b = val("buy");
+  var s = val("sell");
+  var diff = s - b;
+  var pct = b ? (diff / b * 100) : NaN;
+  if (isNaN(diff)) { show("r4", ""); return; }
+  var pctText = isNaN(pct) ? "" : " (" + (Math.round(pct * 100) / 100) + "%)";
+  show("r4", (Math.round(diff * 100) / 100) + pctText);
+}
+
+function increasePrice() {
+  var b = val("base");
+  var i = val("increase");
+  show("r5", b + (b * i / 100));
+}
+
+function genText() {
+  var name = document.getElementById("toolName").value.trim();
+  var result;
+  if (isEnglish) {
+    name = name || "This tool";
+    result = name + " is a free, fast and practical online tool that helps you get your work done in seconds.";
+  } else {
+    name = name || "این ابزار";
+    result = name + " یک ابزار آنلاین رایگان، سریع و کاربردی است که به شما کمک می‌کند کارهایتان را در چند ثانیه انجام دهید.";
+  }
+  show("r6", result);
+}
+
+function toggleLanguage() {
+  isEnglish = !isEnglish;
+  var lang = isEnglish ? "en" : "fa";
+
+  document.body.classList.toggle("en", isEnglish);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isEnglish ? "ltr" : "rtl";
+
+  var t = texts[lang];
+  for (var id in t) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = t[id];
+  }
+
+  var p = placeholders[lang];
+  for (var pid in p) {
+    var input = document.getElementById(pid);
+    if (input) input.placeholder = p[pid];
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+
+</body>
+</html>
