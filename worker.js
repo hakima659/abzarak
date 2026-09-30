@@ -1332,12 +1332,17 @@ async function paymentRequestApi(request, env) {
     const callback = baseUrl + "/api/payment/verify?payment_id=" + encodeURIComponent(paymentId);
     const amountRial = amountToman * 10;
 
+    // FIX:
+    // metadata.mobile حذف شد چون users در دیتابیس فعلی ستون mobile ندارد
+    // و زرین‌مال در نسخه فعلی روی مقدار خالی آن خطا می‌داد.
     const payload = {
       merchant_id: merchantId,
       amount: amountRial,
       description: "Abzarak AI - " + PLAN_NAMES[planId],
       callback_url: callback,
-      metadata: { email: user.email, mobile: "" }
+      metadata: {
+        email: String(user.email || "")
+      }
     };
 
     let response;
