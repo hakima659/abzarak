@@ -42,15 +42,16 @@ nav{display:flex;gap:8px}
 .hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
 .chat-section{margin:40px 0}
-.chat-box{display:flex;flex-direction:column;height:420px}
-.chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:6px 4px 16px}
-.msg{max-width:80%;padding:12px 16px;border-radius:14px;line-height:1.8;font-size:14.5px;white-space:pre-wrap}
-.msg.user{align-self:flex-start;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-bottom-left-radius:4px}
-.msg.ai{align-self:flex-end;background:var(--bg-soft);border:1px solid var(--border);border-bottom-right-radius:4px}
-.msg.system{align-self:center;color:var(--muted);font-size:13px;background:transparent}
-.chat-input-row{display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px}
-.chat-input-row input{flex:1;background:var(--bg-soft);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14.5px}
-.chat-input-row input:focus{outline:none;border-color:var(--accent)}
+.chat-box{display:flex;flex-direction:column;height:680px;background:#fff;color:#111827;border:1px solid #e5e7eb;border-radius:18px;padding:20px}
+.chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:10px 6px 20px;background:#fff;color:#111827}
+.msg{max-width:85%;padding:14px 18px;border-radius:14px;line-height:1.95;font-size:15px;white-space:pre-wrap}
+.msg.user{align-self:flex-start;background:#f1f5f9;color:#111827;border:1px solid #e2e8f0;border-bottom-left-radius:4px}
+.msg.ai{align-self:flex-end;background:#fff;color:#111827;border:1px solid #d1d5db;border-bottom-right-radius:4px}
+.msg.system{align-self:center;color:#4b5563;font-size:14px;background:#fff}
+.chat-input-row{display:flex;gap:10px;border-top:1px solid #e5e7eb;padding-top:16px;background:#fff}
+.chat-input-row input{flex:1;background:#fff;border:1px solid #cbd5e1;color:#111827;border-radius:12px;padding:15px 16px;font-family:inherit;font-size:15px;min-height:50px}
+.chat-input-row input::placeholder{color:#6b7280}
+.chat-input-row input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,109,255,.12)}
 .plans-section{margin:56px 0}
 .section-title{text-align:center;margin-bottom:28px}
 .section-title h2{font-size:26px;margin-bottom:8px}
@@ -84,6 +85,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 20px}
 @media(max-width:640px){
   .hero h1{font-size:28px}
   nav .btn span.long{display:none}
+  .chat-box{height:620px;padding:14px}
+  .msg{max-width:92%;font-size:14.5px}
+  .chat-input-row input{font-size:14px;padding:13px 12px}
 }
 </style>
 </head>
@@ -3750,8 +3754,7 @@ async function adminWithdrawalsApi(
         w.*,
         u.email
        FROM withdrawals w
-       LEFT JOIN users u
-         ON u.id=w.user_id
+       LEFT JOIN users u ON u.id=w.user_id
        ORDER BY w.created_at DESC`
     )
     .all();
