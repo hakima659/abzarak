@@ -1,23 +1,22 @@
 // =============================================================
 // ABZARAK AI — PRODUCTION WORKER
-// Homepage + Auth + D1 + Cloudflare AI + ZarinPal + Resend
+// Homepage + User Login + D1 + Cloudflare AI + ZarinPal + Resend
 // SEO Landing Pages + White Professional SVG Images + FAQ
 // Breadcrumb/WebPage structured data + Sitemap + Robots
 //
-// AUTH FIX:
-// - Stable D1 initialization
-// - Users table migration
-// - Safer signup/login
-// - Better error handling
-// - Prevent concurrent DB initialization issues
+// AUTH MODE:
+// - Public signup REMOVED
+// - Existing users can still login
+// - Password recovery preserved
 // - Subscription / payment logic preserved
+// - Admin login preserved
 // =============================================================
 
 const BASE_URL = "https://abzarakai.ir";
 const FREE_DAILY_LIMIT = 10;
 
 // =============================================================
-// HOMEPAGE — visual layout preserved from current version
+// HOMEPAGE — visual layout preserved
 // =============================================================
 function renderHomepage() {
   return `<!doctype html>
@@ -26,7 +25,9 @@ function renderHomepage() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="enamad" content="17726638">
+
 <title>ابزارک AI — دستیار هوشمند فارسی</title>
+
 <style>
 :root{
  --bg:#fff;
@@ -46,7 +47,9 @@ function renderHomepage() {
 }
 
 *{box-sizing:border-box}
+
 html{scroll-behavior:smooth}
+
 body{
  margin:0;
  font-family:Tahoma,"Vazirmatn",Arial,sans-serif;
@@ -55,9 +58,21 @@ body{
  min-height:100vh;
  direction:rtl
 }
-button,input{font-family:inherit}
-a{color:inherit}
-.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+button,input{
+ font-family:inherit
+}
+
+a{
+ color:inherit
+}
+
+.wrap{
+ max-width:1180px;
+ margin:0 auto;
+ padding:0 24px
+}
+
 header{
  height:70px;
  display:flex;
@@ -66,7 +81,15 @@ header{
  gap:12px;
  border-bottom:1px solid #f0f0f0
 }
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+
+.logo{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:800;
+ font-size:18px
+}
+
 .logo .dot{
  width:34px;
  height:34px;
@@ -78,7 +101,12 @@ header{
  justify-content:center;
  font-size:17px
 }
-nav{display:flex;gap:6px}
+
+nav{
+ display:flex;
+ gap:6px
+}
+
 .btn{
  border:1px solid #d1d5db;
  background:#fff;
@@ -91,18 +119,80 @@ nav{display:flex;gap:6px}
  transition:.16s;
  box-shadow:0 1px 2px rgba(0,0,0,.03)
 }
-.btn:hover{background:#f7f7f8;border-color:#9ca3af}
-.btn.primary{background:#111827;border-color:#111827;color:#fff;font-weight:700}
-.btn.primary:hover{background:#1f2937}
-.btn.block{width:100%}
-.btn.ghost{background:transparent;border-color:transparent;box-shadow:none}
-.hero{text-align:center;padding:62px 0 30px}
-.hero h1{font-size:40px;margin:0 0 14px;line-height:1.5;font-weight:800;letter-spacing:-.5px}
-.hero h1 span{color:#111827}
-.hero p{color:#6b7280;font-size:15.5px;max-width:650px;margin:0 auto 25px;line-height:2}
-.hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px}
-.chat-section{margin:18px auto 70px;max-width:920px;padding:0;background:#fff;border:0}
+
+.btn:hover{
+ background:#f7f7f8;
+ border-color:#9ca3af
+}
+
+.btn.primary{
+ background:#111827;
+ border-color:#111827;
+ color:#fff;
+ font-weight:700
+}
+
+.btn.primary:hover{
+ background:#1f2937
+}
+
+.btn.block{
+ width:100%
+}
+
+.btn.ghost{
+ background:transparent;
+ border-color:transparent;
+ box-shadow:none
+}
+
+.hero{
+ text-align:center;
+ padding:62px 0 30px
+}
+
+.hero h1{
+ font-size:40px;
+ margin:0 0 14px;
+ line-height:1.5;
+ font-weight:800;
+ letter-spacing:-.5px
+}
+
+.hero h1 span{
+ color:#111827
+}
+
+.hero p{
+ color:#6b7280;
+ font-size:15.5px;
+ max-width:650px;
+ margin:0 auto 25px;
+ line-height:2
+}
+
+.hero-actions{
+ display:flex;
+ gap:10px;
+ justify-content:center;
+ flex-wrap:wrap
+}
+
+.card{
+ background:#fff;
+ border:1px solid #e5e7eb;
+ border-radius:16px;
+ padding:22px
+}
+
+.chat-section{
+ margin:18px auto 70px;
+ max-width:920px;
+ padding:0;
+ background:#fff;
+ border:0
+}
+
 .chat-box{
  display:flex;
  flex-direction:column;
@@ -115,6 +205,7 @@ nav{display:flex;gap:6px}
  overflow:hidden;
  box-shadow:0 10px 40px rgba(0,0,0,.06)
 }
+
 .chat-log{
  flex:1;
  overflow-y:auto;
@@ -126,6 +217,7 @@ nav{display:flex;gap:6px}
  color:#111827;
  scroll-behavior:smooth
 }
+
 .msg{
  max-width:82%;
  padding:13px 16px;
@@ -135,6 +227,7 @@ nav{display:flex;gap:6px}
  white-space:pre-wrap;
  word-break:break-word
 }
+
 .msg.user{
  align-self:flex-start;
  background:#f4f4f5;
@@ -142,6 +235,7 @@ nav{display:flex;gap:6px}
  border:1px solid #ececef;
  border-bottom-left-radius:5px
 }
+
 .msg.ai{
  align-self:flex-end;
  background:#fff;
@@ -151,6 +245,7 @@ nav{display:flex;gap:6px}
  padding-left:2px;
  max-width:88%
 }
+
 .msg.system{
  align-self:center;
  color:#6b7280;
@@ -161,6 +256,7 @@ nav{display:flex;gap:6px}
  max-width:92%;
  text-align:center
 }
+
 .chat-input-row{
  display:flex;
  gap:9px;
@@ -172,6 +268,7 @@ nav{display:flex;gap:6px}
  background:#fff;
  box-shadow:0 2px 10px rgba(0,0,0,.04)
 }
+
 .chat-input-row input{
  flex:1;
  background:transparent;
@@ -184,22 +281,94 @@ nav{display:flex;gap:6px}
  min-height:48px;
  outline:none
 }
-.chat-input-row input::placeholder{color:#9ca3af}
-.chat-input-row input:focus{outline:none}
-.chat-input-row .btn{min-height:44px}
-.plans-section{margin:0 0 70px}
-.section-title{text-align:center;margin-bottom:28px}
-.section-title h2{font-size:26px;margin:0 0 8px}
-.section-title p{color:#6b7280;margin:0}
-.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.plan-card{display:flex;flex-direction:column;gap:14px}
-.plan-card h3{margin:0;font-size:18px}
-.plan-price{font-size:24px;font-weight:900}
-.plan-price small{font-size:13px;color:#6b7280;font-weight:400}
-.plan-card ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-.plan-card li{color:#6b7280;font-size:13.5px;display:flex;gap:8px;align-items:flex-start}
-.plan-card li::before{content:"✓";color:#16a34a;font-weight:900}
-.plan-card.featured{border-color:#111827;box-shadow:0 0 0 1px #111827}
+
+.chat-input-row input::placeholder{
+ color:#9ca3af
+}
+
+.chat-input-row input:focus{
+ outline:none
+}
+
+.chat-input-row .btn{
+ min-height:44px
+}
+
+.plans-section{
+ margin:0 0 70px
+}
+
+.section-title{
+ text-align:center;
+ margin-bottom:28px
+}
+
+.section-title h2{
+ font-size:26px;
+ margin:0 0 8px
+}
+
+.section-title p{
+ color:#6b7280;
+ margin:0
+}
+
+.plans-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+ gap:16px
+}
+
+.plan-card{
+ display:flex;
+ flex-direction:column;
+ gap:14px
+}
+
+.plan-card h3{
+ margin:0;
+ font-size:18px
+}
+
+.plan-price{
+ font-size:24px;
+ font-weight:900
+}
+
+.plan-price small{
+ font-size:13px;
+ color:#6b7280;
+ font-weight:400
+}
+
+.plan-card ul{
+ list-style:none;
+ padding:0;
+ margin:0;
+ display:flex;
+ flex-direction:column;
+ gap:8px
+}
+
+.plan-card li{
+ color:#6b7280;
+ font-size:13.5px;
+ display:flex;
+ gap:8px;
+ align-items:flex-start
+}
+
+.plan-card li::before{
+ content:"✓";
+ color:#16a34a;
+ font-weight:900
+}
+
+.plan-card.featured{
+ border-color:#111827;
+ box-shadow:0 0 0 1px #111827
+}
+
 .overlay{
  position:fixed;
  inset:0;
@@ -211,7 +380,11 @@ nav{display:flex;gap:6px}
  padding:16px;
  z-index:50
 }
-.overlay.open{display:flex}
+
+.overlay.open{
+ display:flex
+}
+
 .modal{
  width:100%;
  max-width:390px;
@@ -222,9 +395,23 @@ nav{display:flex;gap:6px}
  position:relative;
  box-shadow:0 20px 60px rgba(0,0,0,.16)
 }
-.modal h3{margin:0 0 18px;font-size:19px}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:13px;color:#6b7280;margin-bottom:6px}
+
+.modal h3{
+ margin:0 0 18px;
+ font-size:19px
+}
+
+.field{
+ margin-bottom:12px
+}
+
+.field label{
+ display:block;
+ font-size:13px;
+ color:#6b7280;
+ margin-bottom:6px
+}
+
 .field input{
  width:100%;
  background:#fff;
@@ -235,26 +422,41 @@ nav{display:flex;gap:6px}
  font-family:inherit;
  font-size:14px
 }
+
 .field input:focus{
  outline:none;
  border-color:#111827;
  box-shadow:0 0 0 3px rgba(17,24,39,.08)
 }
-.modal-msg{font-size:13px;margin:10px 0;min-height:18px}
-.modal-msg.err{color:#dc2626}
-.modal-msg.ok{color:#16a34a}
+
+.modal-msg{
+ font-size:13px;
+ margin:10px 0;
+ min-height:18px
+}
+
+.modal-msg.err{
+ color:#dc2626
+}
+
+.modal-msg.ok{
+ color:#16a34a
+}
+
 .switch-line{
  text-align:center;
  margin-top:14px;
  font-size:13px;
  color:#6b7280
 }
+
 .switch-line a{
  color:#111827;
  cursor:pointer;
  text-decoration:none;
  font-weight:700
 }
+
 .modal-close{
  position:absolute;
  left:16px;
@@ -265,6 +467,7 @@ nav{display:flex;gap:6px}
  font-size:18px;
  cursor:pointer
 }
+
 #userBadge{
  display:none;
  align-items:center;
@@ -272,7 +475,11 @@ nav{display:flex;gap:6px}
  font-size:13.5px;
  color:#6b7280
 }
-#userBadge b{color:#111827}
+
+#userBadge b{
+ color:#111827
+}
+
 footer{
  text-align:center;
  color:#9ca3af;
@@ -280,307 +487,564 @@ footer{
  padding:30px 0 24px;
  border-top:1px solid #f3f4f6
 }
+
 @media(max-width:640px){
- .wrap{padding:0 14px}
- header{height:62px}
- .hero{padding:46px 0 22px}
- .hero h1{font-size:29px}
- .hero p{font-size:14px}
- .chat-section{margin-top:12px}
+
+ .wrap{
+   padding:0 14px
+ }
+
+ header{
+   height:62px
+ }
+
+ .hero{
+   padding:46px 0 22px
+ }
+
+ .hero h1{
+   font-size:29px
+ }
+
+ .hero p{
+   font-size:14px
+ }
+
+ .chat-section{
+   margin-top:12px
+ }
+
  .chat-box{
    height:calc(100vh - 150px);
    min-height:560px;
    border-radius:15px
  }
+
  .chat-log{
    padding:20px 13px 22px;
    gap:18px
  }
+
  .msg{
    max-width:91%;
    font-size:14px
  }
- .msg.ai{max-width:94%}
+
+ .msg.ai{
+   max-width:94%
+ }
+
  .chat-input-row{
    margin:0 10px 10px;
    padding:6px
  }
+
  .chat-input-row input{
    font-size:14px;
    padding:12px 8px
  }
+
  nav .btn.primary{
    padding-left:13px;
    padding-right:13px
  }
- .logo{font-size:16px}
+
+ .logo{
+   font-size:16px
+ }
 }
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
+
 <header>
-<div class="logo"><span class="dot">🤖</span>ابزارک AI</div>
+
+<div class="logo">
+<span class="dot">🤖</span>
+ابزارک AI
+</div>
 
 <nav id="navArea">
-<button class="btn ghost" onclick="openModal('login')">ورود</button>
-<button class="btn primary" onclick="openModal('signup')">ثبت‌نام رایگان</button>
+<button
+ class="btn primary"
+ onclick="openModal('login')"
+>
+ورود
+</button>
 </nav>
 
 <div id="userBadge">
-<span>خوش آمدی، <b id="userNameLabel"></b></span>
-<button class="btn" onclick="logout()">خروج</button>
+
+<span>
+خوش آمدی،
+<b id="userNameLabel"></b>
+</span>
+
+<button
+ class="btn"
+ onclick="logout()"
+>
+خروج
+</button>
+
 </div>
+
 </header>
 
+
 <section class="hero">
-<h1>دستیار هوشمند <span>فارسی</span> شما</h1>
+
+<h1>
+دستیار هوشمند
+<span>فارسی</span>
+شما
+</h1>
+
 <p>
-ابزارک، یک دستیار هوش مصنوعی چندزبانه برای گفتگو، تولید محتوا، ترجمه و ایده‌پردازی است.
+ابزارک، یک دستیار هوش مصنوعی چندزبانه برای گفتگو،
+تولید محتوا، ترجمه و ایده‌پردازی است.
 همین حالا رایگان امتحان کن.
 </p>
+
 <div class="hero-actions">
-<button class="btn primary" onclick="focusChat()">شروع گفتگو</button>
-<button class="btn ghost" onclick="scrollToPlans()">مشاهده پلن‌ها</button>
+
+<button
+ class="btn primary"
+ onclick="focusChat()"
+>
+شروع گفتگو
+</button>
+
+<button
+ class="btn ghost"
+ onclick="scrollToPlans()"
+>
+مشاهده پلن‌ها
+</button>
+
 </div>
+
 </section>
 
+
 <section class="chat-section card">
+
 <div class="chat-box">
-<div class="chat-log" id="chatLog">
-<div class="msg system">سلام! من ابزارک هستم. هر سوالی داری بپرس 👋</div>
+
+<div
+ class="chat-log"
+ id="chatLog"
+>
+
+<div class="msg system">
+سلام! من ابزارک هستم. هر سوالی داری بپرس 👋
 </div>
 
+</div>
+
+
 <div class="chat-input-row">
+
 <input
  id="chatInput"
  type="text"
  placeholder="پیامت را بنویس..."
  onkeydown="if(event.key==='Enter') sendMessage()"
 >
-<button class="btn primary" onclick="sendMessage()">ارسال</button>
+
+<button
+ class="btn primary"
+ onclick="sendMessage()"
+>
+ارسال
+</button>
+
 </div>
+
 </div>
+
 </section>
 
-<section class="plans-section" id="plansSection">
+
+<section
+ class="plans-section"
+ id="plansSection"
+>
+
 <div class="section-title">
-<h2>پلن‌های اشتراک</h2>
-<p>متناسب با نیازت یک پلن انتخاب کن</p>
+
+<h2>
+پلن‌های اشتراک
+</h2>
+
+<p>
+متناسب با نیازت یک پلن انتخاب کن
+</p>
+
 </div>
 
-<div class="plans-grid" id="plansGrid">
-<div class="msg system" style="align-self:center;">
+<div
+ class="plans-grid"
+ id="plansGrid"
+>
+
+<div
+ class="msg system"
+ style="align-self:center;"
+>
 در حال بارگذاری پلن‌ها...
 </div>
+
 </div>
+
 </section>
 
-<footer>🤖 ابزارک AI — ساخته‌شده با هوش مصنوعی</footer>
+
+<footer>
+🤖 ابزارک AI — ساخته‌شده با هوش مصنوعی
+</footer>
+
 </div>
 
-<div class="overlay" id="authOverlay">
+
+<!-- ========================================================= -->
+<!-- LOGIN / FORGOT PASSWORD MODAL                            -->
+<!-- ========================================================= -->
+
+<div
+ class="overlay"
+ id="authOverlay"
+>
+
 <div class="modal">
 
-<button class="modal-close" onclick="closeModal()">✕</button>
+<button
+ class="modal-close"
+ onclick="closeModal()"
+>
+✕
+</button>
+
+
+<!-- LOGIN -->
 
 <div id="loginForm">
-<h3>ورود به حساب</h3>
+
+<h3>
+ورود به حساب
+</h3>
+
 
 <div class="field">
-<label>ایمیل</label>
+
+<label>
+ایمیل
+</label>
+
 <input
  type="email"
  id="loginEmail"
  placeholder="you@example.com"
  autocomplete="email"
 >
+
 </div>
 
+
 <div class="field">
-<label>رمز عبور</label>
+
+<label>
+رمز عبور
+</label>
+
 <input
  type="password"
  id="loginPassword"
  placeholder="••••••••"
  autocomplete="current-password"
 >
+
 </div>
 
-<div class="modal-msg" id="loginMsg"></div>
 
-<button class="btn primary block" onclick="doLogin()">ورود</button>
+<div
+ class="modal-msg"
+ id="loginMsg"
+></div>
+
+
+<button
+ class="btn primary block"
+ onclick="doLogin()"
+>
+ورود
+</button>
+
 
 <div class="switch-line">
-حساب نداری؟
-<a onclick="openModal('signup')">ثبت‌نام کن</a>
-<br>
-<a onclick="openModal('forgot')">رمز عبور را فراموش کرده‌ام</a>
-</div>
+
+<a onclick="openModal('forgot')">
+رمز عبور را فراموش کرده‌ام
+</a>
+
 </div>
 
-<div id="signupForm" style="display:none;">
-<h3>ساخت حساب جدید</h3>
+</div>
 
-<div class="field">
-<label>نام</label>
-<input
- type="text"
- id="signupName"
- placeholder="نام شما"
- autocomplete="name"
+
+<!-- FORGOT -->
+
+<div
+ id="forgotForm"
+ style="display:none;"
 >
-</div>
+
+<h3>
+بازیابی رمز عبور
+</h3>
+
 
 <div class="field">
-<label>ایمیل</label>
-<input
- type="email"
- id="signupEmail"
- placeholder="you@example.com"
- autocomplete="email"
->
-</div>
 
-<div class="field">
-<label>رمز عبور</label>
-<input
- type="password"
- id="signupPassword"
- placeholder="حداقل ۶ کاراکتر"
- autocomplete="new-password"
->
-</div>
+<label>
+ایمیل
+</label>
 
-<div class="modal-msg" id="signupMsg"></div>
-
-<button class="btn primary block" onclick="doSignup()">ثبت‌نام</button>
-
-<div class="switch-line">
-قبلاً ثبت‌نام کرده‌ای؟
-<a onclick="openModal('login')">وارد شو</a>
-</div>
-</div>
-
-<div id="forgotForm" style="display:none;">
-<h3>بازیابی رمز عبور</h3>
-
-<div class="field">
-<label>ایمیل</label>
 <input
  type="email"
  id="forgotEmail"
  placeholder="you@example.com"
  autocomplete="email"
 >
+
 </div>
 
-<div class="modal-msg" id="forgotMsg"></div>
 
-<button class="btn primary block" onclick="doForgot()">ارسال کد بازیابی</button>
+<div
+ class="modal-msg"
+ id="forgotMsg"
+></div>
 
-<div id="resetFields" style="display:none;margin-top:14px;">
+
+<button
+ class="btn primary block"
+ onclick="doForgot()"
+>
+ارسال کد بازیابی
+</button>
+
+
+<div
+ id="resetFields"
+ style="display:none;margin-top:14px;"
+>
 
 <div class="field">
-<label>کد بازیابی</label>
-<input type="text" id="resetCode" placeholder="۶ رقمی" inputmode="numeric">
+
+<label>
+کد بازیابی
+</label>
+
+<input
+ type="text"
+ id="resetCode"
+ placeholder="۶ رقمی"
+ inputmode="numeric"
+>
+
 </div>
 
+
 <div class="field">
-<label>رمز عبور جدید</label>
+
+<label>
+رمز عبور جدید
+</label>
+
 <input
  type="password"
  id="resetNewPassword"
  placeholder="حداقل ۶ کاراکتر"
  autocomplete="new-password"
 >
-</div>
-
-<button class="btn primary block" onclick="doReset()">تغییر رمز عبور</button>
 
 </div>
+
+
+<button
+ class="btn primary block"
+ onclick="doReset()"
+>
+تغییر رمز عبور
+</button>
+
+</div>
+
 
 <div class="switch-line">
-<a onclick="openModal('login')">بازگشت به ورود</a>
+
+<a onclick="openModal('login')">
+بازگشت به ورود
+</a>
+
+</div>
+
 </div>
 
 </div>
 
 </div>
-</div>
+
 
 <script>
+
 const API="";
-let token=localStorage.getItem("abzarak_token")||null;
+
+let token=
+  localStorage.getItem("abzarak_token")||
+  null;
+
 let currentUser=null;
+
 let chatHistory=[];
 
+
+// =============================================================
+// MODAL
+// =============================================================
+
 function openModal(which){
-  const overlay=document.getElementById("authOverlay");
+
+  const overlay=
+    document.getElementById("authOverlay");
 
   overlay.classList.add("open");
 
-  document.getElementById("loginForm").style.display=
-    which==="login"?"block":"none";
 
-  document.getElementById("signupForm").style.display=
-    which==="signup"?"block":"none";
+  document.getElementById("loginForm").style.display=
+    which==="login"
+      ?"block"
+      :"none";
+
 
   document.getElementById("forgotForm").style.display=
-    which==="forgot"?"block":"none";
+    which==="forgot"
+      ?"block"
+      :"none";
+
 
   if(which==="login"){
+
     setTimeout(()=>{
-      const el=document.getElementById("loginEmail");
+
+      const el=
+        document.getElementById("loginEmail");
+
       if(el)el.focus();
+
     },50);
+
   }
 
-  if(which==="signup"){
-    setTimeout(()=>{
-      const el=document.getElementById("signupName");
-      if(el)el.focus();
-    },50);
-  }
 
   if(which==="forgot"){
+
     setTimeout(()=>{
-      const el=document.getElementById("forgotEmail");
+
+      const el=
+        document.getElementById("forgotEmail");
+
       if(el)el.focus();
+
     },50);
+
   }
+
 }
+
 
 function closeModal(){
-  document.getElementById("authOverlay").classList.remove("open");
+
+  document
+    .getElementById("authOverlay")
+    .classList
+    .remove("open");
+
 }
 
-document.getElementById("authOverlay").addEventListener("click",function(e){
-  if(e.target===this)closeModal();
-});
+
+document
+  .getElementById("authOverlay")
+  .addEventListener(
+    "click",
+    function(e){
+
+      if(e.target===this){
+        closeModal();
+      }
+
+    }
+  );
+
+
+// =============================================================
+// MESSAGE
+// =============================================================
 
 function setMsg(id,text,ok){
-  const el=document.getElementById(id);
+
+  const el=
+    document.getElementById(id);
+
   if(!el)return;
 
   el.textContent=text||"";
-  el.className="modal-msg "+(ok?"ok":"err");
+
+  el.className=
+    "modal-msg "+
+    (ok?"ok":"err");
 }
 
+
+// =============================================================
+// API
+// =============================================================
+
 async function api(path,options={}){
-  const headers=Object.assign(
-    {"Content-Type":"application/json"},
-    options.headers||{}
-  );
+
+  const headers=
+    Object.assign(
+      {
+        "Content-Type":
+          "application/json"
+      },
+      options.headers||{}
+    );
+
 
   if(token){
-    headers.Authorization="Bearer "+token;
+
+    headers.Authorization=
+      "Bearer "+token;
+
   }
 
-  const res=await fetch(
-    API+path,
-    Object.assign({},options,{headers})
-  );
+
+  const res=
+    await fetch(
+      API+path,
+      Object.assign(
+        {},
+        options,
+        {
+          headers
+        }
+      )
+    );
+
 
   let data={};
 
@@ -588,12 +1052,15 @@ async function api(path,options={}){
     data=await res.json();
   }catch{}
 
+
   if(!res.ok){
-    const error=new Error(
-      data.error||
-      data.message||
-      "خطایی رخ داد."
-    );
+
+    const error=
+      new Error(
+        data.error||
+        data.message||
+        "خطایی رخ داد."
+      );
 
     error.status=res.status;
     error.data=data;
@@ -601,110 +1068,97 @@ async function api(path,options={}){
     throw error;
   }
 
+
   return data;
 }
 
-async function doSignup(){
-  const name=document.getElementById("signupName").value.trim();
-  const email=document.getElementById("signupEmail").value.trim();
-  const password=document.getElementById("signupPassword").value;
 
-  setMsg("signupMsg","");
-
-  if(!name){
-    setMsg("signupMsg","نام را وارد کنید.");
-    return;
-  }
-
-  if(!email){
-    setMsg("signupMsg","ایمیل را وارد کنید.");
-    return;
-  }
-
-  if(password.length<6){
-    setMsg("signupMsg","رمز عبور باید حداقل ۶ کاراکتر باشد.");
-    return;
-  }
-
-  try{
-    const data=await api(
-      "/api/signup",
-      {
-        method:"POST",
-        body:JSON.stringify({
-          name,
-          email,
-          password
-        })
-      }
-    );
-
-    if(!data.token){
-      throw new Error("توکن ورود از سرور دریافت نشد.");
-    }
-
-    token=data.token;
-    localStorage.setItem("abzarak_token",token);
-
-    const ok=await loadMe();
-
-    closeModal();
-
-    addMsg(
-      ok
-        ?"ثبت‌نام با موفقیت انجام شد. حالا می‌توانی پیام بفرستی. 👋"
-        :"حساب ساخته شد. اگر پیام ارسال نشد، یک‌بار صفحه را تازه‌سازی کن.",
-      "system"
-    );
-
-  }catch(e){
-    console.error("ABZARAK SIGNUP CLIENT ERROR:",e);
-
-    setMsg(
-      "signupMsg",
-      e.message||"ثبت‌نام انجام نشد."
-    );
-  }
-}
+// =============================================================
+// LOGIN
+// =============================================================
 
 async function doLogin(){
-  const email=document.getElementById("loginEmail").value.trim();
-  const password=document.getElementById("loginPassword").value;
 
-  setMsg("loginMsg","");
+  const email=
+    document
+      .getElementById("loginEmail")
+      .value
+      .trim();
+
+
+  const password=
+    document
+      .getElementById("loginPassword")
+      .value;
+
+
+  setMsg(
+    "loginMsg",
+    ""
+  );
+
 
   if(!email){
-    setMsg("loginMsg","ایمیل را وارد کنید.");
-    return;
-  }
 
-  if(!password){
-    setMsg("loginMsg","رمز عبور را وارد کنید.");
-    return;
-  }
-
-  try{
-    const data=await api(
-      "/api/login",
-      {
-        method:"POST",
-        body:JSON.stringify({
-          email,
-          password
-        })
-      }
+    setMsg(
+      "loginMsg",
+      "ایمیل را وارد کنید."
     );
 
+    return;
+  }
+
+
+  if(!password){
+
+    setMsg(
+      "loginMsg",
+      "رمز عبور را وارد کنید."
+    );
+
+    return;
+  }
+
+
+  try{
+
+    const data=
+      await api(
+        "/api/login",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            email,
+            password
+          })
+        }
+      );
+
+
     if(!data.token){
-      throw new Error("توکن ورود از سرور دریافت نشد.");
+
+      throw new Error(
+        "توکن ورود از سرور دریافت نشد."
+      );
+
     }
 
-    token=data.token;
-    localStorage.setItem("abzarak_token",token);
 
-    const ok=await loadMe();
+    token=data.token;
+
+    localStorage.setItem(
+      "abzarak_token",
+      token
+    );
+
+
+    const ok=
+      await loadMe();
+
 
     closeModal();
+
 
     addMsg(
       ok
@@ -713,34 +1167,70 @@ async function doLogin(){
       "system"
     );
 
+
   }catch(e){
-    console.error("ABZARAK LOGIN CLIENT ERROR:",e);
+
+    console.error(
+      "ABZARAK LOGIN CLIENT ERROR:",
+      e
+    );
+
 
     setMsg(
       "loginMsg",
-      e.message||"ورود انجام نشد."
+      e.message||
+      "ورود انجام نشد."
     );
+
   }
+
 }
 
-async function doForgot(){
-  const email=document.getElementById("forgotEmail").value.trim();
 
-  setMsg("forgotMsg","");
+// =============================================================
+// FORGOT PASSWORD
+// =============================================================
+
+async function doForgot(){
+
+  const email=
+    document
+      .getElementById("forgotEmail")
+      .value
+      .trim();
+
+
+  setMsg(
+    "forgotMsg",
+    ""
+  );
+
 
   if(!email){
-    setMsg("forgotMsg","ایمیل را وارد کنید.");
+
+    setMsg(
+      "forgotMsg",
+      "ایمیل را وارد کنید."
+    );
+
     return;
   }
 
+
   try{
-    const data=await api(
-      "/api/forgot-password",
-      {
-        method:"POST",
-        body:JSON.stringify({email})
-      }
-    );
+
+    const data=
+      await api(
+        "/api/forgot-password",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            email
+          })
+        }
+      );
+
 
     setMsg(
       "forgotMsg",
@@ -748,51 +1238,96 @@ async function doForgot(){
       true
     );
 
-    document.getElementById("resetFields").style.display="block";
+
+    document
+      .getElementById("resetFields")
+      .style
+      .display="block";
+
 
   }catch(e){
+
     setMsg(
       "forgotMsg",
-      e.message||"خطا در ارسال کد بازیابی."
+      e.message||
+      "خطا در ارسال کد بازیابی."
     );
+
   }
+
 }
 
-async function doReset(){
-  const email=document.getElementById("forgotEmail").value.trim();
-  const code=document.getElementById("resetCode").value.trim();
-  const newPassword=document.getElementById("resetNewPassword").value;
 
-  setMsg("forgotMsg","");
+// =============================================================
+// RESET PASSWORD
+// =============================================================
+
+async function doReset(){
+
+  const email=
+    document
+      .getElementById("forgotEmail")
+      .value
+      .trim();
+
+
+  const code=
+    document
+      .getElementById("resetCode")
+      .value
+      .trim();
+
+
+  const newPassword=
+    document
+      .getElementById("resetNewPassword")
+      .value;
+
+
+  setMsg(
+    "forgotMsg",
+    ""
+  );
+
 
   if(!email||!code){
+
     setMsg(
       "forgotMsg",
       "ایمیل و کد بازیابی را وارد کنید."
     );
+
     return;
   }
 
+
   if(newPassword.length<6){
+
     setMsg(
       "forgotMsg",
       "رمز جدید باید حداقل ۶ کاراکتر باشد."
     );
+
     return;
   }
 
+
   try{
-    const data=await api(
-      "/api/reset-password",
-      {
-        method:"POST",
-        body:JSON.stringify({
-          email,
-          code,
-          newPassword
-        })
-      }
-    );
+
+    const data=
+      await api(
+        "/api/reset-password",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            email,
+            code,
+            newPassword
+          })
+        }
+      );
+
 
     setMsg(
       "forgotMsg",
@@ -800,363 +1335,674 @@ async function doReset(){
       true
     );
 
+
     setTimeout(()=>{
+
       openModal("login");
+
     },1200);
 
+
   }catch(e){
+
     setMsg(
       "forgotMsg",
-      e.message||"خطا در تغییر رمز عبور."
+      e.message||
+      "خطا در تغییر رمز عبور."
     );
+
   }
+
 }
 
+
+// =============================================================
+// LOGOUT
+// =============================================================
+
 function logout(){
+
   token=null;
   currentUser=null;
   chatHistory=[];
 
-  localStorage.removeItem("abzarak_token");
+
+  localStorage.removeItem(
+    "abzarak_token"
+  );
+
 
   updateNav();
+
 
   addMsg(
     "از حساب خارج شدی.",
     "system"
   );
+
 }
+
+
+// =============================================================
+// NAV
+// =============================================================
 
 function updateNav(){
-  const nav=document.getElementById("navArea");
-  const badge=document.getElementById("userBadge");
+
+  const nav=
+    document.getElementById("navArea");
+
+  const badge=
+    document.getElementById("userBadge");
+
 
   if(currentUser){
+
     nav.style.display="none";
+
     badge.style.display="flex";
 
-    document.getElementById("userNameLabel").textContent=
-      currentUser.name||"کاربر";
+
+    document
+      .getElementById("userNameLabel")
+      .textContent=
+        currentUser.name||
+        "کاربر";
+
   }else{
+
     nav.style.display="flex";
+
     badge.style.display="none";
+
   }
+
 }
 
+
+// =============================================================
+// LOAD ME
+// =============================================================
+
 async function loadMe(){
+
   if(!token){
+
     currentUser=null;
+
     updateNav();
+
     return false;
   }
 
+
   try{
-    const data=await api("/api/me");
+
+    const data=
+      await api(
+        "/api/me"
+      );
+
 
     if(!data||!data.user){
+
       throw new Error(
         "اطلاعات حساب از سرور دریافت نشد."
       );
+
     }
 
-    currentUser=data.user;
+
+    currentUser=
+      data.user;
+
 
     updateNav();
 
+
     return true;
 
+
   }catch(e){
+
     console.error(
       "ABZARAK LOAD ME ERROR:",
       e
     );
 
-    if(Number(e.status)===401){
+
+    if(
+      Number(e.status)===401
+    ){
+
       token=null;
-      localStorage.removeItem("abzarak_token");
+
+      localStorage.removeItem(
+        "abzarak_token"
+      );
+
       currentUser=null;
       chatHistory=[];
+
     }
+
 
     updateNav();
 
+
     return false;
   }
+
 }
 
+
+// =============================================================
+// CHAT MESSAGE
+// =============================================================
+
 function addMsg(text,cls){
-  const log=document.getElementById("chatLog");
 
-  const div=document.createElement("div");
+  const log=
+    document.getElementById("chatLog");
 
-  div.className="msg "+cls;
+
+  const div=
+    document.createElement("div");
+
+
+  div.className=
+    "msg "+cls;
+
 
   div.textContent=text;
 
+
   log.appendChild(div);
 
-  log.scrollTop=log.scrollHeight;
+
+  log.scrollTop=
+    log.scrollHeight;
+
 }
 
+
+// =============================================================
+// FOCUS CHAT
+// =============================================================
+
 function focusChat(){
-  const input=document.getElementById("chatInput");
+
+  const input=
+    document.getElementById("chatInput");
+
 
   input.scrollIntoView({
     behavior:"smooth",
     block:"center"
   });
 
+
   input.focus();
+
 }
+
+
+// =============================================================
+// SCROLL PLANS
+// =============================================================
 
 function scrollToPlans(){
-  document.getElementById("plansSection").scrollIntoView({
-    behavior:"smooth"
-  });
+
+  document
+    .getElementById("plansSection")
+    .scrollIntoView({
+      behavior:"smooth"
+    });
+
 }
 
+
+// =============================================================
+// SEND MESSAGE
+// =============================================================
+
 async function sendMessage(){
-  const input=document.getElementById("chatInput");
-  const message=input.value.trim();
+
+  const input=
+    document.getElementById("chatInput");
+
+
+  const message=
+    input.value.trim();
+
 
   if(!message)return;
 
+
   if(!token){
+
     addMsg(
-      "برای گفتگو با ابزارک ابتدا وارد حساب شو یا ثبت‌نام کن.",
+      "برای گفتگو با ابزارک ابتدا وارد حساب شو.",
       "system"
     );
 
+
     openModal("login");
+
 
     return;
   }
 
-  addMsg(message,"user");
+
+  addMsg(
+    message,
+    "user"
+  );
+
 
   input.value="";
 
-  const thinking=document.createElement("div");
 
-  thinking.className="msg ai";
-  thinking.textContent="در حال فکر کردن...";
+  const thinking=
+    document.createElement("div");
 
-  const log=document.getElementById("chatLog");
 
-  log.appendChild(thinking);
+  thinking.className=
+    "msg ai";
 
-  log.scrollTop=log.scrollHeight;
+
+  thinking.textContent=
+    "در حال فکر کردن...";
+
+
+  const log=
+    document.getElementById("chatLog");
+
+
+  log.appendChild(
+    thinking
+  );
+
+
+  log.scrollTop=
+    log.scrollHeight;
+
 
   try{
-    const data=await api(
-      "/api/ai/chat",
+
+    const data=
+      await api(
+        "/api/ai/chat",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            message,
+            history:chatHistory
+          })
+        }
+      );
+
+
+    const reply=
+      String(
+        data.reply||
+        "متأسفم، نتوانستم پاسخ مناسبی تولید کنم."
+      );
+
+
+    thinking.textContent=
+      reply;
+
+
+    chatHistory.push(
       {
-        method:"POST",
-        body:JSON.stringify({
-          message,
-          history:chatHistory
-        })
+        role:"user",
+        content:message
+      },
+      {
+        role:"assistant",
+        content:reply
       }
     );
 
-    const reply=String(
-      data.reply||
-      "متأسفم، نتوانستم پاسخ مناسبی تولید کنم."
-    );
 
-    thinking.textContent=reply;
+    if(
+      chatHistory.length>20
+    ){
 
-    chatHistory.push(
-      {role:"user",content:message},
-      {role:"assistant",content:reply}
-    );
+      chatHistory=
+        chatHistory.slice(-20);
 
-    if(chatHistory.length>20){
-      chatHistory=chatHistory.slice(-20);
     }
 
-    log.scrollTop=log.scrollHeight;
+
+    log.scrollTop=
+      log.scrollHeight;
+
 
   }catch(e){
+
     console.error(
       "ABZARAK AI ERROR:",
       e
     );
 
-    if(Number(e.status)===401){
+
+    if(
+      Number(e.status)===401
+    ){
+
       token=null;
       currentUser=null;
       chatHistory=[];
 
-      localStorage.removeItem("abzarak_token");
+
+      localStorage.removeItem(
+        "abzarak_token"
+      );
+
 
       updateNav();
+
 
       thinking.textContent=
         "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.";
 
+
       setTimeout(()=>{
+
         openModal("login");
+
       },300);
 
+
     }else{
+
       thinking.textContent=
         "خطا: "+
-        (e.message||"خطا در ارتباط با هوش مصنوعی.");
+        (
+          e.message||
+          "خطا در ارتباط با هوش مصنوعی."
+        );
+
     }
+
   }
+
 }
 
+
+// =============================================================
+// LOAD PLANS
+// =============================================================
+
 async function loadPlans(){
-  const grid=document.getElementById("plansGrid");
+
+  const grid=
+    document.getElementById("plansGrid");
+
 
   try{
-    const data=await api("/api/plans");
 
-    if(!data||!Array.isArray(data.plans)){
+    const data=
+      await api(
+        "/api/plans"
+      );
+
+
+    if(
+      !data||
+      !Array.isArray(data.plans)
+    ){
+
       throw new Error(
         "پاسخ نامعتبر از سرور برای پلن‌ها."
       );
+
     }
+
 
     grid.innerHTML="";
 
+
     if(!data.plans.length){
+
       grid.innerHTML=
         "<div class='msg system' style='align-self:center;'>در حال حاضر پلنی برای نمایش وجود ندارد.</div>";
 
       return;
     }
 
-    data.plans.forEach((plan,i)=>{
-      const card=document.createElement("div");
 
-      card.className=
-        "card plan-card"+
-        (i===2?" featured":"");
+    data.plans.forEach(
+      (plan,i)=>{
 
-      const features=
-        Array.isArray(plan.features)
-          ?plan.features
-          :[];
+        const card=
+          document.createElement("div");
 
-      card.innerHTML=
-        "<h3>"+
-        escapeHtml(plan.name)+
-        "</h3>"+
-        "<div class='plan-price'>"+
-        Number(plan.price_toman||0).toLocaleString("fa-IR")+
-        " تومان <small>/ ماه</small></div>"+
-        "<ul>"+
-        features.map(f=>
-          "<li>"+
-          escapeHtml(String(f))+
-          "</li>"
-        ).join("")+
-        "</ul>"+
-        "<button class='btn primary block' onclick='buyPlan("+
-        JSON.stringify(plan.id)+
-        ")'>خرید این پلن</button>";
 
-      grid.appendChild(card);
-    });
+        card.className=
+          "card plan-card"+
+          (i===2?" featured":"");
+
+
+        const features=
+          Array.isArray(plan.features)
+            ?plan.features
+            :[];
+
+
+        card.innerHTML=
+          "<h3>"+
+          escapeHtml(plan.name)+
+          "</h3>"+
+          "<div class='plan-price'>"+
+          Number(
+            plan.price_toman||0
+          ).toLocaleString("fa-IR")+
+          " تومان <small>/ ماه</small></div>"+
+          "<ul>"+
+          features
+            .map(f=>
+              "<li>"+
+              escapeHtml(
+                String(f)
+              )+
+              "</li>"
+            )
+            .join("")+
+          "</ul>"+
+          "<button class='btn primary block' onclick='buyPlan("+
+          JSON.stringify(plan.id)+
+          ")'>خرید این پلن</button>";
+
+
+        grid.appendChild(
+          card
+        );
+
+      }
+    );
+
 
   }catch(e){
+
     console.error(
       "LOAD PLANS ERROR:",
       e
     );
 
+
     grid.innerHTML=
       "<div class='msg system' style='align-self:center;'>بارگذاری پلن‌ها ناموفق بود.</div>";
+
   }
+
 }
+
+
+// =============================================================
+// HTML ESCAPE
+// =============================================================
 
 function escapeHtml(value){
+
   return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
 }
 
+
+// =============================================================
+// BUY PLAN
+// =============================================================
+
 async function buyPlan(planId){
+
   if(!token){
+
     openModal("login");
+
     return;
   }
 
+
   try{
-    const data=await api(
-      "/api/payment/request",
-      {
-        method:"POST",
-        body:JSON.stringify({planId})
-      }
-    );
+
+    const data=
+      await api(
+        "/api/payment/request",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            planId
+          })
+        }
+      );
+
 
     if(data.payment_url){
-      window.location.href=data.payment_url;
+
+      window.location.href=
+        data.payment_url;
+
     }else{
-      alert("لینک پرداخت از زرین‌پال دریافت نشد.");
+
+      alert(
+        "لینک پرداخت از زرین‌پال دریافت نشد."
+      );
+
     }
 
+
   }catch(e){
+
     console.error(
       "BUY PLAN ERROR:",
       e
     );
 
+
     alert(
       e.message||
       "خطا در ایجاد پرداخت."
     );
+
   }
+
 }
+
+
+// =============================================================
+// INIT
+// =============================================================
 
 loadMe();
 loadPlans();
+
 
 const params=
   new URLSearchParams(
     window.location.search
   );
 
-if(params.get("payment")==="success"){
+
+if(
+  params.get("payment")==="success"
+){
+
   setTimeout(()=>{
+
     alert(
       "پرداخت با موفقیت انجام شد! اشتراک شما فعال است."
     );
+
   },300);
 
+
 }else if(
+
   params.get("payment")==="failed"||
   params.get("payment")==="error"
+
 ){
+
   setTimeout(()=>{
+
     alert(
       "پرداخت ناموفق بود. لطفاً دوباره تلاش کنید."
     );
+
   },300);
+
 
 }else if(
   params.get("payment")==="cancel"
 ){
+
   setTimeout(()=>{
-    alert("پرداخت لغو شد.");
+
+    alert(
+      "پرداخت لغو شد."
+    );
+
   },300);
+
 }
+
 </script>
+
 </body>
 </html>`;
 }
 
 
 // =============================================================
-// SEO DATA — richer, user-focused content
+// SEO DATA
 // =============================================================
 const SEO_PAGES = {
+
   "/chat-ai": {
     title: "چت با هوش مصنوعی فارسی آنلاین | ابزارک AI",
     description: "چت با هوش مصنوعی فارسی ابزارک برای پرسش و پاسخ، آموزش، تولید متن، ایده‌پردازی، ترجمه، خلاصه‌سازی و کارهای روزمره.",
@@ -1165,6 +2011,7 @@ const SEO_PAGES = {
     imageTitle: "چت با هوش مصنوعی فارسی",
     imageKind: "chat",
     updated: "2026-10-01",
+
     sections: [
       {
         title:"چت هوش مصنوعی فارسی چه کاربردی دارد؟",
@@ -1178,6 +2025,7 @@ const SEO_PAGES = {
           "کمک در مسائل برنامه‌نویسی"
         ]
       },
+
       {
         title:"چطور از ابزارک نتیجه بهتری بگیری؟",
         text:"هرچه درخواستت دقیق‌تر باشد، پاسخ هم کاربردی‌تر می‌شود. موضوع، هدف، مخاطب، لحن و محدودیت‌های موردنیاز را داخل پیام بنویس. می‌توانی بعد از پاسخ بگویی متن را کوتاه‌تر، رسمی‌تر، ساده‌تر یا کامل‌تر کند.",
@@ -1188,12 +2036,14 @@ const SEO_PAGES = {
           "در صورت نیاز از ابزارک بخواه پاسخ را اصلاح کند"
         ]
       },
+
       {
         title:"چت فارسی برای چه کسانی مناسب است؟",
         text:"دانش‌آموزان، دانشجویان، تولیدکنندگان محتوا، صاحبان کسب‌وکار، برنامه‌نویسان و کاربرانی که می‌خواهند بخشی از کارهای نوشتاری و فکری روزانه را سریع‌تر انجام دهند، می‌توانند از ابزارک به عنوان یک دستیار متنی استفاده کنند."
       }
     ]
   },
+
 
   "/content": {
     title:"تولید محتوا با هوش مصنوعی فارسی | ابزارک AI",
@@ -1203,6 +2053,7 @@ const SEO_PAGES = {
     imageTitle:"تولید محتوای هوشمند",
     imageKind:"content",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"تولید محتوای متنی با AI",
@@ -1216,16 +2067,19 @@ const SEO_PAGES = {
           "ایده برای تقویم محتوایی"
         ]
       },
+
       {
         title:"برای سئو محتوا را برای انسان بنویس",
         text:"محتوای مفید باید پاسخ روشن به نیاز جستجوکننده بدهد و از تکرار مصنوعی عبارت‌های کلیدی دور باشد. بهتر است موضوع را کامل توضیح بدهی، مثال واقعی اضافه کنی و متن را با تیترهای واضح و قابل اسکن تنظیم کنی."
       },
+
       {
         title:"ویرایش نهایی را فراموش نکن",
         text:"متن تولیدشده را قبل از انتشار بررسی کن؛ واقعیت‌ها، اعداد، نام‌ها، لینک‌ها و لحن برند باید با نیاز واقعی صفحه هماهنگ باشد. ابزارک می‌تواند برای بازنویسی، کوتاه‌کردن یا تغییر لحن نسخه دوم متن را هم تهیه کند."
       }
     ]
   },
+
 
   "/translate-ai": {
     title:"ترجمه با هوش مصنوعی آنلاین | مترجم فارسی ابزارک AI",
@@ -1235,6 +2089,7 @@ const SEO_PAGES = {
     imageTitle:"ترجمه هوشمند چندزبانه",
     imageKind:"translate",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"ترجمه طبیعی‌تر برای متن‌های مختلف",
@@ -1248,16 +2103,19 @@ const SEO_PAGES = {
           "کمک به یادگیری زبان"
         ]
       },
+
       {
         title:"برای ترجمه حرفه‌ای چه چیزی بنویسیم؟",
         text:"زبان مبدأ و مقصد را مشخص کن و اگر متن برای ایمیل، سایت، رزومه، فروشگاه یا شبکه اجتماعی است، آن را هم بگو. این اطلاعات به تنظیم لحن و انتخاب واژه‌های مناسب کمک می‌کند."
       },
+
       {
         title:"ترجمه را قبل از انتشار بررسی کن",
         text:"در متن‌های تخصصی، حقوقی، پزشکی یا قراردادی، خروجی هوش مصنوعی را به عنوان پیش‌نویس بررسی کن و در صورت نیاز از فرد متخصص یا مترجم حرفه‌ای کمک بگیر."
       }
     ]
   },
+
 
   "/summarize-ai": {
     title:"خلاصه سازی متن با هوش مصنوعی | ابزارک AI",
@@ -1267,6 +2125,7 @@ const SEO_PAGES = {
     imageTitle:"خلاصه‌سازی هوشمند متن",
     imageKind:"summary",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"خلاصه‌سازی سریع و خوانا",
@@ -1280,16 +2139,19 @@ const SEO_PAGES = {
           "مرتب‌سازی مطالب طولانی"
         ]
       },
+
       {
         title:"خلاصه مناسب مطالعه",
         text:"برای مطالعه بهتر می‌توانی از ابزارک بخواهی تعریف‌ها، نکات مهم و نتیجه‌گیری متن را جدا کند. این روش برای مرور سریع مطالب کاربردی است."
       },
+
       {
         title:"خلاصه‌سازی جایگزین بررسی منبع نیست",
         text:"برای اطلاعات حساس یا تخصصی، متن خلاصه را با منبع اصلی مقایسه کن؛ خلاصه باید به فهم سریع‌تر کمک کند، نه اینکه جای منبع اصلی را در تصمیم‌های مهم بگیرد."
       }
     ]
   },
+
 
   "/ideas-ai": {
     title:"ایده پردازی با هوش مصنوعی | ایده‌های خلاقانه با ابزارک AI",
@@ -1299,6 +2161,7 @@ const SEO_PAGES = {
     imageTitle:"ایده‌پردازی خلاقانه با AI",
     imageKind:"ideas",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"ایده‌های بیشتر از یک زاویه",
@@ -1312,16 +2175,19 @@ const SEO_PAGES = {
           "نام و عنوان پیشنهادی"
         ]
       },
+
       {
         title:"از ایده خام تا برنامه قابل اجرا",
         text:"بعد از انتخاب چند ایده می‌توانی از ابزارک بخواهی برای هرکدام مزایا، چالش‌ها، مراحل شروع و منابع لازم را بنویسد. این کار ایده را از یک پیشنهاد اولیه به یک برنامه قابل بررسی نزدیک می‌کند."
       },
+
       {
         title:"خلاقیت را با بررسی واقعی ترکیب کن",
         text:"ایده تولیدشده را با شرایط واقعی بازار، مخاطب، هزینه و محدودیت‌های خودت مقایسه کن. ابزارک برای طوفان فکری مناسب است، اما تصمیم نهایی به بررسی واقعی نیاز دارد."
       }
     ]
   },
+
 
   "/programming-ai": {
     title:"برنامه نویسی با هوش مصنوعی | دستیار کدنویسی ابزارک AI",
@@ -1331,6 +2197,7 @@ const SEO_PAGES = {
     imageTitle:"دستیار برنامه‌نویسی با AI",
     imageKind:"code",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"کمک به یادگیری و حل مسئله",
@@ -1344,16 +2211,19 @@ const SEO_PAGES = {
           "JavaScript و زبان‌های دیگر"
         ]
       },
+
       {
         title:"برای رفع خطا چه اطلاعاتی بدهیم؟",
         text:"متن کامل خطا، بخش مرتبط کد و توضیح کوتاهی از چیزی که انتظار داشتی رخ دهد را بفرست. این اطلاعات معمولاً برای پیدا کردن مسیر بررسی مفیدتر از یک جمله کوتاه مثل «کدم کار نمی‌کند» است."
       },
+
       {
         title:"کد تولیدشده را تست کن",
         text:"نمونه کد AI را همیشه در محیط خودت اجرا و بررسی کن. وابستگی‌ها، نسخه کتابخانه‌ها، امنیت و رفتار واقعی برنامه باید قبل از استفاده در محیط اصلی کنترل شوند."
       }
     ]
   },
+
 
   "/ai-writing": {
     title:"نویسندگی و بازنویسی با هوش مصنوعی | ابزارک AI",
@@ -1363,6 +2233,7 @@ const SEO_PAGES = {
     imageTitle:"نویسندگی و بازنویسی هوشمند",
     imageKind:"writing",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"یک متن، چند لحن مختلف",
@@ -1376,16 +2247,19 @@ const SEO_PAGES = {
           "کوتاه‌کردن یا گسترش متن"
         ]
       },
+
       {
         title:"اصلاح متن بدون از دست دادن منظور",
         text:"هنگام بازنویسی بهتر است بگویی کدام اطلاعات باید دقیقاً حفظ شوند. ابزارک می‌تواند ساختار جمله‌ها را بهتر کند و در عین حال به اصل پیام نزدیک بماند."
       },
+
       {
         title:"برای انتشار نهایی مرور انسانی داشته باش",
         text:"قبل از انتشار، نام‌ها، اعداد، ادعاها و اطلاعات حساس را بررسی کن. بازنویسی هوش مصنوعی باید ابزار کمکی باشد و نسخه نهایی با هدف واقعی متن هماهنگ شود."
       }
     ]
   },
+
 
   "/ai-tools": {
     title:"ابزارهای هوش مصنوعی فارسی | کاربردهای AI در ابزارک",
@@ -1395,6 +2269,7 @@ const SEO_PAGES = {
     imageTitle:"مجموعه ابزارهای هوش مصنوعی",
     imageKind:"tools",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"یک دستیار برای چند کار",
@@ -1409,16 +2284,19 @@ const SEO_PAGES = {
           "برنامه‌نویسی"
         ]
       },
+
       {
         title:"صفحه مناسب خودت را انتخاب کن",
         text:"اگر هدف مشخصی داری، از صفحات تخصصی ابزارک شروع کن. هر صفحه درباره یک کاربرد اصلی توضیح می‌دهد و می‌تواند به صفحه اصلی برای شروع استفاده هدایتت کند."
       },
+
       {
         title:"هوش مصنوعی را به شکل کاربردی استفاده کن",
         text:"بهترین نتیجه معمولاً از درخواست‌های دقیق و قابل بررسی به دست می‌آید. هدف، زمینه، فرمت و محدودیت را بنویس و سپس خروجی را با نیاز واقعی خود مقایسه و اصلاح کن."
       }
     ]
   },
+
 
   "/ai-assistant": {
     title:"دستیار هوش مصنوعی فارسی | ابزارک AI",
@@ -1428,6 +2306,7 @@ const SEO_PAGES = {
     imageTitle:"دستیار هوشمند فارسی",
     imageKind:"assistant",
     updated:"2026-10-01",
+
     sections:[
       {
         title:"ابزارک چیست؟",
@@ -1442,10 +2321,12 @@ const SEO_PAGES = {
           "برنامه‌نویسی"
         ]
       },
+
       {
         title:"چطور از یک دستیار AI بهتر استفاده کنیم؟",
         text:"به جای درخواست‌های مبهم، هدفت را مشخص کن و اگر فرمت خاصی می‌خواهی، همان ابتدا بنویس. بعد از اولین پاسخ نیز می‌توانی درباره همان گفتگو درخواست تغییر یا تکمیل بدهی."
       },
+
       {
         title:"برای شروع نیاز به تجربه فنی نداری",
         text:"کار با ابزارک از یک گفتگوی ساده شروع می‌شود. سؤال یا کار خودت را بنویس، پاسخ را بخوان و در صورت نیاز از دستیار بخواه نسخه دیگری با لحن، طول یا ساختار متفاوت آماده کند."
@@ -1459,38 +2340,52 @@ const SEO_PAGES = {
 // FAQ
 // =============================================================
 const FAQ_ITEMS=[
+
  {
    q:"ابزارک AI چیست؟",
    a:"ابزارک AI یک دستیار هوش مصنوعی فارسی برای گفتگو، تولید محتوا، ترجمه، خلاصه‌سازی، ایده‌پردازی، نویسندگی و کمک به برنامه‌نویسی است."
  },
+
  {
    q:"آیا می‌توانم رایگان از ابزارک استفاده کنم؟",
-   a:"بله. حساب‌های رایگان امکان استفاده روزانه از سهمیه رایگان ابزارک را دارند و برای استفاده بیشتر می‌توان یکی از پلن‌های اشتراک را انتخاب کرد."
+   a:"حساب‌های فعال امکان استفاده از سهمیه رایگان ابزارک را دارند و برای استفاده بیشتر می‌توان یکی از پلن‌های اشتراک را انتخاب کرد."
  },
+
  {
-   q:"برای چت با ابزارک باید ثبت‌نام کنم؟",
-   a:"برای ارسال پیام در چت ابزارک باید وارد حساب کاربری شوید یا یک حساب جدید بسازید."
+   q:"برای چت با ابزارک باید وارد حساب شوم؟",
+   a:"بله. برای ارسال پیام در چت ابزارک باید وارد حساب کاربری فعال خود شوید."
  },
+
+ {
+   q:"آیا ثبت‌نام عمومی در ابزارک فعال است؟",
+   a:"خیر. ثبت‌نام عمومی در حال حاضر غیرفعال است و فقط کاربران دارای حساب می‌توانند وارد سرویس شوند."
+ },
+
  {
    q:"ابزارک برای تولید محتوا مناسب است؟",
    a:"بله. می‌توانید برای ساخت پیش‌نویس، ایده، کپشن، توضیحات محصول، متن تبلیغاتی و بازنویسی از ابزارک کمک بگیرید."
  },
+
  {
    q:"آیا ابزارک ترجمه انجام می‌دهد؟",
    a:"بله. ابزارک برای ترجمه، روان‌سازی و بازنویسی متن به زبان‌های مختلف قابل استفاده است."
  },
+
  {
    q:"آیا ابزارک برای برنامه‌نویسی کاربرد دارد؟",
    a:"بله. می‌توانید برای توضیح کد، بررسی خطا، الگوریتم و نمونه کد از ابزارک کمک بگیرید و خروجی را در محیط خودتان آزمایش کنید."
  },
+
  {
    q:"پلن‌های اشتراک ابزارک چگونه هستند؟",
    a:"قیمت و امکانات پلن‌های فعال از طریق صفحه اصلی و بخش پلن‌های اشتراک نمایش داده می‌شود."
  },
+
  {
    q:"چطور رمز عبورم را بازیابی کنم؟",
    a:"از بخش ورود، گزینه فراموشی رمز عبور را انتخاب کنید تا کد بازیابی به ایمیل حساب ارسال شود."
  }
+
 ];
 
 
@@ -1509,39 +2404,58 @@ const IMAGE_THEMES={
   assistant:["#1d4ed8","#7c3aed","#eff6ff"]
 };
 
+
 function escapeSeoHtml(v){
+
   return String(v??"")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+
 }
 
+
 function escapeXml(v){
+
   return String(v??"")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&apos;");
+
 }
+
 
 function jsonLd(obj){
-  return JSON.stringify(obj).replace(/</g,"\\u003c");
+
+  return JSON
+    .stringify(obj)
+    .replace(/</g,"\\u003c");
+
 }
 
+
 function imageResponse(svg){
+
   return new Response(
     svg,
     {
       headers:{
-        "Content-Type":"image/svg+xml;charset=utf-8",
-        "Cache-Control":"public,max-age=86400,immutable",
-        "X-Content-Type-Options":"nosniff"
+        "Content-Type":
+          "image/svg+xml;charset=utf-8",
+
+        "Cache-Control":
+          "public,max-age=86400,immutable",
+
+        "X-Content-Type-Options":
+          "nosniff"
       }
     }
   );
+
 }
 
 
@@ -1549,16 +2463,32 @@ function imageResponse(svg){
 // SEO IMAGE
 // =============================================================
 function seoImageSvg(kind,title){
-  const t=IMAGE_THEMES[kind]||IMAGE_THEMES.assistant;
+
+  const t=
+    IMAGE_THEMES[kind]||
+    IMAGE_THEMES.assistant;
+
+
   const [a,b,soft]=t;
 
-  const safe=escapeXml(title);
 
-  const id="g"+String(kind)
-    .replace(/[^a-z0-9]/gi,"");
+  const safe=
+    escapeXml(title);
+
+
+  const id=
+    "g"+
+    String(kind)
+      .replace(
+        /[^a-z0-9]/gi,
+        ""
+      );
+
 
   const common=`
+
   <defs>
+
     <linearGradient
       id="${id}a"
       x1="0"
@@ -1566,9 +2496,19 @@ function seoImageSvg(kind,title){
       x2="1"
       y2="1"
     >
-      <stop offset="0" stop-color="${a}"/>
-      <stop offset="1" stop-color="${b}"/>
+
+      <stop
+        offset="0"
+        stop-color="${a}"
+      />
+
+      <stop
+        offset="1"
+        stop-color="${b}"
+      />
+
     </linearGradient>
+
 
     <filter
       id="${id}s"
@@ -1577,6 +2517,7 @@ function seoImageSvg(kind,title){
       width="160%"
       height="160%"
     >
+
       <feDropShadow
         dx="0"
         dy="14"
@@ -1584,14 +2525,22 @@ function seoImageSvg(kind,title){
         flood-color="#0f172a"
         flood-opacity=".12"
       />
+
     </filter>
+
   </defs>`;
+
 
   let art="";
 
-  if(kind==="chat"||kind==="assistant"){
+
+  if(
+    kind==="chat"||
+    kind==="assistant"
+  ){
 
     art=`
+
     <rect
       x="95"
       y="78"
@@ -1661,9 +2610,13 @@ function seoImageSvg(kind,title){
       stroke-linejoin="round"
     />`;
 
-  }else if(kind==="content"||kind==="writing"){
+  }else if(
+    kind==="content"||
+    kind==="writing"
+  ){
 
     art=`
+
     <rect
       x="130"
       y="70"
@@ -1739,9 +2692,12 @@ function seoImageSvg(kind,title){
       stroke-width="10"
     />`;
 
-  }else if(kind==="translate"){
+  }else if(
+    kind==="translate"
+  ){
 
     art=`
+
     <rect
       x="85"
       y="90"
@@ -1832,9 +2788,12 @@ function seoImageSvg(kind,title){
       stroke-linejoin="round"
     />`;
 
-  }else if(kind==="summary"){
+  }else if(
+    kind==="summary"
+  ){
 
     art=`
+
     <rect
       x="95"
       y="55"
@@ -1917,9 +2876,12 @@ function seoImageSvg(kind,title){
       fill-opacity=".28"
     />`;
 
-  }else if(kind==="ideas"){
+  }else if(
+    kind==="ideas"
+  ){
 
     art=`
+
     <circle
       cx="340"
       cy="250"
@@ -1961,9 +2923,12 @@ function seoImageSvg(kind,title){
       opacity=".16"
     />`;
 
-  }else if(kind==="code"){
+  }else if(
+    kind==="code"
+  ){
 
     art=`
+
     <rect
       x="80"
       y="82"
@@ -2044,6 +3009,7 @@ function seoImageSvg(kind,title){
   }else{
 
     art=`
+
     <circle
       cx="400"
       cy="250"
@@ -2105,18 +3071,35 @@ function seoImageSvg(kind,title){
     />`;
   }
 
+
   return `<?xml version="1.0" encoding="UTF-8"?>
+
 <svg
  xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 800 540"
  role="img"
  aria-labelledby="title desc"
 >
-<title id="title">${safe}</title>
-<desc id="desc">تصویر حرفه‌ای و مینیمال با پس‌زمینه سفید برای ${safe}</desc>
+
+<title id="title">
+${safe}
+</title>
+
+<desc id="desc">
+تصویر حرفه‌ای و مینیمال با پس‌زمینه سفید برای ${safe}
+</desc>
+
 ${common}
-<rect width="800" height="540" rx="36" fill="#fff"/>
+
+<rect
+ width="800"
+ height="540"
+ rx="36"
+ fill="#fff"
+/>
+
 ${art}
+
 <text
  x="400"
  y="505"
@@ -2125,19 +3108,33 @@ ${art}
  font-size="22"
  font-weight="700"
  fill="#334155"
->${safe}</text>
+>
+${safe}
+</text>
+
 </svg>`;
 }
 
+
 function seoImagePath(kind){
-  return `/images/abzarak-${encodeURIComponent(kind)}.svg`;
+
+  return
+    `/images/abzarak-${encodeURIComponent(kind)}.svg`;
+
 }
 
+
 function createSeoImage(data){
-  const src=seoImagePath(data.imageKind);
+
+  const src=
+    seoImagePath(
+      data.imageKind
+    );
+
 
   return `
   <figure class="seo-image-wrap">
+
     <img
       class="seo-image"
       src="${src}"
@@ -2147,13 +3144,21 @@ function createSeoImage(data){
       loading="eager"
       decoding="async"
     >
-    <figcaption>${escapeSeoHtml(data.imageTitle)}</figcaption>
+
+    <figcaption>
+      ${escapeSeoHtml(data.imageTitle)}
+    </figcaption>
+
   </figure>`;
+
 }
 
+
 function breadcrumbSchema(path,h1){
+
   return {
     "@type":"BreadcrumbList",
+
     itemListElement:[
       {
         "@type":"ListItem",
@@ -2161,6 +3166,7 @@ function breadcrumbSchema(path,h1){
         name:"ابزارک AI",
         item:BASE_URL+"/"
       },
+
       {
         "@type":"ListItem",
         position:2,
@@ -2169,107 +3175,233 @@ function breadcrumbSchema(path,h1){
       }
     ]
   };
+
 }
 
+
 function pageSchema(path,data){
+
   return {
     "@context":"https://schema.org",
+
     "@graph":[
+
       {
         "@type":"WebPage",
-        "@id":BASE_URL+path+"#webpage",
-        url:BASE_URL+path,
-        name:data.title,
-        description:data.description,
-        inLanguage:"fa-IR",
+
+        "@id":
+          BASE_URL+
+          path+
+          "#webpage",
+
+        url:
+          BASE_URL+
+          path,
+
+        name:
+          data.title,
+
+        description:
+          data.description,
+
+        inLanguage:
+          "fa-IR",
+
         isPartOf:{
-          "@id":BASE_URL+"/#website"
+          "@id":
+            BASE_URL+
+            "/#website"
         },
+
         primaryImageOfPage:{
           "@type":"ImageObject",
-          url:BASE_URL+seoImagePath(data.imageKind),
+
+          url:
+            BASE_URL+
+            seoImagePath(
+              data.imageKind
+            ),
+
           width:800,
           height:540
         },
-        dateModified:data.updated
+
+        dateModified:
+          data.updated
       },
+
+
       {
         "@type":"WebSite",
-        "@id":BASE_URL+"/#website",
-        url:BASE_URL+"/",
+
+        "@id":
+          BASE_URL+
+          "/#website",
+
+        url:
+          BASE_URL+"/",
+
         name:"ابزارک AI",
-        description:"دستیار هوش مصنوعی فارسی"
+
+        description:
+          "دستیار هوش مصنوعی فارسی"
       },
-      breadcrumbSchema(path,data.h1)
+
+
+      breadcrumbSchema(
+        path,
+        data.h1
+      )
+
     ]
   };
+
 }
 
-function renderSeoPage(path,data){
-  const canonical=BASE_URL+path;
 
-  const sections=(data.sections||[])
-    .map((s,i)=>{
-      const bullets=
-        Array.isArray(s.bullets)&&s.bullets.length
-          ?`<ul>${s.bullets
-              .map(x=>`<li>${escapeSeoHtml(x)}</li>`)
-              .join("")}</ul>`
+function renderSeoPage(path,data){
+
+  const canonical=
+    BASE_URL+
+    path;
+
+
+  const sections=
+    (data.sections||[])
+      .map((s,i)=>{
+
+        const bullets=
+          Array.isArray(s.bullets)&&
+          s.bullets.length
+
+          ?`<ul>${
+              s.bullets
+                .map(
+                  x=>
+                    `<li>${escapeSeoHtml(x)}</li>`
+                )
+                .join("")
+            }</ul>`
+
           :"";
 
-      return `
-      <section class="seo-card">
-        <span class="section-number">
-          ${String(i+1).padStart(2,"0")}
-        </span>
 
-        <h2>${escapeSeoHtml(s.title)}</h2>
+        return `
+        <section class="seo-card">
 
-        <p>${escapeSeoHtml(s.text||"")}</p>
+          <span class="section-number">
+            ${String(i+1).padStart(2,"0")}
+          </span>
 
-        ${bullets}
-      </section>`;
-    })
-    .join("");
+          <h2>
+            ${escapeSeoHtml(s.title)}
+          </h2>
 
-  const related=Object.entries(SEO_PAGES)
-    .filter(([p])=>p!==path)
-    .map(([p,v])=>{
-      const icon=
-        v.imageKind==="code"
-          ?"</>"
-          :v.imageKind==="ideas"
-          ?"✦"
-          :v.imageKind==="translate"
-          ?"文"
-          :v.imageKind==="summary"
-          ?"≡"
-          :"AI";
+          <p>
+            ${escapeSeoHtml(s.text||"")}
+          </p>
 
-      return `
-      <a class="seo-link" href="${p}">
-        <span class="related-icon">${escapeSeoHtml(icon)}</span>
-        <span>
-          <b>${escapeSeoHtml(v.h1)}</b>
-          <small>${escapeSeoHtml(v.description.slice(0,90))}</small>
-        </span>
-      </a>`;
-    })
-    .join("");
+          ${bullets}
 
-  const schema=jsonLd(pageSchema(path,data));
+        </section>`;
 
-  const [accent,accent2,soft]=
-    IMAGE_THEMES[data.imageKind]||
+      })
+      .join("");
+
+
+  const related=
+    Object.entries(SEO_PAGES)
+      .filter(
+        ([p])=>p!==path
+      )
+      .map(
+        ([p,v])=>{
+
+          const icon=
+            v.imageKind==="code"
+              ?"</>"
+
+              :v.imageKind==="ideas"
+              ?"✦"
+
+              :v.imageKind==="translate"
+              ?"文"
+
+              :v.imageKind==="summary"
+              ?"≡"
+
+              :"AI";
+
+
+          return `
+          <a
+            class="seo-link"
+            href="${p}"
+          >
+
+            <span
+              class="related-icon"
+            >
+              ${escapeSeoHtml(icon)}
+            </span>
+
+            <span>
+
+              <b>
+                ${escapeSeoHtml(v.h1)}
+              </b>
+
+              <small>
+                ${escapeSeoHtml(
+                  v.description.slice(0,90)
+                )}
+              </small>
+
+            </span>
+
+          </a>`;
+
+        }
+      )
+      .join("");
+
+
+  const schema=
+    jsonLd(
+      pageSchema(
+        path,
+        data
+      )
+    );
+
+
+  const [
+    accent,
+    accent2,
+    soft
+  ]=
+    IMAGE_THEMES[
+      data.imageKind
+    ]||
     IMAGE_THEMES.assistant;
 
-  return `<!doctype html>
-<html lang="fa" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>${escapeSeoHtml(data.title)}</title>
+  return `<!doctype html>
+
+<html lang="fa" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+ name="viewport"
+ content="width=device-width,initial-scale=1"
+>
+
+<title>
+${escapeSeoHtml(data.title)}
+</title>
 
 <meta
  name="description"
@@ -2286,24 +3418,90 @@ function renderSeoPage(path,data){
  href="${canonical}"
 >
 
-<meta property="og:type" content="website">
-<meta property="og:locale" content="fa_IR">
-<meta property="og:title" content="${escapeSeoHtml(data.title)}">
-<meta property="og:description" content="${escapeSeoHtml(data.description)}">
-<meta property="og:url" content="${canonical}">
-<meta property="og:site_name" content="ابزارک AI">
-<meta property="og:image" content="${BASE_URL+seoImagePath(data.imageKind)}">
-<meta property="og:image:width" content="800">
-<meta property="og:image:height" content="540">
+<meta
+ property="og:type"
+ content="website"
+>
 
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${escapeSeoHtml(data.title)}">
-<meta name="twitter:description" content="${escapeSeoHtml(data.description)}">
-<meta name="twitter:image" content="${BASE_URL+seoImagePath(data.imageKind)}">
+<meta
+ property="og:locale"
+ content="fa_IR"
+>
 
-<script type="application/ld+json">${schema}</script>
+<meta
+ property="og:title"
+ content="${escapeSeoHtml(data.title)}"
+>
+
+<meta
+ property="og:description"
+ content="${escapeSeoHtml(data.description)}"
+>
+
+<meta
+ property="og:url"
+ content="${canonical}"
+>
+
+<meta
+ property="og:site_name"
+ content="ابزارک AI"
+>
+
+<meta
+ property="og:image"
+ content="${
+   BASE_URL+
+   seoImagePath(
+     data.imageKind
+   )
+ }"
+>
+
+<meta
+ property="og:image:width"
+ content="800"
+>
+
+<meta
+ property="og:image:height"
+ content="540"
+>
+
+<meta
+ name="twitter:card"
+ content="summary_large_image"
+>
+
+<meta
+ name="twitter:title"
+ content="${escapeSeoHtml(data.title)}"
+>
+
+<meta
+ name="twitter:description"
+ content="${escapeSeoHtml(data.description)}"
+>
+
+<meta
+ name="twitter:image"
+ content="${
+   BASE_URL+
+   seoImagePath(
+     data.imageKind
+   )
+ }"
+>
+
+<script
+ type="application/ld+json"
+>
+${schema}
+</script>
+
 
 <style>
+
 :root{
  --accent:${accent};
  --accent2:${accent2};
@@ -2315,9 +3513,13 @@ function renderSeoPage(path,data){
  --page:#fff
 }
 
-*{box-sizing:border-box}
+*{
+ box-sizing:border-box
+}
 
-html{scroll-behavior:smooth}
+html{
+ scroll-behavior:smooth
+}
 
 body{
  margin:0;
@@ -2358,9 +3560,14 @@ body{
  display:flex;
  align-items:center;
  justify-content:center;
- background:linear-gradient(135deg,var(--accent),var(--accent2));
+ background:linear-gradient(
+   135deg,
+   var(--accent),
+   var(--accent2)
+ );
  color:#fff;
- box-shadow:0 8px 20px rgba(15,23,42,.1)
+ box-shadow:
+   0 8px 20px rgba(15,23,42,.1)
 }
 
 .seo-nav{
@@ -2375,9 +3582,14 @@ body{
  border-radius:13px;
  text-decoration:none;
  font-weight:800;
- background:linear-gradient(135deg,var(--accent),var(--accent2));
+ background:linear-gradient(
+   135deg,
+   var(--accent),
+   var(--accent2)
+ );
  color:#fff;
- box-shadow:0 8px 22px rgba(15,23,42,.08)
+ box-shadow:
+   0 8px 22px rgba(15,23,42,.08)
 }
 
 .seo-btn.secondary{
@@ -2449,7 +3661,8 @@ body{
  height:auto;
  border:1px solid var(--line);
  border-radius:28px;
- box-shadow:0 18px 55px rgba(15,23,42,.08)
+ box-shadow:
+   0 18px 55px rgba(15,23,42,.08)
 }
 
 .seo-image-wrap figcaption{
@@ -2466,7 +3679,8 @@ body{
  border-radius:22px;
  padding:30px 30px 28px;
  margin:16px 0;
- box-shadow:0 12px 34px rgba(15,23,42,.045)
+ box-shadow:
+   0 12px 34px rgba(15,23,42,.045)
 }
 
 .seo-card:before{
@@ -2655,8 +3869,11 @@ body{
  .seo-image{
    border-radius:20px
  }
+
 }
+
 </style>
+
 </head>
 
 <body>
@@ -2665,23 +3882,53 @@ body{
 
 <header class="seo-header">
 
-<a href="/" class="seo-logo">
-<span class="seo-logo-icon">🤖</span>
+<a
+ href="/"
+ class="seo-logo"
+>
+
+<span class="seo-logo-icon">
+🤖
+</span>
+
 ابزارک AI
+
 </a>
 
+
 <nav class="seo-nav">
-<a href="/" class="seo-btn secondary">صفحه اصلی</a>
-<a href="/chat-ai" class="seo-btn">شروع گفتگو</a>
+
+<a
+ href="/"
+ class="seo-btn secondary"
+>
+صفحه اصلی
+</a>
+
+<a
+ href="/chat-ai"
+ class="seo-btn"
+>
+شروع گفتگو
+</a>
+
 </nav>
 
 </header>
 
+
 <div class="seo-breadcrumb">
-<a href="/">ابزارک AI</a>
+
+<a href="/">
+ابزارک AI
+</a>
+
 ←
+
 ${escapeSeoHtml(data.h1)}
+
 </div>
+
 
 <main>
 
@@ -2691,19 +3938,30 @@ ${escapeSeoHtml(data.h1)}
 ✦ هوش مصنوعی فارسی
 </div>
 
-<h1>${escapeSeoHtml(data.h1)}</h1>
+<h1>
+${escapeSeoHtml(data.h1)}
+</h1>
 
-<p>${escapeSeoHtml(data.intro)}</p>
+<p>
+${escapeSeoHtml(data.intro)}
+</p>
 
 ${createSeoImage(data)}
 
+
 <div class="hero-actions">
 
-<a href="/" class="seo-btn">
-همین حالا رایگان امتحان کن
+<a
+ href="/"
+ class="seo-btn"
+>
+همین حالا امتحان کن
 </a>
 
-<a href="/ai-tools" class="seo-btn secondary">
+<a
+ href="/ai-tools"
+ class="seo-btn secondary"
+>
 مشاهده کاربردها
 </a>
 
@@ -2711,42 +3969,67 @@ ${createSeoImage(data)}
 
 </section>
 
+
 ${sections}
+
 
 <section class="seo-cta">
 
-<h2>آماده‌ای خودت امتحانش کنی؟</h2>
+<h2>
+آماده‌ای خودت امتحانش کنی؟
+</h2>
 
 <p>
 یک درخواست واقعی خودت را وارد کن و ببین ابزارک چطور می‌تواند در همان کار به تو کمک کند.
 </p>
 
-<a href="/" class="seo-btn">
+<a
+ href="/"
+ class="seo-btn"
+>
 شروع استفاده از ابزارک
 </a>
 
 </section>
 
+
 <section class="seo-card">
 
-<span class="section-number">↗</span>
+<span class="section-number">
+↗
+</span>
 
-<h2>صفحات مرتبط ابزارک</h2>
+<h2>
+صفحات مرتبط ابزارک
+</h2>
 
 <div class="seo-links">
+
 ${related}
+
 </div>
 
 </section>
 
 </main>
 
+
 <footer class="seo-footer">
+
 🤖 ابزارک AI — دستیار هوش مصنوعی فارسی
+
 <br><br>
-<a href="/faq">سؤالات متداول</a>
+
+<a href="/faq">
+سؤالات متداول
+</a>
+
  ·
-<a href="/">صفحه اصلی</a>
+
+<a href="/">
+صفحه اصلی
+</a>
+
 </footer>
 
 </div>
@@ -2761,39 +4044,78 @@ ${related}
 // =============================================================
 function renderFaqPage(){
 
-  const canonical=BASE_URL+"/faq";
+  const canonical=
+    BASE_URL+
+    "/faq";
 
-  const faqHtml=FAQ_ITEMS
-    .map(item=>`
-      <section class="faq-item">
-        <h2>${escapeSeoHtml(item.q)}</h2>
-        <p>${escapeSeoHtml(item.a)}</p>
-      </section>
-    `)
-    .join("");
 
-  const schema=jsonLd({
-    "@context":"https://schema.org",
-    "@type":"WebPage",
-    "name":"سؤالات متداول ابزارک AI | هوش مصنوعی فارسی",
-    "url":canonical,
-    "description":"پاسخ به سؤالات متداول درباره ابزارک AI، ثبت‌نام، استفاده رایگان، پلن‌ها و امکانات سرویس.",
-    "inLanguage":"fa-IR"
-  });
+  const faqHtml=
+    FAQ_ITEMS
+      .map(
+        item=>`
+          <section class="faq-item">
+
+            <h2>
+              ${escapeSeoHtml(item.q)}
+            </h2>
+
+            <p>
+              ${escapeSeoHtml(item.a)}
+            </p>
+
+          </section>
+        `
+      )
+      .join("");
+
+
+  const schema=
+    jsonLd({
+
+      "@context":
+        "https://schema.org",
+
+      "@type":
+        "WebPage",
+
+      "name":
+        "سؤالات متداول ابزارک AI | هوش مصنوعی فارسی",
+
+      "url":
+        canonical,
+
+      "description":
+        "پاسخ به سؤالات متداول درباره ابزارک AI، ورود، استفاده رایگان، پلن‌ها و امکانات سرویس.",
+
+      "inLanguage":
+        "fa-IR"
+
+    });
+
 
   return `<!doctype html>
-<html lang="fa" dir="rtl">
+
+<html
+ lang="fa"
+ dir="rtl"
+>
 
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>سؤالات متداول ابزارک AI | هوش مصنوعی فارسی</title>
+<meta
+ name="viewport"
+ content="width=device-width,initial-scale=1"
+>
+
+<title>
+سؤالات متداول ابزارک AI | هوش مصنوعی فارسی
+</title>
 
 <meta
  name="description"
- content="پاسخ به سؤالات متداول درباره ابزارک AI، چت هوش مصنوعی فارسی، ثبت‌نام، استفاده رایگان، پلن‌ها و بازیابی رمز عبور."
+ content="پاسخ به سؤالات متداول درباره ابزارک AI، چت هوش مصنوعی فارسی، ورود، استفاده رایگان، پلن‌ها و بازیابی رمز عبور."
 >
 
 <meta
@@ -2806,17 +4128,35 @@ function renderFaqPage(){
  href="${canonical}"
 >
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="سؤالات متداول ابزارک AI">
+<meta
+ property="og:type"
+ content="website"
+>
+
+<meta
+ property="og:title"
+ content="سؤالات متداول ابزارک AI"
+>
+
 <meta
  property="og:description"
  content="پاسخ به سؤالات متداول درباره ابزارک AI و امکانات آن."
 >
-<meta property="og:url" content="${canonical}">
 
-<script type="application/ld+json">${schema}</script>
+<meta
+ property="og:url"
+ content="${canonical}"
+>
+
+<script
+ type="application/ld+json"
+>
+${schema}
+</script>
+
 
 <style>
+
 :root{
  --ink:#0f172a;
  --muted:#64748b;
@@ -2825,7 +4165,9 @@ function renderFaqPage(){
  --soft:#f5f3ff
 }
 
-*{box-sizing:border-box}
+*{
+ box-sizing:border-box
+}
 
 body{
  margin:0;
@@ -2894,7 +4236,8 @@ body{
  border:1px solid var(--line);
  border-radius:28px;
  background:#fff;
- box-shadow:0 18px 55px rgba(15,23,42,.07);
+ box-shadow:
+   0 18px 55px rgba(15,23,42,.07);
  padding:16px
 }
 
@@ -2910,7 +4253,8 @@ body{
  border-radius:20px;
  padding:23px;
  margin:14px 0;
- box-shadow:0 9px 28px rgba(15,23,42,.035)
+ box-shadow:
+   0 9px 28px rgba(15,23,42,.035)
 }
 
 .faq-item h2{
@@ -2964,7 +4308,9 @@ body{
    font-size:13px;
    padding:9px 12px
  }
+
 }
+
 </style>
 
 </head>
@@ -2975,26 +4321,36 @@ body{
 
 <header class="faq-header">
 
-<a href="/" class="faq-logo">
+<a
+ href="/"
+ class="faq-logo"
+>
 🤖 ابزارک AI
 </a>
 
-<a href="/" class="faq-btn">
+<a
+ href="/"
+ class="faq-btn"
+>
 شروع استفاده
 </a>
 
 </header>
 
+
 <main>
 
 <section class="faq-hero">
 
-<h1>سؤالات متداول ابزارک AI</h1>
+<h1>
+سؤالات متداول ابزارک AI
+</h1>
 
 <p>
 پاسخ به پرسش‌های رایج درباره چت هوش مصنوعی فارسی،
-ثبت‌نام، استفاده رایگان، پلن‌ها و امکانات ابزارک.
+ورود، استفاده رایگان، پلن‌ها و امکانات ابزارک.
 </p>
+
 
 <div class="faq-image">
 
@@ -3010,23 +4366,31 @@ body{
 
 </section>
 
+
 ${faqHtml}
+
 
 <section class="faq-cta">
 
-<h2>آماده‌ای امتحانش کنی؟</h2>
+<h2>
+آماده‌ای امتحانش کنی؟
+</h2>
 
 <p>
-یک سؤال واقعی خودت را وارد کن و گفتگو با ابزارک را شروع کن.
+برای استفاده از ابزارک وارد حساب فعال خود شو.
 </p>
 
-<a href="/" class="faq-btn">
-شروع گفتگو
+<a
+ href="/"
+ class="faq-btn"
+>
+ورود به ابزارک
 </a>
 
 </section>
 
 </main>
+
 
 <footer class="faq-footer">
 🤖 ابزارک AI — دستیار هوش مصنوعی فارسی
@@ -3043,11 +4407,14 @@ ${faqHtml}
 // ROBOTS + SITEMAP
 // =============================================================
 function robotsTxt(){
+
   return `User-agent: *
 Allow: /
 Sitemap: ${BASE_URL}/sitemap.xml
 `;
+
 }
+
 
 function sitemapXml(){
 
@@ -3057,24 +4424,41 @@ function sitemapXml(){
     "/faq"
   ];
 
+
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+<urlset
+ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+>
+
 ${paths.map(path=>{
 
-  const d=SEO_PAGES[path];
+  const d=
+    SEO_PAGES[path];
+
 
   const last=
     d?.updated||
     "2026-10-01";
 
+
   return `
 <url>
-<loc>${escapeXml(BASE_URL+path)}</loc>
-<lastmod>${last}</lastmod>
+
+<loc>
+${escapeXml(BASE_URL+path)}
+</loc>
+
+<lastmod>
+${last}
+</lastmod>
+
 </url>`;
 
 }).join("")}
+
 </urlset>`;
+
 }
 
 
@@ -3082,121 +4466,186 @@ ${paths.map(path=>{
 // RESPONSE HELPERS
 // =============================================================
 function json(data,status=200){
+
   return new Response(
     JSON.stringify(data),
     {
       status,
+
       headers:{
-        "Content-Type":"application/json; charset=utf-8",
-        "Cache-Control":"no-store"
+        "Content-Type":
+          "application/json; charset=utf-8",
+
+        "Cache-Control":
+          "no-store"
       }
     }
   );
+
 }
+
 
 function html(data,status=200){
+
   return new Response(
     data,
     {
       status,
+
       headers:{
-        "Content-Type":"text/html; charset=utf-8",
-        "Cache-Control":"no-store"
+        "Content-Type":
+          "text/html; charset=utf-8",
+
+        "Cache-Control":
+          "no-store"
       }
     }
   );
+
 }
+
 
 function plainText(data,status=200){
+
   return new Response(
     data,
     {
       status,
+
       headers:{
-        "Content-Type":"text/plain; charset=utf-8"
+        "Content-Type":
+          "text/plain; charset=utf-8"
       }
     }
   );
+
 }
 
+
 function xml(data,status=200){
+
   return new Response(
     data,
     {
       status,
+
       headers:{
-        "Content-Type":"application/xml; charset=utf-8",
-        "Cache-Control":"public,max-age=3600"
+        "Content-Type":
+          "application/xml; charset=utf-8",
+
+        "Cache-Control":
+          "public,max-age=3600"
       }
     }
   );
+
 }
+
 
 function cors(response){
 
-  const h=new Headers(response.headers);
+  const h=
+    new Headers(
+      response.headers
+    );
+
 
   h.set(
     "Access-Control-Allow-Origin",
     "*"
   );
 
+
   h.set(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization"
   );
+
 
   h.set(
     "Access-Control-Allow-Methods",
     "GET,POST,PUT,DELETE,OPTIONS"
   );
 
+
   h.set(
     "Access-Control-Max-Age",
     "86400"
   );
 
+
   return new Response(
     response.body,
     {
-      status:response.status,
-      statusText:response.statusText,
+      status:
+        response.status,
+
+      statusText:
+        response.statusText,
+
       headers:h
     }
   );
+
 }
 
+
 async function bodyJson(request){
+
   try{
+
     return await request.json();
+
   }catch{
+
     return {};
+
   }
+
 }
+
 
 function randomHex(bytes=32){
 
   const data=
     new Uint8Array(bytes);
 
-  crypto.getRandomValues(data);
 
-  return Array.from(data)
-    .map(x=>x.toString(16).padStart(2,"0"))
+  crypto.getRandomValues(
+    data
+  );
+
+
+  return Array
+    .from(data)
+    .map(
+      x=>
+        x.toString(16)
+         .padStart(2,"0")
+    )
     .join("");
+
 }
+
 
 function randomCode(){
 
   const d=
     new Uint32Array(1);
 
-  crypto.getRandomValues(d);
+
+  crypto.getRandomValues(
+    d
+  );
+
 
   return String(
-    100000+(d[0]%900000)
+    100000+
+    (d[0]%900000)
   );
+
 }
+
 
 async function hashPassword(password){
 
@@ -3205,82 +4654,133 @@ async function hashPassword(password){
       String(password)
     );
 
+
   const hash=
     await crypto.subtle.digest(
       "SHA-256",
       data
     );
 
-  return Array.from(
-    new Uint8Array(hash)
-  )
-  .map(x=>x.toString(16).padStart(2,"0"))
-  .join("");
+
+  return Array
+    .from(
+      new Uint8Array(hash)
+    )
+    .map(
+      x=>
+        x.toString(16)
+         .padStart(2,"0")
+    )
+    .join("");
+
 }
+
 
 function base64url(data){
 
   let binary;
 
-  if(typeof data==="string"){
-    binary=btoa(data);
+
+  if(
+    typeof data==="string"
+  ){
+
+    binary=
+      btoa(data);
+
   }else{
-    binary=btoa(
-      String.fromCharCode(...data)
-    );
+
+    binary=
+      btoa(
+        String.fromCharCode(
+          ...data
+        )
+      );
+
   }
+
 
   return binary
     .replaceAll("+","-")
     .replaceAll("/","_")
     .replaceAll("=","");
+
 }
+
 
 function decodeBase64url(v){
 
-  v=v
-    .replaceAll("-","+")
-    .replaceAll("_","/");
+  v=
+    v
+      .replaceAll("-","+")
+      .replaceAll("_","/");
 
-  while(v.length%4){
+
+  while(
+    v.length%4
+  ){
+
     v+="=";
+
   }
 
+
   return atob(v);
+
 }
 
-async function hmacSign(value,secret){
+
+async function hmacSign(
+  value,
+  secret
+){
 
   const key=
     await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode(secret),
+
+      new TextEncoder().encode(
+        secret
+      ),
+
       {
         name:"HMAC",
         hash:"SHA-256"
       },
+
       false,
+
       ["sign"]
     );
+
 
   const sig=
     await crypto.subtle.sign(
       "HMAC",
       key,
-      new TextEncoder().encode(value)
+      new TextEncoder().encode(
+        value
+      )
     );
+
 
   return base64url(
     new Uint8Array(sig)
   );
+
 }
 
-async function createToken(payload,secret){
+
+async function createToken(
+  payload,
+  secret
+){
 
   const enc=
     base64url(
       JSON.stringify(payload)
     );
+
 
   return enc+
     "."+
@@ -3288,18 +4788,26 @@ async function createToken(payload,secret){
       enc,
       secret
     );
+
 }
 
-async function verifyToken(token,secret){
+
+async function verifyToken(
+  token,
+  secret
+){
 
   if(!token)return null;
+
 
   const parts=
     token.split(".");
 
+
   if(parts.length!==2){
     return null;
   }
+
 
   const expected=
     await hmacSign(
@@ -3307,30 +4815,48 @@ async function verifyToken(token,secret){
       secret
     );
 
-  if(parts[1]!==expected){
+
+  if(
+    parts[1]!==expected
+  ){
+
     return null;
+
   }
+
 
   try{
 
     const payload=
       JSON.parse(
-        decodeBase64url(parts[0])
+        decodeBase64url(
+          parts[0]
+        )
       );
+
 
     if(
       payload.exp&&
-      Date.now()>Number(payload.exp)
+      Date.now()>Number(
+        payload.exp
+      )
     ){
+
       return null;
+
     }
+
 
     return payload;
 
   }catch{
+
     return null;
+
   }
+
 }
+
 
 function bearerToken(request){
 
@@ -3339,17 +4865,25 @@ function bearerToken(request){
       "Authorization"
     );
 
+
   if(
     !auth||
-    !auth.toLowerCase().startsWith("bearer ")
+    !auth
+      .toLowerCase()
+      .startsWith("bearer ")
   ){
+
     return "";
+
   }
+
 
   return auth
     .slice(7)
     .trim();
+
 }
+
 
 function getAuthSecret(env){
 
@@ -3358,14 +4892,18 @@ function getAuthSecret(env){
     env.ADMIN_PASSWORD||
     "abzarak-default-secret"
   ).trim();
+
 }
+
 
 function today(){
 
   return new Date()
     .toISOString()
     .slice(0,10);
+
 }
+
 
 function addDays(days){
 
@@ -3373,6 +4911,7 @@ function addDays(days){
     Date.now()+
     days*86400000
   ).toISOString();
+
 }
 
 
@@ -3380,27 +4919,37 @@ function addDays(days){
 // PLANS — UNCHANGED
 // =============================================================
 const PLAN_PRICES={
+
   basic:400000,
   standard:1000000,
   pro:2000000,
   special:3000000
+
 };
 
+
 const PLAN_USD={
+
   basic:5,
   standard:10,
   pro:15,
   special:20
+
 };
 
+
 const PLAN_NAMES={
+
   basic:"Basic",
   standard:"Standard",
   pro:"Pro",
   special:"Special"
+
 };
 
+
 const PLAN_FEATURES={
+
   basic:[
     "استفاده بیشتر از هوش مصنوعی",
     "گفتگو با دستیار هوشمند",
@@ -3428,6 +4977,7 @@ const PLAN_FEATURES={
     "استفاده گسترده",
     "پشتیبانی چندزبانه"
   ]
+
 };
 
 
@@ -3437,7 +4987,11 @@ const PLAN_FEATURES={
 let dbReady=false;
 let dbInitPromise=null;
 
-async function tableColumns(env,table){
+
+async function tableColumns(
+  env,
+  table
+){
 
   const info=
     await env.DB
@@ -3446,11 +5000,19 @@ async function tableColumns(env,table){
       )
       .all();
 
+
   return new Set(
     (info.results||[])
-      .map(r=>String(r.name||""))
+      .map(
+        r=>
+          String(
+            r.name||""
+          )
+      )
   );
+
 }
+
 
 async function addColumnIfMissing(
   env,
@@ -3460,29 +5022,47 @@ async function addColumnIfMissing(
   definition
 ){
 
-  if(columns.has(name)){
+  if(
+    columns.has(name)
+  ){
+
     return;
+
   }
+
 
   await env.DB.prepare(
     `ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`
   ).run();
 
+
   columns.add(name);
+
 }
+
 
 async function migrateUsersTable(env){
 
   await env.DB.prepare(`
+
     CREATE TABLE IF NOT EXISTS users(
+
       id TEXT PRIMARY KEY,
+
       name TEXT NOT NULL,
+
       email TEXT NOT NULL UNIQUE,
+
       password_hash TEXT NOT NULL,
+
       balance INTEGER NOT NULL DEFAULT 0,
+
       created_at TEXT NOT NULL
+
     )
+
   `).run();
+
 
   const columns=
     await tableColumns(
@@ -3490,8 +5070,7 @@ async function migrateUsersTable(env){
       "users"
     );
 
-  // Older versions may have slightly different user schemas.
-  // Add missing fields safely.
+
   await addColumnIfMissing(
     env,
     "users",
@@ -3499,6 +5078,7 @@ async function migrateUsersTable(env){
     "name",
     `TEXT NOT NULL DEFAULT 'کاربر'`
   );
+
 
   await addColumnIfMissing(
     env,
@@ -3508,6 +5088,7 @@ async function migrateUsersTable(env){
     `TEXT NOT NULL DEFAULT ''`
   );
 
+
   await addColumnIfMissing(
     env,
     "users",
@@ -3515,6 +5096,7 @@ async function migrateUsersTable(env){
     "password_hash",
     `TEXT NOT NULL DEFAULT ''`
   );
+
 
   await addColumnIfMissing(
     env,
@@ -3524,6 +5106,7 @@ async function migrateUsersTable(env){
     `INTEGER NOT NULL DEFAULT 0`
   );
 
+
   await addColumnIfMissing(
     env,
     "users",
@@ -3531,7 +5114,9 @@ async function migrateUsersTable(env){
     "created_at",
     `TEXT NOT NULL DEFAULT ''`
   );
+
 }
+
 
 async function migratePaymentsTable(env){
 
@@ -3542,21 +5127,37 @@ async function migratePaymentsTable(env){
       )
       .all();
 
+
   const cols=
     new Set(
       (info.results||[])
-        .map(r=>String(r.name||""))
+        .map(
+          r=>
+            String(
+              r.name||""
+            )
+        )
     );
 
+
   const adds=[
+
     ["user_id","TEXT"],
+
     ["plan_id","TEXT"],
+
     ["amount_toman","INTEGER"],
+
     ["authority","TEXT"],
+
     ["status","TEXT DEFAULT 'pending'"],
+
     ["created_at","TEXT"],
+
     ["paid_at","TEXT"]
+
   ];
+
 
   for(
     const [c,type]
@@ -3580,8 +5181,11 @@ async function migratePaymentsTable(env){
         );
 
       }
+
     }
+
   }
+
 
   try{
 
@@ -3597,213 +5201,301 @@ async function migratePaymentsTable(env){
       "PAYMENTS STATUS MIGRATION ERROR:",
       e?.message||String(e)
     );
+
   }
+
 }
+
 
 async function initDatabase(env){
 
   if(!env.DB){
+
     throw new Error(
       "D1 binding DB تنظیم نشده است."
     );
+
   }
+
 
   if(dbReady){
+
     return;
+
   }
+
 
   if(dbInitPromise){
+
     return dbInitPromise;
+
   }
 
-  dbInitPromise=(async()=>{
 
-    // ---------------------------------------------------------
-    // USERS
-    // ---------------------------------------------------------
-    await migrateUsersTable(env);
+  dbInitPromise=
+    (async()=>{
 
-    // ---------------------------------------------------------
-    // PLANS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS plans(
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        price_toman INTEGER NOT NULL,
-        price_usd REAL NOT NULL,
-        features TEXT NOT NULL
-      )
-    `).run();
+      await migrateUsersTable(env);
 
-    // ---------------------------------------------------------
-    // SUBSCRIPTIONS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS subscriptions(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        plan_id TEXT NOT NULL,
-        starts_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'active'
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // USAGE
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS usage(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        usage_date TEXT NOT NULL,
-        used INTEGER NOT NULL DEFAULT 0,
-        UNIQUE(user_id,usage_date)
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // PASSWORD RESETS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS password_resets(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        code_hash TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        used INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // PAYMENTS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS payments(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        plan_id TEXT NOT NULL,
-        amount_toman INTEGER NOT NULL,
-        authority TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT,
-        paid_at TEXT
-      )
-    `).run();
-
-    await migratePaymentsTable(env);
-
-    // ---------------------------------------------------------
-    // PAYMENTS V2
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS payments_v2(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        plan_id TEXT NOT NULL,
-        amount_toman INTEGER NOT NULL,
-        authority TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT NOT NULL,
-        paid_at TEXT
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // WITHDRAWALS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS withdrawals(
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        method TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT NOT NULL,
-        processed_at TEXT
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // ADMIN SESSIONS
-    // ---------------------------------------------------------
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS admin_sessions(
-        id TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL
-      )
-    `).run();
-
-    // ---------------------------------------------------------
-    // PLANS DATA
-    // INSERT OR IGNORE prevents duplicate insert race.
-    // Then UPDATE keeps current prices/features in sync.
-    // ---------------------------------------------------------
-    for(
-      const id
-      of Object.keys(PLAN_PRICES)
-    ){
 
       await env.DB.prepare(`
-        INSERT OR IGNORE INTO plans
-        (id,name,price_toman,price_usd,features)
-        VALUES(?,?,?,?,?)
-      `)
-      .bind(
-        id,
-        PLAN_NAMES[id],
-        PLAN_PRICES[id],
-        PLAN_USD[id],
-        JSON.stringify(PLAN_FEATURES[id])
-      )
-      .run();
+
+        CREATE TABLE IF NOT EXISTS plans(
+
+          id TEXT PRIMARY KEY,
+
+          name TEXT NOT NULL,
+
+          price_toman INTEGER NOT NULL,
+
+          price_usd REAL NOT NULL,
+
+          features TEXT NOT NULL
+
+        )
+
+      `).run();
+
 
       await env.DB.prepare(`
-        UPDATE plans
-        SET
-          name=?,
-          price_toman=?,
-          price_usd=?,
-          features=?
-        WHERE id=?
-      `)
-      .bind(
-        PLAN_NAMES[id],
-        PLAN_PRICES[id],
-        PLAN_USD[id],
-        JSON.stringify(PLAN_FEATURES[id]),
-        id
-      )
-      .run();
-    }
 
-    dbReady=true;
+        CREATE TABLE IF NOT EXISTS subscriptions(
 
-  })()
-  .catch(error=>{
-    dbInitPromise=null;
-    dbReady=false;
-    throw error;
-  });
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          plan_id TEXT NOT NULL,
+
+          starts_at TEXT NOT NULL,
+
+          expires_at TEXT NOT NULL,
+
+          status TEXT NOT NULL DEFAULT 'active'
+
+        )
+
+      `).run();
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS usage(
+
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          usage_date TEXT NOT NULL,
+
+          used INTEGER NOT NULL DEFAULT 0,
+
+          UNIQUE(user_id,usage_date)
+
+        )
+
+      `).run();
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS password_resets(
+
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          code_hash TEXT NOT NULL,
+
+          expires_at TEXT NOT NULL,
+
+          used INTEGER NOT NULL DEFAULT 0,
+
+          created_at TEXT NOT NULL
+
+        )
+
+      `).run();
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS payments(
+
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          plan_id TEXT NOT NULL,
+
+          amount_toman INTEGER NOT NULL,
+
+          authority TEXT,
+
+          status TEXT NOT NULL DEFAULT 'pending',
+
+          created_at TEXT,
+
+          paid_at TEXT
+
+        )
+
+      `).run();
+
+
+      await migratePaymentsTable(env);
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS payments_v2(
+
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          plan_id TEXT NOT NULL,
+
+          amount_toman INTEGER NOT NULL,
+
+          authority TEXT,
+
+          status TEXT NOT NULL DEFAULT 'pending',
+
+          created_at TEXT NOT NULL,
+
+          paid_at TEXT
+
+        )
+
+      `).run();
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS withdrawals(
+
+          id TEXT PRIMARY KEY,
+
+          user_id TEXT NOT NULL,
+
+          amount INTEGER NOT NULL,
+
+          method TEXT NOT NULL,
+
+          destination TEXT NOT NULL,
+
+          status TEXT NOT NULL DEFAULT 'pending',
+
+          created_at TEXT NOT NULL,
+
+          processed_at TEXT
+
+        )
+
+      `).run();
+
+
+      await env.DB.prepare(`
+
+        CREATE TABLE IF NOT EXISTS admin_sessions(
+
+          id TEXT PRIMARY KEY,
+
+          created_at TEXT NOT NULL
+
+        )
+
+      `).run();
+
+
+      for(
+        const id
+        of Object.keys(PLAN_PRICES)
+      ){
+
+        await env.DB.prepare(`
+
+          INSERT OR IGNORE INTO plans
+          (id,name,price_toman,price_usd,features)
+          VALUES(?,?,?,?,?)
+
+        `)
+        .bind(
+          id,
+          PLAN_NAMES[id],
+          PLAN_PRICES[id],
+          PLAN_USD[id],
+          JSON.stringify(
+            PLAN_FEATURES[id]
+          )
+        )
+        .run();
+
+
+        await env.DB.prepare(`
+
+          UPDATE plans
+
+          SET
+            name=?,
+            price_toman=?,
+            price_usd=?,
+            features=?
+
+          WHERE id=?
+
+        `)
+        .bind(
+          PLAN_NAMES[id],
+          PLAN_PRICES[id],
+          PLAN_USD[id],
+          JSON.stringify(
+            PLAN_FEATURES[id]
+          ),
+          id
+        )
+        .run();
+
+      }
+
+
+      dbReady=true;
+
+    })()
+    .catch(error=>{
+
+      dbInitPromise=null;
+      dbReady=false;
+
+      throw error;
+
+    });
+
 
   return dbInitPromise;
+
 }
 
 
 // =============================================================
 // AUTH CORE
 // =============================================================
-async function requireUser(request,env){
+async function requireUser(
+  request,
+  env
+){
 
   const token=
     bearerToken(request);
 
+
   if(!token){
+
     return null;
+
   }
+
 
   const payload=
     await verifyToken(
@@ -3811,9 +5503,13 @@ async function requireUser(request,env){
       getAuthSecret(env)
     );
 
+
   if(!payload?.userId){
+
     return null;
+
   }
+
 
   const user=
     await env.DB
@@ -3823,20 +5519,32 @@ async function requireUser(request,env){
          WHERE id=?
          LIMIT 1`
       )
-      .bind(payload.userId)
+      .bind(
+        payload.userId
+      )
       .first();
 
+
   return user||null;
+
 }
 
-async function requireAdmin(request,env){
+
+async function requireAdmin(
+  request,
+  env
+){
 
   const token=
     bearerToken(request);
 
+
   if(!token){
+
     return false;
+
   }
+
 
   const payload=
     await verifyToken(
@@ -3844,19 +5552,26 @@ async function requireAdmin(request,env){
       getAuthSecret(env)
     );
 
+
   return !!(
     payload&&
     payload.admin===true
   );
+
 }
 
 
 // =============================================================
 // USAGE / SUBSCRIPTION
 // =============================================================
-async function getUsage(env,userId){
+async function getUsage(
+  env,
+  userId
+){
 
-  const date=today();
+  const date=
+    today();
+
 
   let row=
     await env.DB
@@ -3873,14 +5588,18 @@ async function getUsage(env,userId){
       )
       .first();
 
+
   if(!row){
 
     try{
 
       await env.DB.prepare(`
+
         INSERT INTO usage
         (id,user_id,usage_date,used)
+
         VALUES(?,?,?,0)
+
       `)
       .bind(
         randomHex(16),
@@ -3890,11 +5609,14 @@ async function getUsage(env,userId){
       .run();
 
     }catch(e){
+
       console.error(
         "USAGE INSERT ERROR:",
         e?.message||String(e)
       );
+
     }
+
 
     row=
       await env.DB
@@ -3910,14 +5632,21 @@ async function getUsage(env,userId){
           date
         )
         .first();
+
   }
+
 
   return row||{
     used:0
   };
+
 }
 
-async function getSubscription(env,userId){
+
+async function getSubscription(
+  env,
+  userId
+){
 
   return await env.DB
     .prepare(`
@@ -3927,14 +5656,19 @@ async function getSubscription(env,userId){
         p.price_toman,
         p.price_usd,
         p.features
+
       FROM subscriptions s
+
       LEFT JOIN plans p
         ON p.id=s.plan_id
+
       WHERE
         s.user_id=?
         AND s.status='active'
         AND s.expires_at>?
+
       ORDER BY s.expires_at DESC
+
       LIMIT 1
     `)
     .bind(
@@ -3942,6 +5676,7 @@ async function getSubscription(env,userId){
       new Date().toISOString()
     )
     .first();
+
 }
 
 
@@ -3959,18 +5694,24 @@ async function sendRecoveryEmail(
     return{
       ok:false,
       status:500,
-      error:"سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)"
+      error:
+        "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)"
     };
+
   }
+
 
   if(!env.RESEND_FROM_EMAIL){
 
     return{
       ok:false,
       status:500,
-      error:"آدرس ارسال ایمیل تنظیم نشده است (RESEND_FROM_EMAIL وجود ندارد)"
+      error:
+        "آدرس ارسال ایمیل تنظیم نشده است (RESEND_FROM_EMAIL وجود ندارد)"
     };
+
   }
+
 
   try{
 
@@ -4002,8 +5743,14 @@ async function sendRecoveryEmail(
               "کد بازیابی رمز عبور ابزارک",
 
             html:`
+
 <!doctype html>
-<html lang="fa" dir="rtl">
+
+<html
+ lang="fa"
+ dir="rtl"
+>
+
 <body
  style="
  margin:0;
@@ -4092,42 +5839,64 @@ ${code}
 </div>
 
 </body>
+
 </html>
+
 `
+
           })
+
         }
+
       );
+
 
     if(!response.ok){
 
       return{
         ok:false,
-        status:response.status,
-        error:"ارسال ایمیل ناموفق بود",
-        details:await response.text()
+        status:
+          response.status,
+
+        error:
+          "ارسال ایمیل ناموفق بود",
+
+        details:
+          await response.text()
       };
+
     }
+
 
     return{
       ok:true
     };
+
 
   }catch(e){
 
     return{
       ok:false,
       status:502,
-      error:"ارتباط با سرویس Resend ناموفق بود.",
-      details:e?.message||String(e)
+      error:
+        "ارتباط با سرویس Resend ناموفق بود.",
+      details:
+        e?.message||
+        String(e)
     };
+
   }
+
 }
 
 
 // =============================================================
-// AUTH API — FIXED
+// LOGIN API
 // =============================================================
-async function signupApi(request,env){
+async function loginApi(
+  request,
+  env
+){
 
   try{
 
@@ -4140,200 +5909,55 @@ async function signupApi(request,env){
         },
         500
       );
+
     }
 
-    const b=
-      await bodyJson(request);
 
-    const name=
-      String(
-        b.name||""
-      ).trim();
+    const b=
+      await bodyJson(
+        request
+      );
+
 
     const email=
       String(
         b.email||""
-      ).trim()
-      .toLowerCase();
-
-    const password=
-      String(
-        b.password||""
-      );
-
-    if(!name){
-
-      return json(
-        {
-          error:"نام را وارد کنید."
-        },
-        400
-      );
-    }
-
-    if(
-      !email||
-      !email.includes("@")||
-      !email.includes(".")
-    ){
-
-      return json(
-        {
-          error:"ایمیل معتبر نیست."
-        },
-        400
-      );
-    }
-
-    if(password.length<6){
-
-      return json(
-        {
-          error:
-            "رمز عبور باید حداقل ۶ کاراکتر باشد."
-        },
-        400
-      );
-    }
-
-    const existing=
-      await env.DB
-        .prepare(`
-          SELECT id
-          FROM users
-          WHERE email=?
-          LIMIT 1
-        `)
-        .bind(email)
-        .first();
-
-    if(existing){
-
-      return json(
-        {
-          error:
-            "این ایمیل قبلاً ثبت شده است. وارد حساب شوید."
-        },
-        409
-      );
-    }
-
-    const id=
-      randomHex(16);
-
-    const passwordHash=
-      await hashPassword(
-        password
-      );
-
-    const createdAt=
-      new Date().toISOString();
-
-    await env.DB
-      .prepare(`
-        INSERT INTO users
-        (
-          id,
-          name,
-          email,
-          password_hash,
-          balance,
-          created_at
-        )
-        VALUES(?,?,?,?,0,?)
-      `)
-      .bind(
-        id,
-        name,
-        email,
-        passwordHash,
-        createdAt
       )
-      .run();
-
-    const token=
-      await createToken(
-        {
-          userId:id,
-          exp:
-            Date.now()+
-            30*86400000
-        },
-        getAuthSecret(env)
-      );
-
-    return json({
-      ok:true,
-      token
-    });
-
-  }catch(error){
-
-    console.error(
-      "SIGNUP ERROR:",
-      error?.message||String(error)
-    );
-
-    return json(
-      {
-        error:"ثبت‌نام انجام نشد.",
-        details:
-          error?.message||
-          String(error)
-      },
-      500
-    );
-  }
-}
-
-async function loginApi(request,env){
-
-  try{
-
-    if(!env.DB){
-
-      return json(
-        {
-          error:
-            "اتصال پایگاه داده D1 تنظیم نشده است."
-        },
-        500
-      );
-    }
-
-    const b=
-      await bodyJson(request);
-
-    const email=
-      String(
-        b.email||""
-      ).trim()
+      .trim()
       .toLowerCase();
+
 
     const password=
       String(
         b.password||""
       );
+
 
     if(!email){
 
       return json(
         {
-          error:"ایمیل را وارد کنید."
+          error:
+            "ایمیل را وارد کنید."
         },
         400
       );
+
     }
+
 
     if(!password){
 
       return json(
         {
-          error:"رمز عبور را وارد کنید."
+          error:
+            "رمز عبور را وارد کنید."
         },
         400
       );
+
     }
+
 
     const user=
       await env.DB
@@ -4344,12 +5968,18 @@ async function loginApi(request,env){
             email,
             password_hash,
             balance
+
           FROM users
+
           WHERE email=?
+
           LIMIT 1
         `)
-        .bind(email)
+        .bind(
+          email
+        )
         .first();
+
 
     if(!user){
 
@@ -4360,12 +5990,15 @@ async function loginApi(request,env){
         },
         401
       );
+
     }
+
 
     const passwordHash=
       await hashPassword(
         password
       );
+
 
     if(
       passwordHash!==
@@ -4381,44 +6014,67 @@ async function loginApi(request,env){
         },
         401
       );
+
     }
+
 
     const token=
       await createToken(
         {
-          userId:user.id,
+          userId:
+            user.id,
+
           exp:
             Date.now()+
             30*86400000
+
         },
         getAuthSecret(env)
       );
 
+
     return json({
+
       ok:true,
+
       token
+
     });
+
 
   }catch(error){
 
     console.error(
       "LOGIN ERROR:",
-      error?.message||String(error)
+      error?.message||
+      String(error)
     );
+
 
     return json(
       {
-        error:"ورود انجام نشد.",
+        error:
+          "ورود انجام نشد.",
+
         details:
           error?.message||
           String(error)
       },
       500
     );
+
   }
+
 }
 
-async function meApi(request,env){
+
+// =============================================================
+// ME API
+// =============================================================
+async function meApi(
+  request,
+  env
+){
 
   try{
 
@@ -4431,13 +6087,16 @@ async function meApi(request,env){
         },
         500
       );
+
     }
+
 
     const user=
       await requireUser(
         request,
         env
       );
+
 
     if(!user){
 
@@ -4448,13 +6107,17 @@ async function meApi(request,env){
         },
         401
       );
+
     }
 
+
     let subscription=null;
+
 
     let usage={
       used:0
     };
+
 
     try{
 
@@ -4468,9 +6131,12 @@ async function meApi(request,env){
 
       console.error(
         "SUBSCRIPTION ERROR:",
-        e?.message||String(e)
+        e?.message||
+        String(e)
       );
+
     }
+
 
     try{
 
@@ -4484,26 +6150,34 @@ async function meApi(request,env){
 
       console.error(
         "USAGE ERROR:",
-        e?.message||String(e)
+        e?.message||
+        String(e)
       );
+
     }
 
+
     let sub=null;
+
 
     if(subscription){
 
       let features=[];
 
+
       try{
 
         features=
           JSON.parse(
-            subscription.features||"[]"
+            subscription.features||
+            "[]"
           );
 
       }catch{}
 
+
       sub={
+
         plan_id:
           subscription.plan_id,
 
@@ -4511,6 +6185,7 @@ async function meApi(request,env){
           subscription.expires_at,
 
         plan:{
+
           id:
             subscription.plan_id,
 
@@ -4518,26 +6193,43 @@ async function meApi(request,env){
             subscription.plan_name,
 
           features
+
         }
+
       };
+
     }
 
+
     return json({
+
       ok:true,
 
       user:{
-        id:user.id,
-        name:user.name,
-        email:user.email,
+
+        id:
+          user.id,
+
+        name:
+          user.name,
+
+        email:
+          user.email,
+
         balance:
           Number(
             user.balance||0
           )
+
       },
 
-      subscription:sub,
+
+      subscription:
+        sub,
+
 
       usage:{
+
         used:
           Number(
             usage?.used||0
@@ -4547,41 +6239,61 @@ async function meApi(request,env){
           subscription
             ?999999999
             :FREE_DAILY_LIMIT
+
       }
+
     });
+
 
   }catch(error){
 
     console.error(
       "ME ERROR:",
-      error?.message||String(error)
+      error?.message||
+      String(error)
     );
+
 
     return json(
       {
         error:
           "دریافت اطلاعات حساب انجام نشد.",
+
         details:
           error?.message||
           String(error)
       },
       500
     );
+
   }
+
 }
 
-async function forgotPasswordApi(request,env){
+
+// =============================================================
+// FORGOT PASSWORD API
+// =============================================================
+async function forgotPasswordApi(
+  request,
+  env
+){
 
   try{
 
     const b=
-      await bodyJson(request);
+      await bodyJson(
+        request
+      );
+
 
     const email=
       String(
         b.email||""
-      ).trim()
+      )
+      .trim()
       .toLowerCase();
+
 
     if(!email){
 
@@ -4592,50 +6304,76 @@ async function forgotPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     const user=
       await env.DB
         .prepare(`
-          SELECT id,email
+          SELECT
+            id,
+            email
+
           FROM users
+
           WHERE email=?
+
           LIMIT 1
         `)
-        .bind(email)
+        .bind(
+          email
+        )
         .first();
+
 
     if(!user){
 
       return json({
+
         message:
           "اگر این ایمیل در ابزارک ثبت شده باشد، کد بازیابی ارسال خواهد شد."
+
       });
+
     }
+
 
     const code=
       randomCode();
+
 
     const codeHash=
       await hashPassword(
         code
       );
 
+
     const id=
       randomHex(16);
 
-    await env.DB
-      .prepare(`
-        UPDATE password_resets
-        SET used=1
-        WHERE user_id=?
-        AND used=0
-      `)
-      .bind(user.id)
-      .run();
 
     await env.DB
       .prepare(`
+
+        UPDATE password_resets
+
+        SET used=1
+
+        WHERE user_id=?
+
+        AND used=0
+
+      `)
+      .bind(
+        user.id
+      )
+      .run();
+
+
+    await env.DB
+      .prepare(`
+
         INSERT INTO password_resets
         (
           id,
@@ -4645,7 +6383,9 @@ async function forgotPasswordApi(request,env){
           used,
           created_at
         )
+
         VALUES(?,?,?,?,0,?)
+
       `)
       .bind(
         id,
@@ -4655,9 +6395,11 @@ async function forgotPasswordApi(request,env){
           Date.now()+
           15*60*1000
         ).toISOString(),
+
         new Date().toISOString()
       )
       .run();
+
 
     const mail=
       await sendRecoveryEmail(
@@ -4666,65 +6408,95 @@ async function forgotPasswordApi(request,env){
         code
       );
 
+
     if(!mail.ok){
 
       return json(
         {
-          error:mail.error,
-          details:mail.details
+          error:
+            mail.error,
+
+          details:
+            mail.details
         },
         mail.status||500
       );
+
     }
 
+
     return json({
+
       ok:true,
+
       message:
         "کد بازیابی به ایمیل شما ارسال شد."
+
     });
+
 
   }catch(error){
 
     console.error(
       "FORGOT PASSWORD ERROR:",
-      error?.message||String(error)
+      error?.message||
+      String(error)
     );
+
 
     return json(
       {
         error:
           "خطا در درخواست بازیابی رمز عبور.",
+
         details:
           error?.message||
           String(error)
       },
       500
     );
+
   }
+
 }
 
-async function resetPasswordApi(request,env){
+
+// =============================================================
+// RESET PASSWORD API
+// =============================================================
+async function resetPasswordApi(
+  request,
+  env
+){
 
   try{
 
     const b=
-      await bodyJson(request);
+      await bodyJson(
+        request
+      );
+
 
     const email=
       String(
         b.email||""
-      ).trim()
+      )
+      .trim()
       .toLowerCase();
+
 
     const code=
       String(
         b.code||""
-      ).trim();
+      )
+      .trim();
+
 
     const newPassword=
       String(
         b.newPassword||""
       );
+
 
     if(!email||!code){
 
@@ -4735,9 +6507,13 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
 
-    if(newPassword.length<6){
+
+    if(
+      newPassword.length<6
+    ){
 
       return json(
         {
@@ -4746,18 +6522,26 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     const user=
       await env.DB
         .prepare(`
           SELECT id
+
           FROM users
+
           WHERE email=?
+
           LIMIT 1
         `)
-        .bind(email)
+        .bind(
+          email
+        )
         .first();
+
 
     if(!user){
 
@@ -4768,20 +6552,30 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     const reset=
       await env.DB
         .prepare(`
           SELECT *
+
           FROM password_resets
+
           WHERE user_id=?
+
           AND used=0
+
           ORDER BY created_at DESC
+
           LIMIT 1
         `)
-        .bind(user.id)
+        .bind(
+          user.id
+        )
         .first();
+
 
     if(!reset){
 
@@ -4792,7 +6586,9 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     if(
       Date.now()>
@@ -4804,11 +6600,16 @@ async function resetPasswordApi(request,env){
       await env.DB
         .prepare(`
           UPDATE password_resets
+
           SET used=1
+
           WHERE id=?
         `)
-        .bind(reset.id)
+        .bind(
+          reset.id
+        )
         .run();
+
 
       return json(
         {
@@ -4817,12 +6618,15 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     const codeHash=
       await hashPassword(
         code
       );
+
 
     if(
       codeHash!==
@@ -4838,17 +6642,22 @@ async function resetPasswordApi(request,env){
         },
         400
       );
+
     }
+
 
     const newHash=
       await hashPassword(
         newPassword
       );
 
+
     await env.DB
       .prepare(`
         UPDATE users
+
         SET password_hash=?
+
         WHERE id=?
       `)
       .bind(
@@ -4857,10 +6666,13 @@ async function resetPasswordApi(request,env){
       )
       .run();
 
+
     await env.DB
       .prepare(`
         UPDATE password_resets
+
         SET used=1
+
         WHERE id=?
       `)
       .bind(
@@ -4868,30 +6680,40 @@ async function resetPasswordApi(request,env){
       )
       .run();
 
+
     return json({
+
       ok:true,
+
       message:
         "رمز عبور با موفقیت تغییر کرد."
+
     });
+
 
   }catch(error){
 
     console.error(
       "RESET PASSWORD ERROR:",
-      error?.message||String(error)
+      error?.message||
+      String(error)
     );
+
 
     return json(
       {
         error:
           "تغییر رمز عبور انجام نشد.",
+
         details:
           error?.message||
           String(error)
       },
       500
     );
+
   }
+
 }
 
 
@@ -4899,37 +6721,55 @@ async function resetPasswordApi(request,env){
 // AI
 // =============================================================
 async function plansApi(){
+
   return json({
+
     ok:true,
 
     plans:
       Object.keys(
         PLAN_PRICES
-      ).map(id=>({
-        id,
-        name:
-          PLAN_NAMES[id],
-        price_toman:
-          Number(
-            PLAN_PRICES[id]
-          ),
-        price_usd:
-          Number(
-            PLAN_USD[id]
-          ),
-        features:
-          PLAN_FEATURES[id]
-      }))
+      )
+      .map(
+        id=>({
+
+          id,
+
+          name:
+            PLAN_NAMES[id],
+
+          price_toman:
+            Number(
+              PLAN_PRICES[id]
+            ),
+
+          price_usd:
+            Number(
+              PLAN_USD[id]
+            ),
+
+          features:
+            PLAN_FEATURES[id]
+
+        })
+      )
+
   });
+
 }
 
-async function aiChatApi(request,env){
+
+async function aiChatApi(
+  request,
+  env
+){
 
   const user=
     await requireUser(
       request,
       env
     );
+
 
   if(!user){
 
@@ -4940,25 +6780,35 @@ async function aiChatApi(request,env){
       },
       401
     );
+
   }
 
+
   const b=
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const message=
     String(
       b.message||""
-    ).trim();
+    )
+    .trim();
+
 
   if(!message){
 
     return json(
       {
-        error:"پیام خالی است."
+        error:
+          "پیام خالی است."
       },
       400
     );
+
   }
+
 
   if(message.length>12000){
 
@@ -4969,35 +6819,48 @@ async function aiChatApi(request,env){
       },
       400
     );
+
   }
 
+
   let history=
-    Array.isArray(b.history)
+    Array.isArray(
+      b.history
+    )
       ?b.history
       :[];
+
 
   history=
     history
       .filter(
         x=>
           x&&
-          ["user","assistant"].includes(x.role)&&
+          ["user","assistant"].includes(
+            x.role
+          )&&
           typeof x.content==="string"&&
           x.content.trim()
       )
       .slice(-20);
 
+
   const subscription=
     await getSubscription(
       env,
       user.id
-    ).catch(()=>null);
+    )
+    .catch(
+      ()=>null
+    );
+
 
   const usage=
     await getUsage(
       env,
       user.id
     );
+
 
   if(
     !subscription&&
@@ -5010,11 +6873,14 @@ async function aiChatApi(request,env){
       {
         error:
           "سهمیه رایگان روزانه شما تمام شده است. برای ادامه یکی از پلن‌های اشتراک را انتخاب کنید.",
+
         upgrade_required:true
       },
       429
     );
+
   }
+
 
   if(!env.AI){
 
@@ -5025,40 +6891,67 @@ async function aiChatApi(request,env){
       },
       500
     );
+
   }
 
+
   const systemPrompt=`
-تو «ابزارک AI» هستی؛ یک دستیار هوش مصنوعی حرفه‌ای، فارسی‌زبان و چندزبانه.
+
+تو «ابزارک AI» هستی؛
+یک دستیار هوش مصنوعی حرفه‌ای، فارسی‌زبان و چندزبانه.
+
 اگر کاربر فارسی صحبت می‌کند فارسی روان پاسخ بده و اگر زبان دیگری استفاده کرد تا حد امکان همان زبان را به کار ببر.
+
 پاسخ را متناسب با سؤال تولید کن، دقیق و کاربردی باش.
+
 برای آموزش مرحله‌به‌مرحله توضیح بده؛
+
 برای درخواست‌های نوشتاری متن آماده ارائه کن؛
+
 برای ترجمه طبیعی و وفادار ترجمه کن؛
+
 برای ایده‌پردازی چند پیشنهاد بده؛
+
 برای برنامه‌نویسی راه‌حل عملی ارائه کن.
+
 اطلاعات نامطمئن را قطعی بیان نکن و از تکرار بی‌دلیل خودداری کن.
+
 اگر کاربر سلام کرد دوستانه پاسخ بده.
+
 ارتباط پیام‌های قبلی را حفظ کن.
+
 `;
 
+
   const messages=[
+
     {
       role:"system",
-      content:systemPrompt
+      content:
+        systemPrompt
     },
 
-    ...history.map(x=>({
-      role:x.role,
-      content:x.content
-    })),
+    ...history.map(
+      x=>({
+        role:
+          x.role,
+
+        content:
+          x.content
+      })
+    ),
 
     {
       role:"user",
-      content:message
+      content:
+        message
     }
+
   ];
 
+
   let result;
+
 
   try{
 
@@ -5067,42 +6960,55 @@ async function aiChatApi(request,env){
         "@cf/meta/llama-3.1-8b-instruct-fast",
         {
           messages,
+
           max_tokens:1200,
+
           temperature:.7
         }
       );
+
 
   }catch(e){
 
     console.error(
       "ABZARAK AI PROVIDER ERROR:",
-      e?.message||String(e)
+      e?.message||
+      String(e)
     );
+
 
     return json(
       {
         error:
           "ارتباط با سرویس هوش مصنوعی برقرار نشد.",
+
         details:
           e?.message||
           String(e)
       },
       500
     );
+
   }
+
 
   let reply=
     typeof result==="string"
+
       ?result
+
       :result?.response||
        result?.result?.response||
        result?.result||
        "";
 
+
   reply=
     String(
       reply||""
-    ).trim();
+    )
+    .trim();
+
 
   if(!reply){
 
@@ -5113,15 +7019,20 @@ async function aiChatApi(request,env){
       },
       502
     );
+
   }
+
 
   if(!subscription){
 
     await env.DB
       .prepare(`
         UPDATE usage
+
         SET used=used+1
+
         WHERE user_id=?
+
         AND usage_date=?
       `)
       .bind(
@@ -5129,25 +7040,37 @@ async function aiChatApi(request,env){
         today()
       )
       .run();
+
   }
 
+
   return json({
+
     ok:true,
+
     reply,
 
     usage:{
+
       used:
         Number(
           usage?.used||0
         )+
-        (subscription?0:1),
+        (
+          subscription
+            ?0
+            :1
+        ),
 
       limit:
         subscription
           ?999999999
           :FREE_DAILY_LIMIT
+
     }
+
   });
+
 }
 
 
@@ -5157,6 +7080,7 @@ async function aiChatApi(request,env){
 function zarinPalConfig(){
 
   return{
+
     requestUrl:
       "https://api.zarinpal.com/pg/v4/payment/request.json",
 
@@ -5165,16 +7089,22 @@ function zarinPalConfig(){
 
     startPayUrl:
       "https://www.zarinpal.com/pg/StartPay/"
+
   };
+
 }
+
 
 function extractZarinPalError(data){
 
   let code=null;
+
   let message="";
+
 
   const e=
     data?.errors;
+
 
   if(
     Array.isArray(e)&&
@@ -5184,6 +7114,7 @@ function extractZarinPalError(data){
     code=
       e[0]?.code??
       null;
+
 
     message=
       String(
@@ -5197,13 +7128,16 @@ function extractZarinPalError(data){
     code=
       e.code??null;
 
+
     message=
       String(
         e.message||
         e.error||
         ""
       );
+
   }
+
 
   if(
     !message&&
@@ -5214,13 +7148,17 @@ function extractZarinPalError(data){
       String(
         data.message
       );
+
   }
+
 
   return{
     code,
     message
   };
+
 }
+
 
 async function markPaymentFailed(
   env,
@@ -5233,8 +7171,11 @@ async function markPaymentFailed(
     await env.DB
       .prepare(`
         UPDATE payments_v2
+
         SET status=?
+
         WHERE id=?
+
         AND status='pending'
       `)
       .bind(
@@ -5247,10 +7188,14 @@ async function markPaymentFailed(
 
     console.error(
       "PAYMENT STATUS UPDATE ERROR:",
-      e?.message||String(e)
+      e?.message||
+      String(e)
     );
+
   }
+
 }
+
 
 async function paymentRequestApi(
   request,
@@ -5265,6 +7210,7 @@ async function paymentRequestApi(
         env
       );
 
+
     if(!user){
 
       return json(
@@ -5274,15 +7220,22 @@ async function paymentRequestApi(
         },
         401
       );
+
     }
 
+
     const b=
-      await bodyJson(request);
+      await bodyJson(
+        request
+      );
+
 
     const planId=
       String(
         b.planId||""
-      ).trim();
+      )
+      .trim();
+
 
     if(
       !Object.prototype.hasOwnProperty.call(
@@ -5298,17 +7251,23 @@ async function paymentRequestApi(
         },
         400
       );
+
     }
+
 
     const amountToman=
       Number(
         PLAN_PRICES[planId]
       );
 
+
     const merchantId=
       String(
-        env.ZARINPAL_MERCHANT_ID||""
-      ).trim();
+        env.ZARINPAL_MERCHANT_ID||
+        ""
+      )
+      .trim();
+
 
     if(!merchantId){
 
@@ -5319,16 +7278,21 @@ async function paymentRequestApi(
         },
         503
       );
+
     }
+
 
     const paymentId=
       randomHex(16);
 
+
     const createdAt=
       new Date().toISOString();
 
+
     await env.DB
       .prepare(`
+
         INSERT INTO payments_v2
         (
           id,
@@ -5340,6 +7304,7 @@ async function paymentRequestApi(
           created_at,
           paid_at
         )
+
         VALUES(
           ?,
           ?,
@@ -5350,6 +7315,7 @@ async function paymentRequestApi(
           ?,
           NULL
         )
+
       `)
       .bind(
         paymentId,
@@ -5360,6 +7326,7 @@ async function paymentRequestApi(
       )
       .run();
 
+
     const callback=
       BASE_URL+
       "/api/payment/verify?payment_id="+
@@ -5367,10 +7334,13 @@ async function paymentRequestApi(
         paymentId
       );
 
+
     const amountRial=
       amountToman*10;
 
+
     const payload={
+
       merchant_id:
         merchantId,
 
@@ -5385,20 +7355,26 @@ async function paymentRequestApi(
         callback,
 
       metadata:{
+
         email:
           String(
             user.email||""
           )
+
       }
+
     };
+
 
     const response=
       await fetch(
         zarinPalConfig().requestUrl,
         {
+
           method:"POST",
 
           headers:{
+
             "Content-Type":
               "application/json",
 
@@ -5407,19 +7383,24 @@ async function paymentRequestApi(
 
             "User-Agent":
               "AbzarakAI-ZarinPal-v4"
+
           },
 
           body:
             JSON.stringify(
               payload
             )
+
         }
       );
+
 
     const raw=
       await response.text();
 
+
     let data={};
+
 
     try{
 
@@ -5435,29 +7416,36 @@ async function paymentRequestApi(
         paymentId
       );
 
+
       return json(
         {
           error:
             "پاسخ زرین‌پال JSON معتبر نبود.",
+
           http_status:
             response.status
         },
         502
       );
+
     }
+
 
     const info=
       extractZarinPalError(
         data
       );
 
+
     const authority=
       data?.data?.authority;
+
 
     const code=
       Number(
         data?.data?.code
       );
+
 
     if(
       !response.ok||
@@ -5469,6 +7457,7 @@ async function paymentRequestApi(
         env,
         paymentId
       );
+
 
       return json(
         {
@@ -5483,16 +7472,24 @@ async function paymentRequestApi(
             response.status,
 
           details:
-            raw.slice(0,1000)
+            raw.slice(
+              0,
+              1000
+            )
+
         },
         502
       );
+
     }
+
 
     await env.DB
       .prepare(`
         UPDATE payments_v2
+
         SET authority=?
+
         WHERE id=?
       `)
       .bind(
@@ -5501,11 +7498,14 @@ async function paymentRequestApi(
       )
       .run();
 
+
     return json({
+
       ok:true,
 
       payment_url:
-        zarinPalConfig().startPayUrl+
+        zarinPalConfig()
+          .startPayUrl+
         encodeURIComponent(
           String(authority)
         ),
@@ -5515,27 +7515,35 @@ async function paymentRequestApi(
 
       authority:
         String(authority)
+
     });
+
 
   }catch(e){
 
     console.error(
       "PAYMENT REQUEST ERROR:",
-      e?.message||String(e)
+      e?.message||
+      String(e)
     );
+
 
     return json(
       {
         error:
           "خطای داخلی در ایجاد درخواست پرداخت.",
+
         details:
           e?.message||
           String(e)
       },
       500
     );
+
   }
+
 }
+
 
 async function paymentVerifyApi(
   request,
@@ -5547,22 +7555,27 @@ async function paymentVerifyApi(
       request.url
     );
 
+
   const paymentId=
     url.searchParams.get(
       "payment_id"
     );
+
 
   const authority=
     url.searchParams.get(
       "Authority"
     );
 
+
   const status=
     String(
       url.searchParams.get(
         "Status"
       )||""
-    ).toUpperCase();
+    )
+    .toUpperCase();
+
 
   const redirect=
     p=>
@@ -5574,19 +7587,25 @@ async function paymentVerifyApi(
         302
       );
 
+
   if(!paymentId){
 
     return redirect(
       "/?payment=error"
     );
+
   }
+
 
   const payment=
     await env.DB
       .prepare(`
         SELECT *
+
         FROM payments_v2
+
         WHERE id=?
+
         LIMIT 1
       `)
       .bind(
@@ -5594,12 +7613,15 @@ async function paymentVerifyApi(
       )
       .first();
 
+
   if(!payment){
 
     return redirect(
       "/?payment=error&reason=payment-not-found"
     );
+
   }
+
 
   if(
     payment.status==="paid"
@@ -5608,7 +7630,9 @@ async function paymentVerifyApi(
     return redirect(
       "/?payment=success"
     );
+
   }
+
 
   if(
     status!=="OK"||
@@ -5621,10 +7645,13 @@ async function paymentVerifyApi(
       "cancelled"
     );
 
+
     return redirect(
       "/?payment=cancel"
     );
+
   }
+
 
   if(
     payment.authority&&
@@ -5638,24 +7665,32 @@ async function paymentVerifyApi(
     return redirect(
       "/?payment=error&reason=authority-mismatch"
     );
+
   }
+
 
   const merchantId=
     String(
-      env.ZARINPAL_MERCHANT_ID||""
-    ).trim();
+      env.ZARINPAL_MERCHANT_ID||
+      ""
+    )
+    .trim();
+
 
   if(!merchantId){
 
     return redirect(
       "/?payment=error&reason=merchant-not-configured"
     );
+
   }
+
 
   const amountRial=
     Number(
       payment.amount_toman
     )*10;
+
 
   try{
 
@@ -5663,9 +7698,11 @@ async function paymentVerifyApi(
       await fetch(
         zarinPalConfig().verifyUrl,
         {
+
           method:"POST",
 
           headers:{
+
             "Content-Type":
               "application/json",
 
@@ -5674,10 +7711,12 @@ async function paymentVerifyApi(
 
             "User-Agent":
               "AbzarakAI-ZarinPal-v4"
+
           },
 
           body:
             JSON.stringify({
+
               merchant_id:
                 merchantId,
 
@@ -5685,15 +7724,22 @@ async function paymentVerifyApi(
                 amountRial,
 
               authority:
-                String(authority)
+                String(
+                  authority
+                )
+
             })
+
         }
       );
+
 
     const raw=
       await response.text();
 
+
     let data={};
+
 
     try{
 
@@ -5707,15 +7753,19 @@ async function paymentVerifyApi(
       return redirect(
         "/?payment=error&reason=invalid-gateway-response"
       );
+
     }
+
 
     const code=
       Number(
         data?.data?.code
       );
 
+
     const refId=
       data?.data?.ref_id;
+
 
     if(
       !response.ok||
@@ -5727,10 +7777,13 @@ async function paymentVerifyApi(
         paymentId
       );
 
+
       return redirect(
         "/?payment=failed"
       );
+
     }
+
 
     const existing=
       await env.DB
@@ -5738,13 +7791,20 @@ async function paymentVerifyApi(
           SELECT
             id,
             expires_at
+
           FROM subscriptions
+
           WHERE
             user_id=?
+
             AND plan_id=?
+
             AND status='active'
+
             AND expires_at>?
+
           ORDER BY expires_at DESC
+
           LIMIT 1
         `)
         .bind(
@@ -5754,19 +7814,24 @@ async function paymentVerifyApi(
         )
         .first();
 
+
     if(existing){
 
-      const base=Math.max(
-        new Date(
-          existing.expires_at
-        ).getTime(),
-        Date.now()
-      );
+      const base=
+        Math.max(
+          new Date(
+            existing.expires_at
+          ).getTime(),
+          Date.now()
+        );
+
 
       await env.DB
         .prepare(`
           UPDATE subscriptions
+
           SET expires_at=?
+
           WHERE id=?
         `)
         .bind(
@@ -5774,6 +7839,7 @@ async function paymentVerifyApi(
             base+
             30*86400000
           ).toISOString(),
+
           existing.id
         )
         .run();
@@ -5791,6 +7857,7 @@ async function paymentVerifyApi(
             expires_at,
             status
           )
+
           VALUES(
             ?,
             ?,
@@ -5808,16 +7875,21 @@ async function paymentVerifyApi(
           addDays(30)
         )
         .run();
+
     }
+
 
     await env.DB
       .prepare(`
         UPDATE payments_v2
+
         SET
           status='paid',
           authority=?,
           paid_at=?
+
         WHERE id=?
+
         AND status!='paid'
       `)
       .bind(
@@ -5827,30 +7899,38 @@ async function paymentVerifyApi(
       )
       .run();
 
+
     console.log(
       "ZARINPAL VERIFY SUCCESS",
       JSON.stringify({
         paymentId,
         refId,
-        planId:payment.plan_id
+        planId:
+          payment.plan_id
       })
     );
+
 
     return redirect(
       "/?payment=success"
     );
 
+
   }catch(e){
 
     console.error(
       "PAYMENT VERIFY ERROR:",
-      e?.message||String(e)
+      e?.message||
+      String(e)
     );
+
 
     return redirect(
       "/?payment=error&reason=verify-error"
     );
+
   }
+
 }
 
 
@@ -5868,6 +7948,7 @@ async function withdrawalApi(
       env
     );
 
+
   if(!user){
 
     return json(
@@ -5877,25 +7958,34 @@ async function withdrawalApi(
       },
       401
     );
+
   }
 
+
   const b=
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const amount=
     Number(
       b.amount||0
     );
 
+
   const method=
     String(
       b.method||"bank"
     );
 
+
   const destination=
     String(
       b.destination||""
-    ).trim();
+    )
+    .trim();
+
 
   if(
     !Number.isFinite(amount)||
@@ -5909,7 +7999,9 @@ async function withdrawalApi(
       },
       400
     );
+
   }
+
 
   if(!destination){
 
@@ -5920,7 +8012,9 @@ async function withdrawalApi(
       },
       400
     );
+
   }
+
 
   if(
     amount>
@@ -5936,14 +8030,19 @@ async function withdrawalApi(
       },
       400
     );
+
   }
+
 
   const result=
     await env.DB
       .prepare(`
         UPDATE users
+
         SET balance=balance-?
+
         WHERE id=?
+
         AND balance>=?
       `)
       .bind(
@@ -5952,6 +8051,7 @@ async function withdrawalApi(
         amount
       )
       .run();
+
 
   if(
     result.meta?.changes!==1
@@ -5964,7 +8064,9 @@ async function withdrawalApi(
       },
       400
     );
+
   }
+
 
   await env.DB
     .prepare(`
@@ -5978,6 +8080,7 @@ async function withdrawalApi(
         status,
         created_at
       )
+
       VALUES(
         ?,
         ?,
@@ -5998,11 +8101,16 @@ async function withdrawalApi(
     )
     .run();
 
+
   return json({
+
     message:
       "درخواست برداشت ثبت شد."
+
   });
+
 }
+
 
 async function myWithdrawalsApi(
   request,
@@ -6015,6 +8123,7 @@ async function myWithdrawalsApi(
       env
     );
 
+
   if(!user){
 
     return json(
@@ -6024,7 +8133,9 @@ async function myWithdrawalsApi(
       },
       401
     );
+
   }
+
 
   const rows=
     await env.DB
@@ -6036,8 +8147,11 @@ async function myWithdrawalsApi(
           destination,
           status,
           created_at
+
         FROM withdrawals
+
         WHERE user_id=?
+
         ORDER BY created_at DESC
       `)
       .bind(
@@ -6045,11 +8159,16 @@ async function myWithdrawalsApi(
       )
       .all();
 
+
   return json({
+
     withdrawals:
       rows.results||[]
+
   });
+
 }
+
 
 async function adminLoginApi(
   request,
@@ -6057,7 +8176,10 @@ async function adminLoginApi(
 ){
 
   const b=
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   if(!env.ADMIN_PASSWORD){
 
@@ -6068,7 +8190,9 @@ async function adminLoginApi(
       },
       500
     );
+
   }
+
 
   if(
     String(
@@ -6086,21 +8210,29 @@ async function adminLoginApi(
       },
       401
     );
+
   }
 
+
   return json({
+
     token:
       await createToken(
         {
           admin:true,
+
           exp:
             Date.now()+
             12*60*60*1000
         },
+
         getAuthSecret(env)
       )
+
   });
+
 }
+
 
 async function adminUsersApi(
   request,
@@ -6121,7 +8253,9 @@ async function adminUsersApi(
       },
       403
     );
+
   }
+
 
   const rows=
     await env.DB
@@ -6132,16 +8266,23 @@ async function adminUsersApi(
           email,
           balance,
           created_at
+
         FROM users
+
         ORDER BY created_at DESC
       `)
       .all();
 
+
   return json({
+
     users:
       rows.results||[]
+
   });
+
 }
+
 
 async function adminPaymentsApi(
   request,
@@ -6162,7 +8303,9 @@ async function adminPaymentsApi(
       },
       403
     );
+
   }
+
 
   const rows=
     await env.DB
@@ -6170,45 +8313,55 @@ async function adminPaymentsApi(
         SELECT
           p.*,
           u.email
+
         FROM payments_v2 p
+
         LEFT JOIN users u
           ON u.id=p.user_id
+
         ORDER BY p.created_at DESC
       `)
       .all();
 
+
   return json({
+
     payments:
       (rows.results||[])
-      .map(x=>({
+      .map(
+        x=>({
 
-        id:
-          x.id,
+          id:
+            x.id,
 
-        email:
-          x.email,
+          email:
+            x.email,
 
-        plan_id:
-          x.plan_id,
+          plan_id:
+            x.plan_id,
 
-        amount_toman:
-          x.amount_toman,
+          amount_toman:
+            x.amount_toman,
 
-        status:
-          x.status,
+          status:
+            x.status,
 
-        authority:
-          x.authority,
+          authority:
+            x.authority,
 
-        created_at:
-          x.created_at,
+          created_at:
+            x.created_at,
 
-        paid_at:
-          x.paid_at
+          paid_at:
+            x.paid_at
 
-      }))
+        })
+      )
+
   });
+
 }
+
 
 async function adminWithdrawalsApi(
   request,
@@ -6229,7 +8382,9 @@ async function adminWithdrawalsApi(
       },
       403
     );
+
   }
+
 
   const rows=
     await env.DB
@@ -6237,18 +8392,26 @@ async function adminWithdrawalsApi(
         SELECT
           w.*,
           u.email
+
         FROM withdrawals w
+
         LEFT JOIN users u
           ON u.id=w.user_id
+
         ORDER BY w.created_at DESC
       `)
       .all();
 
+
   return json({
+
     withdrawals:
       rows.results||[]
+
   });
+
 }
+
 
 async function adminProcessWithdrawalApi(
   request,
@@ -6269,20 +8432,27 @@ async function adminProcessWithdrawalApi(
       },
       403
     );
+
   }
 
+
   const b=
-    await bodyJson(request);
+    await bodyJson(
+      request
+    );
+
 
   const id=
     String(
       b.id||""
     );
 
+
   const action=
     String(
       b.action||""
     );
+
 
   if(
     !id||
@@ -6298,18 +8468,26 @@ async function adminProcessWithdrawalApi(
       },
       400
     );
+
   }
+
 
   const w=
     await env.DB
       .prepare(`
         SELECT *
+
         FROM withdrawals
+
         WHERE id=?
+
         LIMIT 1
       `)
-      .bind(id)
+      .bind(
+        id
+      )
       .first();
+
 
   if(!w){
 
@@ -6320,9 +8498,13 @@ async function adminProcessWithdrawalApi(
       },
       404
     );
+
   }
 
-  if(w.status!=="pending"){
+
+  if(
+    w.status!=="pending"
+  ){
 
     return json(
       {
@@ -6331,14 +8513,20 @@ async function adminProcessWithdrawalApi(
       },
       400
     );
+
   }
 
-  if(action==="rejected"){
+
+  if(
+    action==="rejected"
+  ){
 
     await env.DB
       .prepare(`
         UPDATE users
+
         SET balance=balance+?
+
         WHERE id=?
       `)
       .bind(
@@ -6346,54 +8534,81 @@ async function adminProcessWithdrawalApi(
         w.user_id
       )
       .run();
+
   }
+
 
   await env.DB
     .prepare(`
       UPDATE withdrawals
+
       SET
         status=?,
         processed_at=?
+
       WHERE id=?
     `)
     .bind(
       action,
+
       new Date().toISOString(),
+
       id
     )
     .run();
 
+
   return json({
+
     message:
       action==="paid"
+
         ?"برداشت پرداخت شد."
+
         :"درخواست برداشت رد شد و مبلغ به موجودی برگشت."
-  });
-}
 
-async function healthApi(env){
-
-  return json({
-    ok:true,
-    service:"Abzarak AI",
-    time:
-      new Date().toISOString(),
-    database:
-      !!env.DB,
-    ai:
-      !!env.AI,
-    resend:
-      !!env.RESEND_API_KEY,
-    zarinpal:
-      !!env.ZARINPAL_MERCHANT_ID,
-    zarinpal_mode:
-      "production"
   });
+
 }
 
 
 // =============================================================
-// FETCH — FIXED DB INITIALIZATION FLOW
+// HEALTH
+// =============================================================
+async function healthApi(env){
+
+  return json({
+
+    ok:true,
+
+    service:
+      "Abzarak AI",
+
+    time:
+      new Date().toISOString(),
+
+    database:
+      !!env.DB,
+
+    ai:
+      !!env.AI,
+
+    resend:
+      !!env.RESEND_API_KEY,
+
+    zarinpal:
+      !!env.ZARINPAL_MERCHANT_ID,
+
+    zarinpal_mode:
+      "production"
+
+  });
+
+}
+
+
+// =============================================================
+// FETCH
 // =============================================================
 export default {
 
@@ -6408,6 +8623,7 @@ export default {
       // -------------------------------------------------------
       // CORS PREFLIGHT
       // -------------------------------------------------------
+
       if(
         request.method==="OPTIONS"
       ){
@@ -6420,22 +8636,28 @@ export default {
             }
           )
         );
+
       }
+
 
       const url=
         new URL(
           request.url
         );
 
+
       const path=
         url.pathname;
+
 
       const m=
         request.method;
 
+
       // -------------------------------------------------------
       // ENAMAD VERIFICATION
       // -------------------------------------------------------
+
       if(
         path==="/17726638.txt"
       ){
@@ -6445,11 +8667,14 @@ export default {
             "17726638"
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // ROBOTS
       // -------------------------------------------------------
+
       if(
         path==="/robots.txt"
       ){
@@ -6459,11 +8684,14 @@ export default {
             robotsTxt()
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // SITEMAP
       // -------------------------------------------------------
+
       if(
         path==="/sitemap.xml"
       ){
@@ -6473,11 +8701,14 @@ export default {
             sitemapXml()
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // SVG IMAGES
       // -------------------------------------------------------
+
       if(
         path.startsWith(
           "/images/abzarak-"
@@ -6494,6 +8725,7 @@ export default {
             )
           );
 
+
         const known=
           Object.prototype.hasOwnProperty.call(
             IMAGE_THEMES,
@@ -6501,6 +8733,7 @@ export default {
           )
             ?kind
             :"assistant";
+
 
         const title=
           SEO_PAGES[
@@ -6514,17 +8747,21 @@ export default {
           ]?.imageTitle||
           "دستیار هوش مصنوعی فارسی";
 
+
         return imageResponse(
           seoImageSvg(
             known,
             title
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // OLD CONTENT URL REDIRECT
       // -------------------------------------------------------
+
       if(
         path==="/content-ai"&&
         m==="GET"
@@ -6537,11 +8774,14 @@ export default {
           ).toString(),
           301
         );
+
       }
+
 
       // -------------------------------------------------------
       // FAQ
       // -------------------------------------------------------
+
       if(
         path==="/faq"&&
         m==="GET"
@@ -6552,11 +8792,14 @@ export default {
             renderFaqPage()
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // SEO PAGES
       // -------------------------------------------------------
+
       if(
         SEO_PAGES[path]&&
         m==="GET"
@@ -6570,17 +8813,18 @@ export default {
             )
           )
         );
+
       }
+
 
       // -------------------------------------------------------
       // DATABASE
-      //
-      // Only API/health routes need D1.
-      // This keeps the homepage available even if D1 has an issue.
       // -------------------------------------------------------
+
       const needsDatabase=
         path.startsWith("/api/")||
         path==="/health";
+
 
       if(needsDatabase){
 
@@ -6594,14 +8838,17 @@ export default {
 
           console.error(
             "DB INIT ERROR:",
-            e?.message||String(e)
+            e?.message||
+            String(e)
           );
+
 
           return cors(
             json(
               {
                 error:
                   "پایگاه داده ابزارک آماده نیست.",
+
                 details:
                   e?.message||
                   String(e)
@@ -6609,31 +8856,27 @@ export default {
               503
             )
           );
+
         }
+
       }
+
 
       // -------------------------------------------------------
       // API ROUTES
       // -------------------------------------------------------
       let response;
 
+
       if(
         path==="/health"
       ){
 
         response=
-          await healthApi(env);
-
-      }else if(
-        path==="/api/signup"&&
-        m==="POST"
-      ){
-
-        response=
-          await signupApi(
-            request,
+          await healthApi(
             env
           );
+
 
       }else if(
         path==="/api/login"&&
@@ -6646,6 +8889,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/me"&&
         m==="GET"
@@ -6656,6 +8900,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/forgot-password"&&
@@ -6668,6 +8913,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/reset-password"&&
         m==="POST"
@@ -6678,6 +8924,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/ai/chat"&&
@@ -6690,6 +8937,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/plans"&&
         m==="GET"
@@ -6697,6 +8945,7 @@ export default {
 
         response=
           await plansApi();
+
 
       }else if(
         path==="/api/payment/request"&&
@@ -6709,6 +8958,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/payment/verify"&&
         m==="GET"
@@ -6719,6 +8969,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/withdrawal"&&
@@ -6731,6 +8982,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/my-withdrawals"&&
         m==="GET"
@@ -6741,6 +8993,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/admin/login"&&
@@ -6753,6 +9006,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/admin/users"&&
         m==="GET"
@@ -6763,6 +9017,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/admin/payments"&&
@@ -6775,6 +9030,7 @@ export default {
             env
           );
 
+
       }else if(
         path==="/api/admin/withdrawals"&&
         m==="GET"
@@ -6785,6 +9041,7 @@ export default {
             request,
             env
           );
+
 
       }else if(
         path==="/api/admin/withdrawals/process"&&
@@ -6797,9 +9054,11 @@ export default {
             env
           );
 
+
       // -------------------------------------------------------
       // HOMEPAGE
       // -------------------------------------------------------
+
       }else if(
         (
           path==="/"||
@@ -6813,9 +9072,11 @@ export default {
             renderHomepage()
           );
 
+
       // -------------------------------------------------------
       // NOT FOUND
       // -------------------------------------------------------
+
       }else{
 
         response=
@@ -6826,11 +9087,14 @@ export default {
             },
             404
           );
+
       }
+
 
       return cors(
         response
       );
+
 
     }catch(error){
 
@@ -6839,11 +9103,13 @@ export default {
         error
       );
 
+
       return cors(
         json(
           {
             error:
               "خطای داخلی سرور.",
+
             details:
               error?.message||
               String(error)
@@ -6851,6 +9117,9 @@ export default {
           500
         )
       );
+
     }
+
   }
+
 };
