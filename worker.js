@@ -10,6 +10,16 @@
 // - Password recovery preserved
 // - Subscription / payment logic preserved
 // - Admin login preserved
+//
+// FIXES:
+// - Fixed SEO image path return bug
+// - Removed hardcoded JWT fallback secret
+// - Added password-reset attempt protection
+// - Added password-recovery cooldown
+// - Added atomic free-usage reservation
+// - Added subscription payment_id idempotency
+// - Duplicate ZarinPal callback no longer extends subscription twice
+// - Reduced internal error leakage to clients
 // =============================================================
 
 const BASE_URL = "https://abzarakai.ir";
@@ -3116,10 +3126,12 @@ ${safe}
 }
 
 
+// =============================================================
+// FIXED SEO IMAGE PATH
+// =============================================================
 function seoImagePath(kind){
 
-  return
-    `/images/abzarak-${encodeURIComponent(kind)}.svg`;
+  return `/images/abzarak-${encodeURIComponent(kind)}.svg`;
 
 }
 
@@ -4797,7 +4809,7 @@ async function verifyToken(
   secret
 ){
 
-  if(!token)return null;
+  if(!token||!secret)return null;
 
 
   const parts=
@@ -4885,13 +4897,41 @@ function bearerToken(request){
 }
 
 
+// =============================================================
+// AUTH SECRET
+// - Prefer JWT_SECRET
+// - Legacy fallback to ADMIN_PASSWORD preserved
+// - No hardcoded public default secret
+// =============================================================
 function getAuthSecret(env){
 
+  const jwtSecret=
+    String(
+      env.JWT_SECRET||
+      ""
+    )
+    .trim();
+
+
+  if(jwtSecret){
+
+    return jwtSecret;
+
+  }
+
+
   return String(
-    env.JWT_SECRET||
     env.ADMIN_PASSWORD||
-    "abzarak-default-secret"
-  ).trim();
+    ""
+  )
+  .trim();
+
+}
+
+
+function authSecretConfigured(env){
+
+  return !!getAuthSecret(env);
 
 }
 
@@ -5207,6 +5247,98 @@ async function migratePaymentsTable(env){
 }
 
 
+// =============================================================
+// PASSWORD RESET MIGRATION
+// =============================================================
+async function migratePasswordResetsTable(env){
+
+  await env.DB.prepare(`
+
+    CREATE TABLE IF NOT EXISTS password_resets(
+
+      id TEXT PRIMARY KEY,
+
+      user_id TEXT NOT NULL,
+
+      code_hash TEXT NOT NULL,
+
+      expires_at TEXT NOT NULL,
+
+      used INTEGER NOT NULL DEFAULT 0,
+
+      created_at TEXT NOT NULL,
+
+      attempts INTEGER NOT NULL DEFAULT 0
+
+    )
+
+  `).run();
+
+
+  const columns=
+    await tableColumns(
+      env,
+      "password_resets"
+    );
+
+
+  await addColumnIfMissing(
+    env,
+    "password_resets",
+    columns,
+    "attempts",
+    `INTEGER NOT NULL DEFAULT 0`
+  );
+
+}
+
+
+// =============================================================
+// SUBSCRIPTIONS MIGRATION
+// =============================================================
+async function migrateSubscriptionsTable(env){
+
+  const columns=
+    await tableColumns(
+      env,
+      "subscriptions"
+    );
+
+
+  await addColumnIfMissing(
+    env,
+    "subscriptions",
+    columns,
+    "payment_id",
+    `TEXT`
+  );
+
+
+  try{
+
+    await env.DB.prepare(`
+
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      idx_subscriptions_payment_id
+
+      ON subscriptions(payment_id)
+
+      WHERE payment_id IS NOT NULL
+
+    `).run();
+
+  }catch(e){
+
+    console.error(
+      "SUBSCRIPTIONS INDEX MIGRATION ERROR:",
+      e?.message||String(e)
+    );
+
+  }
+
+}
+
+
 async function initDatabase(env){
 
   if(!env.DB){
@@ -5271,11 +5403,18 @@ async function initDatabase(env){
 
           expires_at TEXT NOT NULL,
 
-          status TEXT NOT NULL DEFAULT 'active'
+          status TEXT NOT NULL DEFAULT 'active',
+
+          payment_id TEXT
 
         )
 
       `).run();
+
+
+      await migrateSubscriptionsTable(
+        env
+      );
 
 
       await env.DB.prepare(`
@@ -5297,25 +5436,9 @@ async function initDatabase(env){
       `).run();
 
 
-      await env.DB.prepare(`
-
-        CREATE TABLE IF NOT EXISTS password_resets(
-
-          id TEXT PRIMARY KEY,
-
-          user_id TEXT NOT NULL,
-
-          code_hash TEXT NOT NULL,
-
-          expires_at TEXT NOT NULL,
-
-          used INTEGER NOT NULL DEFAULT 0,
-
-          created_at TEXT NOT NULL
-
-        )
-
-      `).run();
+      await migratePasswordResetsTable(
+        env
+      );
 
 
       await env.DB.prepare(`
@@ -5343,7 +5466,9 @@ async function initDatabase(env){
       `).run();
 
 
-      await migratePaymentsTable(env);
+      await migratePaymentsTable(
+        env
+      );
 
 
       await env.DB.prepare(`
@@ -5369,6 +5494,29 @@ async function initDatabase(env){
         )
 
       `).run();
+
+
+      try{
+
+        await env.DB.prepare(`
+
+          CREATE UNIQUE INDEX IF NOT EXISTS
+          idx_payments_v2_authority
+
+          ON payments_v2(authority)
+
+          WHERE authority IS NOT NULL
+
+        `).run();
+
+      }catch(e){
+
+        console.error(
+          "PAYMENTS V2 INDEX MIGRATION ERROR:",
+          e?.message||String(e)
+        );
+
+      }
 
 
       await env.DB.prepare(`
@@ -5490,7 +5638,10 @@ async function requireUser(
     bearerToken(request);
 
 
-  if(!token){
+  if(
+    !token||
+    !authSecretConfigured(env)
+  ){
 
     return null;
 
@@ -5539,7 +5690,10 @@ async function requireAdmin(
     bearerToken(request);
 
 
-  if(!token){
+  if(
+    !token||
+    !authSecretConfigured(env)
+  ){
 
     return false;
 
@@ -5643,6 +5797,124 @@ async function getUsage(
 }
 
 
+// =============================================================
+// ATOMIC FREE USAGE RESERVATION
+// =============================================================
+async function reserveFreeUsage(
+  env,
+  userId
+){
+
+  const date=
+    today();
+
+
+  await getUsage(
+    env,
+    userId
+  );
+
+
+  const result=
+    await env.DB
+      .prepare(`
+        UPDATE usage
+
+        SET used=used+1
+
+        WHERE
+          user_id=?
+
+          AND usage_date=?
+
+          AND used < ?
+
+      `)
+      .bind(
+        userId,
+        date,
+        FREE_DAILY_LIMIT
+      )
+      .run();
+
+
+  if(
+    result.meta?.changes!==1
+  ){
+
+    return{
+      ok:false,
+      used:
+        Number(
+          (
+            await getUsage(
+              env,
+              userId
+            )
+          )?.used||FREE_DAILY_LIMIT
+        )
+    };
+
+  }
+
+
+  const usage=
+    await getUsage(
+      env,
+      userId
+    );
+
+
+  return{
+    ok:true,
+    used:
+      Number(
+        usage?.used||0
+      )
+  };
+
+}
+
+
+async function releaseFreeUsage(
+  env,
+  userId
+){
+
+  try{
+
+    await env.DB
+      .prepare(`
+        UPDATE usage
+
+        SET used=
+          CASE
+            WHEN used>0 THEN used-1
+            ELSE 0
+          END
+
+        WHERE
+          user_id=?
+          AND usage_date=?
+      `)
+      .bind(
+        userId,
+        today()
+      )
+      .run();
+
+  }catch(e){
+
+    console.error(
+      "USAGE RELEASE ERROR:",
+      e?.message||String(e)
+    );
+
+  }
+
+}
+
+
 async function getSubscription(
   env,
   userId
@@ -5695,7 +5967,7 @@ async function sendRecoveryEmail(
       ok:false,
       status:500,
       error:
-        "سرویس ایمیل تنظیم نشده است (RESEND_API_KEY وجود ندارد)"
+        "سرویس ایمیل تنظیم نشده است."
     };
 
   }
@@ -5707,7 +5979,7 @@ async function sendRecoveryEmail(
       ok:false,
       status:500,
       error:
-        "آدرس ارسال ایمیل تنظیم نشده است (RESEND_FROM_EMAIL وجود ندارد)"
+        "آدرس ارسال ایمیل تنظیم نشده است."
     };
 
   }
@@ -5853,16 +6125,23 @@ ${code}
 
     if(!response.ok){
 
+      const responseText=
+        await response.text();
+
+      console.error(
+        "RESEND ERROR:",
+        response.status,
+        responseText
+      );
+
+
       return{
         ok:false,
         status:
           response.status,
 
         error:
-          "ارسال ایمیل ناموفق بود",
-
-        details:
-          await response.text()
+          "ارسال ایمیل ناموفق بود."
       };
 
     }
@@ -5875,14 +6154,18 @@ ${code}
 
   }catch(e){
 
+    console.error(
+      "RESEND REQUEST ERROR:",
+      e?.message||
+      String(e)
+    );
+
+
     return{
       ok:false,
       status:502,
       error:
-        "ارتباط با سرویس Resend ناموفق بود.",
-      details:
-        e?.message||
-        String(e)
+        "ارتباط با سرویس ایمیل ناموفق بود."
     };
 
   }
@@ -5908,6 +6191,19 @@ async function loginApi(
             "اتصال پایگاه داده D1 تنظیم نشده است."
         },
         500
+      );
+
+    }
+
+
+    if(!authSecretConfigured(env)){
+
+      return json(
+        {
+          error:
+            "امنیت ورود در Worker تنظیم نشده است."
+        },
+        503
       );
 
     }
@@ -6054,11 +6350,7 @@ async function loginApi(
     return json(
       {
         error:
-          "ورود انجام نشد.",
-
-        details:
-          error?.message||
-          String(error)
+          "ورود انجام نشد."
       },
       500
     );
@@ -6257,11 +6549,7 @@ async function meApi(
     return json(
       {
         error:
-          "دریافت اطلاعات حساب انجام نشد.",
-
-        details:
-          error?.message||
-          String(error)
+          "دریافت اطلاعات حساب انجام نشد."
       },
       500
     );
@@ -6339,6 +6627,56 @@ async function forgotPasswordApi(
     }
 
 
+    // ---------------------------------------------------------
+    // Recovery cooldown — avoid repeated email spam
+    // ---------------------------------------------------------
+    const recent=
+      await env.DB
+        .prepare(`
+
+          SELECT
+            created_at
+
+          FROM password_resets
+
+          WHERE user_id=?
+
+          ORDER BY created_at DESC
+
+          LIMIT 1
+
+        `)
+        .bind(
+          user.id
+        )
+        .first();
+
+
+    if(recent?.created_at){
+
+      const recentTime=
+        new Date(
+          recent.created_at
+        ).getTime();
+
+
+      if(
+        Number.isFinite(recentTime)&&
+        Date.now()-recentTime<60000
+      ){
+
+        return json({
+
+          message:
+            "کد بازیابی اخیراً ارسال شده است. لطفاً یک دقیقه بعد دوباره تلاش کنید."
+
+        });
+
+      }
+
+    }
+
+
     const code=
       randomCode();
 
@@ -6381,10 +6719,11 @@ async function forgotPasswordApi(
           code_hash,
           expires_at,
           used,
-          created_at
+          created_at,
+          attempts
         )
 
-        VALUES(?,?,?,?,0,?)
+        VALUES(?,?,?,?,0,?,0)
 
       `)
       .bind(
@@ -6414,10 +6753,7 @@ async function forgotPasswordApi(
       return json(
         {
           error:
-            mail.error,
-
-          details:
-            mail.details
+            mail.error
         },
         mail.status||500
       );
@@ -6447,11 +6783,7 @@ async function forgotPasswordApi(
     return json(
       {
         error:
-          "خطا در درخواست بازیابی رمز عبور.",
-
-        details:
-          error?.message||
-          String(error)
+          "خطا در درخواست بازیابی رمز عبور."
       },
       500
     );
@@ -6526,6 +6858,21 @@ async function resetPasswordApi(
     }
 
 
+    if(
+      newPassword.length>200
+    ){
+
+      return json(
+        {
+          error:
+            "رمز عبور بیش از حد طولانی است."
+        },
+        400
+      );
+
+    }
+
+
     const user=
       await env.DB
         .prepare(`
@@ -6590,6 +6937,41 @@ async function resetPasswordApi(
     }
 
 
+    const attempts=
+      Number(
+        reset.attempts||0
+      );
+
+
+    if(
+      attempts>=5
+    ){
+
+      await env.DB
+        .prepare(`
+          UPDATE password_resets
+
+          SET used=1
+
+          WHERE id=?
+        `)
+        .bind(
+          reset.id
+        )
+        .run();
+
+
+      return json(
+        {
+          error:
+            "تعداد تلاش‌های مجاز برای این کد تمام شده است. کد جدید درخواست کنید."
+        },
+        400
+      );
+
+    }
+
+
     if(
       Date.now()>
       new Date(
@@ -6635,10 +7017,39 @@ async function resetPasswordApi(
       )
     ){
 
+      const nextAttempts=
+        attempts+
+        1;
+
+
+      await env.DB
+        .prepare(`
+          UPDATE password_resets
+
+          SET
+            attempts=?,
+            used=
+              CASE
+                WHEN ?>=5 THEN 1
+                ELSE used
+              END
+
+          WHERE id=?
+        `)
+        .bind(
+          nextAttempts,
+          nextAttempts,
+          reset.id
+        )
+        .run();
+
+
       return json(
         {
           error:
-            "کد بازیابی اشتباه است."
+            nextAttempts>=5
+              ?"کد بازیابی اشتباه است و تعداد تلاش‌های مجاز تمام شد."
+              :"کد بازیابی اشتباه است."
         },
         400
       );
@@ -6703,11 +7114,7 @@ async function resetPasswordApi(
     return json(
       {
         error:
-          "تغییر رمز عبور انجام نشد.",
-
-        details:
-          error?.message||
-          String(error)
+          "تغییر رمز عبور انجام نشد."
       },
       500
     );
@@ -6855,34 +7262,58 @@ async function aiChatApi(
     );
 
 
-  const usage=
-    await getUsage(
-      env,
-      user.id
-    );
+  let reservedFree=false;
+  let reservedUsage=0;
 
 
-  if(
-    !subscription&&
-    Number(
-      usage?.used||0
-    )>=FREE_DAILY_LIMIT
-  ){
+  if(subscription){
 
-    return json(
-      {
-        error:
-          "سهمیه رایگان روزانه شما تمام شده است. برای ادامه یکی از پلن‌های اشتراک را انتخاب کنید.",
+    // No free quota reservation required.
 
-        upgrade_required:true
-      },
-      429
-    );
+  }else{
+
+    const reservation=
+      await reserveFreeUsage(
+        env,
+        user.id
+      );
+
+
+    if(!reservation.ok){
+
+      return json(
+        {
+          error:
+            "سهمیه رایگان روزانه شما تمام شده است. برای ادامه یکی از پلن‌های اشتراک را انتخاب کنید.",
+
+          upgrade_required:true
+        },
+        429
+      );
+
+    }
+
+
+    reservedFree=true;
+    reservedUsage=
+      Number(
+        reservation.used||0
+      );
 
   }
 
 
   if(!env.AI){
+
+    if(reservedFree){
+
+      await releaseFreeUsage(
+        env,
+        user.id
+      );
+
+    }
+
 
     return json(
       {
@@ -6970,6 +7401,16 @@ async function aiChatApi(
 
   }catch(e){
 
+    if(reservedFree){
+
+      await releaseFreeUsage(
+        env,
+        user.id
+      );
+
+    }
+
+
     console.error(
       "ABZARAK AI PROVIDER ERROR:",
       e?.message||
@@ -6980,11 +7421,7 @@ async function aiChatApi(
     return json(
       {
         error:
-          "ارتباط با سرویس هوش مصنوعی برقرار نشد.",
-
-        details:
-          e?.message||
-          String(e)
+          "ارتباط با سرویس هوش مصنوعی برقرار نشد."
       },
       500
     );
@@ -7012,6 +7449,16 @@ async function aiChatApi(
 
   if(!reply){
 
+    if(reservedFree){
+
+      await releaseFreeUsage(
+        env,
+        user.id
+      );
+
+    }
+
+
     return json(
       {
         error:
@@ -7019,27 +7466,6 @@ async function aiChatApi(
       },
       502
     );
-
-  }
-
-
-  if(!subscription){
-
-    await env.DB
-      .prepare(`
-        UPDATE usage
-
-        SET used=used+1
-
-        WHERE user_id=?
-
-        AND usage_date=?
-      `)
-      .bind(
-        user.id,
-        today()
-      )
-      .run();
 
   }
 
@@ -7053,14 +7479,16 @@ async function aiChatApi(
     usage:{
 
       used:
-        Number(
-          usage?.used||0
-        )+
-        (
-          subscription
-            ?0
-            :1
-        ),
+        subscription
+          ?Number(
+              (
+                await getUsage(
+                  env,
+                  user.id
+                )
+              )?.used||0
+            )
+          :reservedUsage,
 
       limit:
         subscription
@@ -7469,14 +7897,7 @@ async function paymentRequestApi(
             info.code??code??null,
 
           http_status:
-            response.status,
-
-          details:
-            raw.slice(
-              0,
-              1000
-            )
-
+            response.status
         },
         502
       );
@@ -7484,19 +7905,47 @@ async function paymentRequestApi(
     }
 
 
-    await env.DB
-      .prepare(`
-        UPDATE payments_v2
+    try{
 
-        SET authority=?
+      await env.DB
+        .prepare(`
+          UPDATE payments_v2
 
-        WHERE id=?
-      `)
-      .bind(
-        String(authority),
+          SET authority=?
+
+          WHERE id=?
+          AND status='pending'
+        `)
+        .bind(
+          String(authority),
+          paymentId
+        )
+        .run();
+
+    }catch(e){
+
+      await markPaymentFailed(
+        env,
         paymentId
-      )
-      .run();
+      );
+
+
+      console.error(
+        "PAYMENT AUTHORITY SAVE ERROR:",
+        e?.message||
+        String(e)
+      );
+
+
+      return json(
+        {
+          error:
+            "ثبت درخواست پرداخت انجام نشد."
+        },
+        500
+      );
+
+    }
 
 
     return json({
@@ -7531,11 +7980,7 @@ async function paymentRequestApi(
     return json(
       {
         error:
-          "خطای داخلی در ایجاد درخواست پرداخت.",
-
-        details:
-          e?.message||
-          String(e)
+          "خطای داخلی در ایجاد درخواست پرداخت."
       },
       500
     );
@@ -7545,6 +7990,9 @@ async function paymentRequestApi(
 }
 
 
+// =============================================================
+// PAYMENT VERIFY — IDEMPOTENT
+// =============================================================
 async function paymentVerifyApi(
   request,
   env
@@ -7694,6 +8142,9 @@ async function paymentVerifyApi(
 
   try{
 
+    // ---------------------------------------------------------
+    // Verify transaction with ZarinPal
+    // ---------------------------------------------------------
     const response=
       await fetch(
         zarinPalConfig().verifyUrl,
@@ -7785,7 +8236,10 @@ async function paymentVerifyApi(
     }
 
 
-    const existing=
+    // ---------------------------------------------------------
+    // Check whether this payment already created a subscription
+    // ---------------------------------------------------------
+    let paymentSubscription=
       await env.DB
         .prepare(`
           SELECT
@@ -7794,91 +8248,156 @@ async function paymentVerifyApi(
 
           FROM subscriptions
 
-          WHERE
-            user_id=?
-
-            AND plan_id=?
-
-            AND status='active'
-
-            AND expires_at>?
-
-          ORDER BY expires_at DESC
+          WHERE payment_id=?
 
           LIMIT 1
         `)
         .bind(
-          payment.user_id,
-          payment.plan_id,
-          new Date().toISOString()
+          paymentId
         )
         .first();
 
 
-    if(existing){
+    if(!paymentSubscription){
+
+      // -------------------------------------------------------
+      // Preserve previous extension behavior:
+      // start after the latest active subscription expiration
+      // -------------------------------------------------------
+      const existing=
+        await env.DB
+          .prepare(`
+            SELECT
+              id,
+              expires_at
+
+            FROM subscriptions
+
+            WHERE
+              user_id=?
+
+              AND status='active'
+
+              AND expires_at>?
+
+            ORDER BY expires_at DESC
+
+            LIMIT 1
+          `)
+          .bind(
+            payment.user_id,
+            new Date().toISOString()
+          )
+          .first();
+
 
       const base=
-        Math.max(
-          new Date(
-            existing.expires_at
-          ).getTime(),
-          Date.now()
-        );
+        existing?.expires_at
+          ?Math.max(
+              new Date(
+                existing.expires_at
+              ).getTime(),
+              Date.now()
+            )
+          :Date.now();
 
 
-      await env.DB
-        .prepare(`
-          UPDATE subscriptions
+      const startsAt=
+        new Date(
+          base
+        ).toISOString();
 
-          SET expires_at=?
 
-          WHERE id=?
-        `)
-        .bind(
-          new Date(
-            base+
-            30*86400000
-          ).toISOString(),
+      const expiresAt=
+        new Date(
+          base+
+          30*86400000
+        ).toISOString();
 
-          existing.id
-        )
-        .run();
 
-    }else{
+      try{
 
-      await env.DB
-        .prepare(`
-          INSERT INTO subscriptions
-          (
-            id,
-            user_id,
-            plan_id,
-            starts_at,
-            expires_at,
-            status
+        await env.DB
+          .prepare(`
+            INSERT INTO subscriptions
+            (
+              id,
+              user_id,
+              plan_id,
+              starts_at,
+              expires_at,
+              status,
+              payment_id
+            )
+
+            VALUES(
+              ?,
+              ?,
+              ?,
+              ?,
+              ?,
+              'active',
+              ?
+            )
+          `)
+          .bind(
+            randomHex(16),
+            payment.user_id,
+            payment.plan_id,
+            startsAt,
+            expiresAt,
+            paymentId
           )
+          .run();
 
-          VALUES(
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            'active'
-          )
-        `)
-        .bind(
-          randomHex(16),
-          payment.user_id,
-          payment.plan_id,
-          new Date().toISOString(),
-          addDays(30)
-        )
-        .run();
+      }catch(insertError){
+
+        // -----------------------------------------------------
+        // Concurrent duplicate callback:
+        // another request may have inserted the same payment_id
+        // -----------------------------------------------------
+        paymentSubscription=
+          await env.DB
+            .prepare(`
+              SELECT
+                id,
+                expires_at
+
+              FROM subscriptions
+
+              WHERE payment_id=?
+
+              LIMIT 1
+            `)
+            .bind(
+              paymentId
+            )
+            .first();
+
+
+        if(!paymentSubscription){
+
+          console.error(
+            "SUBSCRIPTION INSERT ERROR:",
+            insertError?.message||
+            String(insertError)
+          );
+
+
+          return redirect(
+            "/?payment=error&reason=subscription-save-error"
+          );
+
+        }
+
+      }
 
     }
 
 
+    // ---------------------------------------------------------
+    // Finalize payment only after subscription exists
+    // ---------------------------------------------------------
     await env.DB
       .prepare(`
         UPDATE payments_v2
@@ -7889,7 +8408,6 @@ async function paymentVerifyApi(
           paid_at=?
 
         WHERE id=?
-
         AND status!='paid'
       `)
       .bind(
@@ -8068,38 +8586,87 @@ async function withdrawalApi(
   }
 
 
-  await env.DB
-    .prepare(`
-      INSERT INTO withdrawals
-      (
-        id,
-        user_id,
+  try{
+
+    await env.DB
+      .prepare(`
+        INSERT INTO withdrawals
+        (
+          id,
+          user_id,
+          amount,
+          method,
+          destination,
+          status,
+          created_at
+        )
+
+        VALUES(
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          'pending',
+          ?
+        )
+      `)
+      .bind(
+        randomHex(16),
+        user.id,
         amount,
         method,
         destination,
-        status,
-        created_at
+        new Date().toISOString()
       )
+      .run();
 
-      VALUES(
-        ?,
-        ?,
-        ?,
-        ?,
-        ?,
-        'pending',
-        ?
-      )
-    `)
-    .bind(
-      randomHex(16),
-      user.id,
-      amount,
-      method,
-      destination,
-      new Date().toISOString()
-    )
-    .run();
+  }catch(e){
+
+    // Refund balance if withdrawal record could not be created
+    try{
+
+      await env.DB
+        .prepare(`
+          UPDATE users
+
+          SET balance=balance+?
+
+          WHERE id=?
+        `)
+        .bind(
+          amount,
+          user.id
+        )
+        .run();
+
+    }catch(refundError){
+
+      console.error(
+        "WITHDRAWAL REFUND ERROR:",
+        refundError?.message||
+        String(refundError)
+      );
+
+    }
+
+
+    console.error(
+      "WITHDRAWAL INSERT ERROR:",
+      e?.message||
+      String(e)
+    );
+
+
+    return json(
+      {
+        error:
+          "ثبت درخواست برداشت انجام نشد."
+      },
+      500
+    );
+
+  }
 
 
   return json({
@@ -8189,6 +8756,19 @@ async function adminLoginApi(
           "ADMIN_PASSWORD در Worker تنظیم نشده است."
       },
       500
+    );
+
+  }
+
+
+  if(!authSecretConfigured(env)){
+
+    return json(
+      {
+        error:
+          "امنیت مدیریت در Worker تنظیم نشده است."
+      },
+      503
     );
 
   }
@@ -8599,6 +9179,13 @@ async function healthApi(env){
     zarinpal:
       !!env.ZARINPAL_MERCHANT_ID,
 
+    jwt_secret:
+      !!env.JWT_SECRET,
+
+    legacy_auth_fallback:
+      !env.JWT_SECRET&&
+      !!env.ADMIN_PASSWORD,
+
     zarinpal_mode:
       "production"
 
@@ -8847,11 +9434,7 @@ export default {
             json(
               {
                 error:
-                  "پایگاه داده ابزارک آماده نیست.",
-
-                details:
-                  e?.message||
-                  String(e)
+                  "پایگاه داده ابزارک آماده نیست."
               },
               503
             )
@@ -9108,11 +9691,7 @@ export default {
         json(
           {
             error:
-              "خطای داخلی سرور.",
-
-            details:
-              error?.message||
-              String(error)
+              "خطای داخلی سرور."
           },
           500
         )
