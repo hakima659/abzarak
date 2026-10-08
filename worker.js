@@ -883,7 +883,6 @@ footer{
 
 </div>
 
-
 <button
  class="btn primary block"
  onclick="doReset()"
@@ -892,7 +891,6 @@ footer{
 </button>
 
 </div>
-
 
 <div class="switch-line">
 
@@ -1304,7 +1302,7 @@ async function doReset(){
 
     setMsg(
       "forgotMsg",
-      "ایمیل و کد بازیابی را وارد کنید."
+      "ایمیل و کد بازیابی الزامی است."
     );
 
     return;
