@@ -1,11 +1,12 @@
 // =============================================================
 // ABZARAK AI — PRODUCTION WORKER
-// Homepage + User Login + D1 + Cloudflare AI + ZarinPal + Resend
+// Homepage + User Registration/Login + D1 + Cloudflare AI
+// + ZarinPal + Resend
 // SEO Landing Pages + White Professional SVG Images + FAQ
 // Breadcrumb/WebPage structured data + Sitemap + Robots
 //
 // AUTH MODE:
-// - Public signup REMOVED
+// - Public signup ENABLED
 // - Existing users can still login
 // - Password recovery preserved
 // - Subscription / payment logic preserved
@@ -114,7 +115,8 @@ header{
 
 nav{
  display:flex;
- gap:6px
+ gap:6px;
+ flex-wrap:wrap
 }
 
 .btn{
@@ -403,7 +405,9 @@ nav{
  border-radius:16px;
  padding:25px;
  position:relative;
- box-shadow:0 20px 60px rgba(0,0,0,.16)
+ box-shadow:0 20px 60px rgba(0,0,0,.16);
+ max-height:92vh;
+ overflow-y:auto
 }
 
 .modal h3{
@@ -554,13 +558,18 @@ footer{
    padding:12px 8px
  }
 
- nav .btn.primary{
-   padding-left:13px;
-   padding-right:13px
+ nav .btn{
+   padding-left:11px;
+   padding-right:11px
  }
 
  .logo{
    font-size:16px
+ }
+
+ .userBadge{
+   max-width:70%;
+   flex-wrap:wrap
  }
 }
 </style>
@@ -578,12 +587,21 @@ footer{
 </div>
 
 <nav id="navArea">
+
+<button
+ class="btn"
+ onclick="openModal('signup')"
+>
+ثبت‌نام
+</button>
+
 <button
  class="btn primary"
  onclick="openModal('login')"
 >
 ورود
 </button>
+
 </nav>
 
 <div id="userBadge">
@@ -721,7 +739,7 @@ footer{
 
 
 <!-- ========================================================= -->
-<!-- LOGIN / FORGOT PASSWORD MODAL                            -->
+<!-- LOGIN / SIGNUP / FORGOT PASSWORD MODAL                  -->
 <!-- ========================================================= -->
 
 <div
@@ -775,6 +793,7 @@ footer{
  id="loginPassword"
  placeholder="••••••••"
  autocomplete="current-password"
+ onkeydown="if(event.key==='Enter') doLogin()"
 >
 
 </div>
@@ -796,8 +815,103 @@ footer{
 
 <div class="switch-line">
 
+<a onclick="openModal('signup')">
+حساب نداری؟ ثبت‌نام کن
+</a>
+
+</div>
+
+
+<div class="switch-line">
+
 <a onclick="openModal('forgot')">
 رمز عبور را فراموش کرده‌ام
+</a>
+
+</div>
+
+</div>
+
+
+<!-- SIGNUP -->
+
+<div
+ id="signupForm"
+ style="display:none;"
+>
+
+<h3>
+ساخت حساب جدید
+</h3>
+
+
+<div class="field">
+
+<label>
+نام
+</label>
+
+<input
+ type="text"
+ id="signupName"
+ placeholder="نام شما"
+ autocomplete="name"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+ایمیل
+</label>
+
+<input
+ type="email"
+ id="signupEmail"
+ placeholder="you@example.com"
+ autocomplete="email"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+رمز عبور
+</label>
+
+<input
+ type="password"
+ id="signupPassword"
+ placeholder="حداقل ۶ کاراکتر"
+ autocomplete="new-password"
+ onkeydown="if(event.key==='Enter') doSignup()"
+>
+
+</div>
+
+
+<div
+ class="modal-msg"
+ id="signupMsg"
+></div>
+
+
+<button
+ class="btn primary block"
+ onclick="doSignup()"
+>
+ثبت‌نام و ورود
+</button>
+
+
+<div class="switch-line">
+
+<a onclick="openModal('login')">
+قبلاً حساب ساخته‌ام؛ ورود
 </a>
 
 </div>
@@ -938,6 +1052,12 @@ function openModal(which){
       :"none";
 
 
+  document.getElementById("signupForm").style.display=
+    which==="signup"
+      ?"block"
+      :"none";
+
+
   document.getElementById("forgotForm").style.display=
     which==="forgot"
       ?"block"
@@ -950,6 +1070,20 @@ function openModal(which){
 
       const el=
         document.getElementById("loginEmail");
+
+      if(el)el.focus();
+
+    },50);
+
+  }
+
+
+  if(which==="signup"){
+
+    setTimeout(()=>{
+
+      const el=
+        document.getElementById("signupName");
 
       if(el)el.focus();
 
@@ -1196,6 +1330,163 @@ async function doLogin(){
 
 
 // =============================================================
+// PUBLIC SIGNUP
+// =============================================================
+
+async function doSignup(){
+
+  const name=
+    document
+      .getElementById("signupName")
+      .value
+      .trim();
+
+
+  const email=
+    document
+      .getElementById("signupEmail")
+      .value
+      .trim();
+
+
+  const password=
+    document
+      .getElementById("signupPassword")
+      .value;
+
+
+  setMsg(
+    "signupMsg",
+    ""
+  );
+
+
+  if(!name){
+
+    setMsg(
+      "signupMsg",
+      "نام را وارد کنید."
+    );
+
+    return;
+  }
+
+
+  if(name.length<2){
+
+    setMsg(
+      "signupMsg",
+      "نام باید حداقل ۲ کاراکتر باشد."
+    );
+
+    return;
+  }
+
+
+  if(!email){
+
+    setMsg(
+      "signupMsg",
+      "ایمیل را وارد کنید."
+    );
+
+    return;
+  }
+
+
+  if(!password){
+
+    setMsg(
+      "signupMsg",
+      "رمز عبور را وارد کنید."
+    );
+
+    return;
+  }
+
+
+  if(password.length<6){
+
+    setMsg(
+      "signupMsg",
+      "رمز عبور باید حداقل ۶ کاراکتر باشد."
+    );
+
+    return;
+  }
+
+
+  try{
+
+    const data=
+      await api(
+        "/api/register",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            name,
+            email,
+            password
+          })
+        }
+      );
+
+
+    if(!data.token){
+
+      throw new Error(
+        "ثبت‌نام انجام شد اما ورود خودکار ممکن نشد."
+      );
+
+    }
+
+
+    token=
+      data.token;
+
+
+    localStorage.setItem(
+      "abzarak_token",
+      token
+    );
+
+
+    const ok=
+      await loadMe();
+
+
+    closeModal();
+
+
+    addMsg(
+      ok
+        ?"حساب شما با موفقیت ساخته شد. خوش آمدی 👋"
+        :"ثبت‌نام انجام شد. صفحه را تازه‌سازی کن.",
+      "system"
+    );
+
+
+  }catch(e){
+
+    console.error(
+      "ABZARAK SIGNUP CLIENT ERROR:",
+      e
+    );
+
+
+    setMsg(
+      "signupMsg",
+      e.message||
+      "ثبت‌نام انجام نشد."
+    );
+
+  }
+
+}
+
+
+// =============================================================
 // FORGOT PASSWORD
 // =============================================================
 
@@ -1421,6 +1712,7 @@ function updateNav(){
 
     nav.style.display="flex";
 
+    badge.style.display="flex";
     badge.style.display="none";
 
   }
@@ -1590,7 +1882,7 @@ async function sendMessage(){
   if(!token){
 
     addMsg(
-      "برای گفتگو با ابزارک ابتدا وارد حساب شو.",
+      "برای گفتگو با ابزارک ابتدا وارد حساب شو یا ثبت‌نام کن.",
       "system"
     );
 
@@ -2366,7 +2658,7 @@ const FAQ_ITEMS=[
 
  {
    q:"آیا ثبت‌نام عمومی در ابزارک فعال است؟",
-   a:"خیر. ثبت‌نام عمومی در حال حاضر غیرفعال است و فقط کاربران دارای حساب می‌توانند وارد سرویس شوند."
+   a:"بله. ثبت‌نام عمومی فعال است و کاربران جدید می‌توانند با نام، ایمیل و رمز عبور حساب خود را ایجاد کنند."
  },
 
  {
@@ -4095,7 +4387,7 @@ function renderFaqPage(){
         canonical,
 
       "description":
-        "پاسخ به سؤالات متداول درباره ابزارک AI، ورود، استفاده رایگان، پلن‌ها و امکانات سرویس.",
+        "پاسخ به سؤالات متداول درباره ابزارک AI، ورود، ثبت‌نام، استفاده رایگان، پلن‌ها و امکانات سرویس.",
 
       "inLanguage":
         "fa-IR"
@@ -4125,7 +4417,7 @@ function renderFaqPage(){
 
 <meta
  name="description"
- content="پاسخ به سؤالات متداول درباره ابزارک AI، چت هوش مصنوعی فارسی، ورود، استفاده رایگان، پلن‌ها و بازیابی رمز عبور."
+ content="پاسخ به سؤالات متداول درباره ابزارک AI، چت هوش مصنوعی فارسی، ثبت‌نام، ورود، استفاده رایگان، پلن‌ها و بازیابی رمز عبور."
 >
 
 <meta
@@ -4358,7 +4650,7 @@ body{
 
 <p>
 پاسخ به پرسش‌های رایج درباره چت هوش مصنوعی فارسی،
-ورود، استفاده رایگان، پلن‌ها و امکانات ابزارک.
+ثبت‌نام، ورود، استفاده رایگان، پلن‌ها و امکانات ابزارک.
 </p>
 
 
@@ -4387,14 +4679,14 @@ ${faqHtml}
 </h2>
 
 <p>
-برای استفاده از ابزارک وارد حساب فعال خود شو.
+برای استفاده از ابزارک یک حساب رایگان بساز یا وارد حساب فعال خود شو.
 </p>
 
 <a
  href="/"
  class="faq-btn"
 >
-ورود به ابزارک
+ثبت‌نام یا ورود
 </a>
 
 </section>
@@ -6172,6 +6464,336 @@ ${code}
 
 
 // =============================================================
+// PUBLIC REGISTER API
+// =============================================================
+async function registerApi(
+  request,
+  env
+){
+
+  try{
+
+    if(!env.DB){
+
+      return json(
+        {
+          error:
+            "اتصال پایگاه داده D1 تنظیم نشده است."
+        },
+        500
+      );
+
+    }
+
+
+    if(!authSecretConfigured(env)){
+
+      return json(
+        {
+          error:
+            "امنیت ورود در Worker تنظیم نشده است."
+        },
+        503
+      );
+
+    }
+
+
+    const b=
+      await bodyJson(
+        request
+      );
+
+
+    const name=
+      String(
+        b.name||""
+      )
+      .trim();
+
+
+    const email=
+      String(
+        b.email||""
+      )
+      .trim()
+      .toLowerCase();
+
+
+    const password=
+      String(
+        b.password||""
+      );
+
+
+    if(!name){
+
+      return json(
+        {
+          error:
+            "نام را وارد کنید."
+        },
+        400
+      );
+
+    }
+
+
+    if(
+      name.length<2||
+      name.length>80
+    ){
+
+      return json(
+        {
+          error:
+            "نام باید بین ۲ تا ۸۰ کاراکتر باشد."
+        },
+        400
+      );
+
+    }
+
+
+    if(!email){
+
+      return json(
+        {
+          error:
+            "ایمیل را وارد کنید."
+        },
+        400
+      );
+
+    }
+
+
+    if(
+      email.length>160||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ){
+
+      return json(
+        {
+          error:
+            "ایمیل واردشده معتبر نیست."
+        },
+        400
+      );
+
+    }
+
+
+    if(!password){
+
+      return json(
+        {
+          error:
+            "رمز عبور را وارد کنید."
+        },
+        400
+      );
+
+    }
+
+
+    if(password.length<6){
+
+      return json(
+        {
+          error:
+            "رمز عبور باید حداقل ۶ کاراکتر باشد."
+        },
+        400
+      );
+
+    }
+
+
+    if(password.length>200){
+
+      return json(
+        {
+          error:
+            "رمز عبور بیش از حد طولانی است."
+        },
+        400
+      );
+
+    }
+
+
+    const exists=
+      await env.DB
+        .prepare(`
+          SELECT
+            id
+
+          FROM users
+
+          WHERE email=?
+
+          LIMIT 1
+        `)
+        .bind(
+          email
+        )
+        .first();
+
+
+    if(exists){
+
+      return json(
+        {
+          error:
+            "این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید."
+        },
+        409
+      );
+
+    }
+
+
+    const userId=
+      randomHex(16);
+
+
+    const passwordHash=
+      await hashPassword(
+        password
+      );
+
+
+    const createdAt=
+      new Date().toISOString();
+
+
+    try{
+
+      await env.DB
+        .prepare(`
+
+          INSERT INTO users
+          (
+            id,
+            name,
+            email,
+            password_hash,
+            balance,
+            created_at
+          )
+
+          VALUES(
+            ?,
+            ?,
+            ?,
+            ?,
+            0,
+            ?
+          )
+
+        `)
+        .bind(
+          userId,
+          name,
+          email,
+          passwordHash,
+          createdAt
+        )
+        .run();
+
+    }catch(insertError){
+
+      const message=
+        String(
+          insertError?.message||
+          ""
+        )
+        .toLowerCase();
+
+
+      if(
+        message.includes("unique")||
+        message.includes("constraint")
+      ){
+
+        return json(
+          {
+            error:
+              "این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید."
+          },
+          409
+        );
+
+      }
+
+
+      throw insertError;
+
+    }
+
+
+    const token=
+      await createToken(
+        {
+          userId,
+
+          exp:
+            Date.now()+
+            30*86400000
+
+        },
+        getAuthSecret(env)
+      );
+
+
+    return json({
+
+      ok:true,
+
+      token,
+
+      user:{
+
+        id:
+          userId,
+
+        name,
+
+        email,
+
+        balance:0
+
+      },
+
+      message:
+        "حساب شما با موفقیت ساخته شد."
+
+    });
+
+  }catch(error){
+
+    console.error(
+      "REGISTER ERROR:",
+      error?.message||
+      String(error)
+    );
+
+
+    return json(
+      {
+        error:
+          "ثبت‌نام انجام نشد. لطفاً دوباره تلاش کنید."
+      },
+      500
+    );
+
+  }
+
+}
+
+
+// =============================================================
 // LOGIN API
 // =============================================================
 async function loginApi(
@@ -6625,9 +7247,6 @@ async function forgotPasswordApi(
     }
 
 
-    // ---------------------------------------------------------
-    // Recovery cooldown — avoid repeated email spam
-    // ---------------------------------------------------------
     const recent=
       await env.DB
         .prepare(`
@@ -7265,8 +7884,6 @@ async function aiChatApi(
 
 
   if(subscription){
-
-    // No free quota reservation required.
 
   }else{
 
@@ -8140,9 +8757,6 @@ async function paymentVerifyApi(
 
   try{
 
-    // ---------------------------------------------------------
-    // Verify transaction with ZarinPal
-    // ---------------------------------------------------------
     const response=
       await fetch(
         zarinPalConfig().verifyUrl,
@@ -8234,9 +8848,6 @@ async function paymentVerifyApi(
     }
 
 
-    // ---------------------------------------------------------
-    // Check whether this payment already created a subscription
-    // ---------------------------------------------------------
     let paymentSubscription=
       await env.DB
         .prepare(`
@@ -8258,10 +8869,6 @@ async function paymentVerifyApi(
 
     if(!paymentSubscription){
 
-      // -------------------------------------------------------
-      // Preserve previous extension behavior:
-      // start after the latest active subscription expiration
-      // -------------------------------------------------------
       const existing=
         await env.DB
           .prepare(`
@@ -8350,10 +8957,6 @@ async function paymentVerifyApi(
 
       }catch(insertError){
 
-        // -----------------------------------------------------
-        // Concurrent duplicate callback:
-        // another request may have inserted the same payment_id
-        // -----------------------------------------------------
         paymentSubscription=
           await env.DB
             .prepare(`
@@ -8393,9 +8996,6 @@ async function paymentVerifyApi(
     }
 
 
-    // ---------------------------------------------------------
-    // Finalize payment only after subscription exists
-    // ---------------------------------------------------------
     await env.DB
       .prepare(`
         UPDATE payments_v2
@@ -8621,7 +9221,6 @@ async function withdrawalApi(
 
   }catch(e){
 
-    // Refund balance if withdrawal record could not be created
     try{
 
       await env.DB
@@ -9205,10 +9804,6 @@ export default {
 
     try{
 
-      // -------------------------------------------------------
-      // CORS PREFLIGHT
-      // -------------------------------------------------------
-
       if(
         request.method==="OPTIONS"
       ){
@@ -9239,10 +9834,6 @@ export default {
         request.method;
 
 
-      // -------------------------------------------------------
-      // ENAMAD VERIFICATION
-      // -------------------------------------------------------
-
       if(
         path==="/17726638.txt"
       ){
@@ -9255,10 +9846,6 @@ export default {
 
       }
 
-
-      // -------------------------------------------------------
-      // ROBOTS
-      // -------------------------------------------------------
 
       if(
         path==="/robots.txt"
@@ -9273,10 +9860,6 @@ export default {
       }
 
 
-      // -------------------------------------------------------
-      // SITEMAP
-      // -------------------------------------------------------
-
       if(
         path==="/sitemap.xml"
       ){
@@ -9289,10 +9872,6 @@ export default {
 
       }
 
-
-      // -------------------------------------------------------
-      // SVG IMAGES
-      // -------------------------------------------------------
 
       if(
         path.startsWith(
@@ -9343,10 +9922,6 @@ export default {
       }
 
 
-      // -------------------------------------------------------
-      // OLD CONTENT URL REDIRECT
-      // -------------------------------------------------------
-
       if(
         path==="/content-ai"&&
         m==="GET"
@@ -9363,10 +9938,6 @@ export default {
       }
 
 
-      // -------------------------------------------------------
-      // FAQ
-      // -------------------------------------------------------
-
       if(
         path==="/faq"&&
         m==="GET"
@@ -9380,10 +9951,6 @@ export default {
 
       }
 
-
-      // -------------------------------------------------------
-      // SEO PAGES
-      // -------------------------------------------------------
 
       if(
         SEO_PAGES[path]&&
@@ -9401,10 +9968,6 @@ export default {
 
       }
 
-
-      // -------------------------------------------------------
-      // DATABASE
-      // -------------------------------------------------------
 
       const needsDatabase=
         path.startsWith("/api/")||
@@ -9443,9 +10006,6 @@ export default {
       }
 
 
-      // -------------------------------------------------------
-      // API ROUTES
-      // -------------------------------------------------------
       let response;
 
 
@@ -9455,6 +10015,18 @@ export default {
 
         response=
           await healthApi(
+            env
+          );
+
+
+      }else if(
+        path==="/api/register"&&
+        m==="POST"
+      ){
+
+        response=
+          await registerApi(
+            request,
             env
           );
 
@@ -9636,10 +10208,6 @@ export default {
           );
 
 
-      // -------------------------------------------------------
-      // HOMEPAGE
-      // -------------------------------------------------------
-
       }else if(
         (
           path==="/"||
@@ -9653,10 +10221,6 @@ export default {
             renderHomepage()
           );
 
-
-      // -------------------------------------------------------
-      // NOT FOUND
-      // -------------------------------------------------------
 
       }else{
 
