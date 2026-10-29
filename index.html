@@ -1,22 +1,27 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<meta name="description" content="ابزارک | Abzarak - مجموعه‌ای از ابزارهای رایگان، سریع و کاربردی آنلاین برای محاسبه، تبدیل ارز، تخفیف، سود و افزایش قیمت.">
-<meta name="keywords" content="ابزار آنلاین, ابزار رایگان, online tools, free tools, calculator, currency converter, percentage calculator, discount calculator, profit calculator">
+<meta name="theme-color" content="#12163a">
+<meta name="description" content="ابزارک | Abzarak - مجموعه‌ای از ابزارهای رایگان، سریع و کاربردی آنلاین برای محاسبه درصد، تبدیل ارز، تخفیف، سود و افزایش قیمت.">
+<meta name="keywords" content="ابزار آنلاین, ابزار رایگان, online tools, calculator, currency converter, discount calculator, profit calculator">
+<meta name="application-name" content="ابزارک AI">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ابزارک">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
 
 <link rel="canonical" href="https://abzarakai.ir/">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/مانیفست.json">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
 
 <title>ابزارک | Abzarak - ابزارهای رایگان آنلاین</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -38,9 +43,7 @@ header h1 {
   font-size: 32px;
 }
 
-header p {
-  margin: 0 0 15px;
-}
+header p { margin: 0 0 15px; }
 
 .lang-btn {
   width: auto;
@@ -83,9 +86,7 @@ main {
   font-size: 20px;
 }
 
-input,
-textarea,
-button {
+input, textarea, button {
   width: 100%;
   padding: 12px;
   margin: 7px 0;
@@ -103,9 +104,7 @@ button {
   font-weight: bold;
 }
 
-button:hover {
-  opacity: 0.9;
-}
+button:hover { opacity: 0.9; }
 
 .result {
   background: #f1f5f9;
@@ -114,6 +113,7 @@ button:hover {
   margin-top: 8px;
   min-height: 25px;
   font-weight: bold;
+  overflow-wrap: anywhere;
 }
 
 footer {
@@ -127,125 +127,90 @@ body.en {
   font-family: Arial, Tahoma, sans-serif;
 }
 
-body.en .lang-btn {
-  direction: ltr;
-}
+body.en .lang-btn { direction: ltr; }
 
-.hidden {
-  display: none;
+@media (max-width: 480px) {
+  header h1 { font-size: 26px; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
 }
 </style>
 </head>
 
 <body>
-
 <header>
   <h1>ابزارک | Abzarak</h1>
-
-  <p id="subtitle">
-    ابزارهای رایگان، سریع و کاربردی آنلاین
-  </p>
-
-  <button class="lang-btn" onclick="toggleLanguage()" id="langButton">
-    English
-  </button>
+  <p id="subtitle">ابزارهای رایگان، سریع و کاربردی آنلاین</p>
+  <button class="lang-btn" onclick="toggleLanguage()" id="langButton">English</button>
 </header>
 
 <main>
+  <div class="intro">
+    <h2 id="introTitle">ابزارهای کاربردی، رایگان و سریع</h2>
+    <p id="introText">در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل ارز، تخفیف، سود و افزایش قیمت را به‌صورت آنلاین انجام دهید.</p>
+  </div>
 
-<div class="intro">
-  <h2 id="introTitle">ابزارهای کاربردی، رایگان و سریع</h2>
+  <div class="grid">
+    <section class="card">
+      <h2 id="percentTitle">🧮 محاسبه درصد</h2>
+      <input id="num" type="number" placeholder="عدد">
+      <input id="per" type="number" placeholder="درصد">
+      <button onclick="percent()" id="percentButton">محاسبه</button>
+      <div class="result" id="r1" aria-live="polite"></div>
+    </section>
 
-  <p id="introText">
-    در ابزارک می‌توانید محاسبات روزمره، درصد، تبدیل ارز،
-    تخفیف، سود و افزایش قیمت را به‌صورت آنلاین انجام دهید.
-  </p>
-</div>
+    <section class="card">
+      <h2 id="currencyTitle">💱 تبدیل ارز</h2>
+      <input id="amount" type="number" placeholder="مقدار">
+      <input id="rate" type="number" placeholder="نرخ تبدیل">
+      <button onclick="currency()" id="currencyButton">محاسبه</button>
+      <div class="result" id="r2" aria-live="polite"></div>
+    </section>
 
-<div class="grid">
+    <section class="card">
+      <h2 id="discountTitle">🏷️ محاسبه تخفیف</h2>
+      <input id="price" type="number" placeholder="قیمت">
+      <input id="discount" type="number" placeholder="درصد تخفیف">
+      <button onclick="off()" id="discountButton">محاسبه</button>
+      <div class="result" id="r3" aria-live="polite"></div>
+    </section>
 
-<section class="card">
-  <h2 id="percentTitle">🧮 محاسبه درصد</h2>
+    <section class="card">
+      <h2 id="profitTitle">💰 محاسبه سود</h2>
+      <input id="buy" type="number" placeholder="قیمت خرید">
+      <input id="sell" type="number" placeholder="قیمت فروش">
+      <button onclick="profit()" id="profitButton">محاسبه</button>
+      <div class="result" id="r4" aria-live="polite"></div>
+    </section>
 
-  <input id="num" type="number" placeholder="عدد">
-  <input id="per" type="number" placeholder="درصد">
+    <section class="card">
+      <h2 id="increaseTitle">📊 محاسبه افزایش قیمت</h2>
+      <input id="base" type="number" placeholder="قیمت اولیه">
+      <input id="increase" type="number" placeholder="درصد افزایش">
+      <button onclick="increasePrice()" id="increaseButton">محاسبه</button>
+      <div class="result" id="r5" aria-live="polite"></div>
+    </section>
 
-  <button onclick="percent()" id="percentButton">محاسبه</button>
-
-  <div class="result" id="r1"></div>
-</section>
-
-
-<section class="card">
-  <h2 id="currencyTitle">💱 تبدیل ارز</h2>
-
-  <input id="amount" type="number" placeholder="مقدار">
-  <input id="rate" type="number" placeholder="نرخ تبدیل">
-
-  <button onclick="currency()" id="currencyButton">محاسبه</button>
-
-  <div class="result" id="r2"></div>
-</section>
-
-
-<section class="card">
-  <h2 id="discountTitle">🏷️ محاسبه تخفیف</h2>
-
-  <input id="price" type="number" placeholder="قیمت">
-  <input id="discount" type="number" placeholder="درصد تخفیف">
-
-  <button onclick="off()" id="discountButton">محاسبه</button>
-
-  <div class="result" id="r3"></div>
-</section>
-
-
-<section class="card">
-  <h2 id="profitTitle">💰 محاسبه سود</h2>
-
-  <input id="buy" type="number" placeholder="قیمت خرید">
-  <input id="sell" type="number" placeholder="قیمت فروش">
-
-  <button onclick="profit()" id="profitButton">محاسبه</button>
-
-  <div class="result" id="r4"></div>
-</section>
-
-
-<section class="card">
-  <h2 id="increaseTitle">📊 محاسبه افزایش قیمت</h2>
-
-  <input id="base" type="number" placeholder="قیمت اولیه">
-  <input id="increase" type="number" placeholder="درصد افزایش">
-
-  <button onclick="increasePrice()" id="increaseButton">محاسبه</button>
-
-  <div class="result" id="r5"></div>
-</section>
-
-
-<section class="card">
-  <h2 id="textTitle">📝 تولید متن معرفی</h2>
-
-  <input id="toolName" type="text" placeholder="نام ابزار یا محصول">
-
-  <button onclick="genText()" id="textButton">تولید متن</button>
-
-  <div class="result" id="r6"></div>
-</section>
-
-</div>
+    <section class="card">
+      <h2 id="textTitle">📝 تولید متن معرفی</h2>
+      <input id="toolName" type="text" placeholder="نام ابزار یا محصول">
+      <button onclick="genText()" id="textButton">تولید متن</button>
+      <div class="result" id="r6" aria-live="polite"></div>
+    </section>
+  </div>
 </main>
 
 <footer>
   <p id="copyright">© ابزارک | Abzarak</p>
-
   <div style="text-align:center; margin:20px 0;">
-    <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7957256&Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM' alt='' style='cursor:pointer' code='9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM'></a>
+    <a referrerpolicy="origin" target="_blank" rel="noopener" href="https://trustseal.enamad.ir/?id=7957256&amp;Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM">
+      <img referrerpolicy="origin" src="https://trustseal.enamad.ir/logo.aspx?id=7957256&amp;Code=9wBhyrxeOgOkBfkS7hKt7jlOn1b5oNUM" alt="نماد اعتماد الکترونیکی" style="cursor:pointer;max-width:100%">
+    </a>
   </div>
 </footer>
 
 <script>
+"use strict";
+
 var isEnglish = false;
 
 var texts = {
@@ -309,59 +274,64 @@ var placeholders = {
 };
 
 function val(id) {
-  return parseFloat(document.getElementById(id).value);
+  var value = document.getElementById(id).value.trim();
+  return value === "" ? NaN : Number(value);
 }
 
 function show(id, value) {
   var el = document.getElementById(id);
   if (typeof value === "number") {
-    el.textContent = isNaN(value) ? "" : Math.round(value * 100) / 100;
+    el.textContent = Number.isFinite(value)
+      ? String(Math.round(value * 100) / 100)
+      : (isEnglish ? "Please enter valid numbers." : "لطفاً اعداد معتبر وارد کنید.");
   } else {
     el.textContent = value;
   }
 }
 
 function percent() {
-  show("r1", val("num") * val("per") / 100);
+  var n = val("num"), p = val("per");
+  if (!Number.isFinite(n) || !Number.isFinite(p)) return show("r1", NaN);
+  show("r1", n * p / 100);
 }
 
 function currency() {
-  show("r2", val("amount") * val("rate"));
+  var a = val("amount"), r = val("rate");
+  if (!Number.isFinite(a) || !Number.isFinite(r)) return show("r2", NaN);
+  show("r2", a * r);
 }
 
 function off() {
-  var p = val("price");
-  var d = val("discount");
+  var p = val("price"), d = val("discount");
+  if (!Number.isFinite(p) || !Number.isFinite(d)) return show("r3", NaN);
   show("r3", p - (p * d / 100));
 }
 
 function profit() {
-  var b = val("buy");
-  var s = val("sell");
+  var b = val("buy"), s = val("sell");
+  if (!Number.isFinite(b) || !Number.isFinite(s)) return show("r4", NaN);
   var diff = s - b;
-  var pct = b ? (diff / b * 100) : NaN;
-  if (isNaN(diff)) { show("r4", ""); return; }
-  var pctText = isNaN(pct) ? "" : " (" + (Math.round(pct * 100) / 100) + "%)";
-  show("r4", (Math.round(diff * 100) / 100) + pctText);
+  var pct = b !== 0 ? (diff / b * 100) : NaN;
+  var result = String(Math.round(diff * 100) / 100);
+  if (Number.isFinite(pct)) result += " (" + (Math.round(pct * 100) / 100) + "%)";
+  show("r4", result);
 }
 
 function increasePrice() {
-  var b = val("base");
-  var i = val("increase");
+  var b = val("base"), i = val("increase");
+  if (!Number.isFinite(b) || !Number.isFinite(i)) return show("r5", NaN);
   show("r5", b + (b * i / 100));
 }
 
 function genText() {
   var name = document.getElementById("toolName").value.trim();
-  var result;
   if (isEnglish) {
     name = name || "This tool";
-    result = name + " is a free, fast and practical online tool that helps you get your work done in seconds.";
+    show("r6", name + " is a free, fast and practical online tool that helps you get your work done in seconds.");
   } else {
     name = name || "این ابزار";
-    result = name + " یک ابزار آنلاین رایگان، سریع و کاربردی است که به شما کمک می‌کند کارهایتان را در چند ثانیه انجام دهید.";
+    show("r6", name + " یک ابزار آنلاین رایگان، سریع و کاربردی است که به شما کمک می‌کند کارهایتان را در چند ثانیه انجام دهید.");
   }
-  show("r6", result);
 }
 
 function toggleLanguage() {
@@ -373,24 +343,26 @@ function toggleLanguage() {
   document.documentElement.dir = isEnglish ? "ltr" : "rtl";
 
   var t = texts[lang];
-  for (var id in t) {
+  Object.keys(t).forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.textContent = t[id];
-  }
+  });
 
   var p = placeholders[lang];
-  for (var pid in p) {
-    var input = document.getElementById(pid);
-    if (input) input.placeholder = p[pid];
-  }
+  Object.keys(p).forEach(function(id) {
+    var input = document.getElementById(id);
+    if (input) input.placeholder = p[id];
+  });
 }
 
+/* Register the existing service worker. */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js").catch(function () {});
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("/sw.js").catch(function(error) {
+      console.warn("Service worker registration failed:", error);
+    });
   });
 }
 </script>
-
 </body>
 </html>
